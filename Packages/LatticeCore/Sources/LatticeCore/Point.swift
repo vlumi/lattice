@@ -1,5 +1,5 @@
 /// A dot position on the unbounded integer lattice.
-public struct Point: Hashable, Sendable {
+public struct Point: Hashable, Codable, Sendable {
     public var x: Int
     public var y: Int
 
