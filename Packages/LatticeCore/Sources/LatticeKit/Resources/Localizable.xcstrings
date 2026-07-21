@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Best: %lld" : {
+
+    },
     "Cancel" : {
 
     },

@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Persistence: the game in progress survives quitting (restored on
+  launch), every finished game is stored as a full replay record, and
+  personal bests are tracked per variant — the best shows in the header.
+
 - Board camera: pinch to zoom (up to 6×, drag to pan, clamped so the
   board can't be lost off-screen), a Fit button (⌘0) to snap back, camera
   reset on new game.

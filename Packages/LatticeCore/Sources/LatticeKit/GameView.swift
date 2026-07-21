@@ -23,6 +23,11 @@ public struct GameView: View {
         HStack {
             Text("Score: \(session.game.score)", bundle: .module)
                 .font(.headline.monospacedDigit())
+            if let best = session.best {
+                Text("Best: \(best)", bundle: .module)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             if !camera.isIdentity {
                 Button {

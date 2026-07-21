@@ -1,7 +1,7 @@
 /// A drawn line: `length` consecutive dots from `origin` along `axis` in its
 /// canonical positive direction, so each physical line has exactly one
 /// representation.
-public struct Line: Hashable, Sendable {
+public struct Line: Hashable, Codable, Sendable {
     public let origin: Point
     public let axis: Axis
     public let length: Int

@@ -1,10 +1,10 @@
 /// The four line axes. Axes are undirected; `step` fixes a canonical
 /// positive direction so segment keys and line walks are unambiguous.
-public enum Axis: CaseIterable, Sendable {
-    case horizontal
-    case vertical
-    case diagonalRising
-    case diagonalFalling
+public enum Axis: String, CaseIterable, Codable, Sendable {
+    case horizontal = "h"
+    case vertical = "v"
+    case diagonalRising = "dr"
+    case diagonalFalling = "df"
 
     public var step: (dx: Int, dy: Int) {
         switch self {
