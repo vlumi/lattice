@@ -6,6 +6,20 @@ import SwiftUI
 /// last-move highlight. Empty lattice positions render as faint pinpoints,
 /// not a hairline grid — lines are reserved for played moves.
 public struct BoardView: View {
+    /// What hover or a selection scrub is currently pointing at — previewed
+    /// in accent, chosen on click/lift.
+    enum HotTarget: Equatable {
+        case place(Point)
+        case ghost(Move)
+        case cancelTentative
+    }
+
+    private enum DragMode {
+        case undecided
+        case scrub
+        case pan
+    }
+
     @ObservedObject private var session: GameSession
     @ObservedObject private var camera: BoardCamera
 
@@ -13,6 +27,8 @@ public struct BoardView: View {
     // gesture end.
     @State private var gestureZoom: CGFloat = 1
     @State private var gesturePan: CGSize = .zero
+    @State private var dragMode: DragMode = .undecided
+    @State private var hot: HotTarget?
 
     public init(session: GameSession, camera: BoardCamera) {
         self.session = session
@@ -29,6 +45,11 @@ public struct BoardView: View {
                     width: camera.pan.width + gesturePan.width,
                     height: camera.pan.height + gesturePan.height),
                 zoom: zoom, in: size)
+            let toWorld: (CGPoint) -> CGPoint = { location in
+                CGPoint(
+                    x: (location.x - size.width / 2 - pan.width) / zoom + size.width / 2,
+                    y: (location.y - size.height / 2 - pan.height) / zoom + size.height / 2)
+            }
             Canvas { context, _ in
                 context.translateBy(
                     x: size.width / 2 + pan.width, y: size.height / 2 + pan.height)
@@ -36,20 +57,54 @@ public struct BoardView: View {
                 context.translateBy(x: -size.width / 2, y: -size.height / 2)
                 draw(in: context, layout)
             }
-            .gesture(
-                SpatialTapGesture().onEnded { tap in
-                    let world = CGPoint(
-                        x: (tap.location.x - size.width / 2 - pan.width) / zoom + size.width / 2,
-                        y: (tap.location.y - size.height / 2 - pan.height) / zoom + size.height / 2)
-                    handleTap(at: world, layout)
+            // Pointer hover (Mac, iPad pointer/trackpad): preview the target
+            // under the cursor. No-op on plain touch.
+            .onContinuousHover { phase in
+                switch phase {
+                case .active(let location):
+                    hot = target(at: toWorld(location), layout)
+                case .ended:
+                    hot = nil
                 }
-            )
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 12)
-                    .onChanged { gesturePan = $0.translation }
+            }
+            // One drag gesture for tap / scrub-select / camera pan. Starting
+            // on a selectable target makes it a scrub: the nearest target
+            // highlights as the finger moves, lifting selects it. Starting
+            // anywhere else pans; a sub-threshold pan is a tap.
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        if dragMode == .undecided {
+                            dragMode =
+                                target(at: toWorld(value.startLocation), layout) != nil
+                                ? .scrub : .pan
+                        }
+                        switch dragMode {
+                        case .scrub:
+                            hot = target(at: toWorld(value.location), layout)
+                        case .pan:
+                            gesturePan = value.translation
+                        case .undecided:
+                            break
+                        }
+                    }
                     .onEnded { value in
-                        gesturePan = .zero
-                        camera.apply(zoomDelta: 1, panDelta: value.translation, in: size)
+                        switch dragMode {
+                        case .scrub:
+                            select(target(at: toWorld(value.location), layout))
+                        case .pan:
+                            gesturePan = .zero
+                            if abs(value.translation.width) + abs(value.translation.height) < 6 {
+                                handleTap(at: toWorld(value.location), layout)
+                            } else {
+                                camera.apply(
+                                    zoomDelta: 1, panDelta: value.translation, in: size)
+                            }
+                        case .undecided:
+                            break
+                        }
+                        dragMode = .undecided
+                        hot = nil
                     }
             )
             .simultaneousGesture(
@@ -63,15 +118,50 @@ public struct BoardView: View {
         .clipped()
     }
 
+    // MARK: Targets
+
+    /// The selectable thing near a world location: candidate ghosts first
+    /// (they overlay the grid), then the tentative dot (cancel), then any
+    /// placeable point.
+    private func target(at location: CGPoint, _ layout: Layout) -> HotTarget? {
+        if session.tentative != nil, let ghost = closestCandidate(to: location, layout) {
+            return .ghost(ghost)
+        }
+        guard let p = layout.point(near: location) else { return nil }
+        if p == session.tentative { return .cancelTentative }
+        if session.isPlaceable(p) { return .place(p) }
+        return nil
+    }
+
+    private func select(_ target: HotTarget?) {
+        switch target {
+        case .ghost(let move):
+            session.commit(move)
+        case .place(let p):
+            session.place(p)
+        case .cancelTentative:
+            session.cancel()
+        case nil:
+            break
+        }
+    }
+
     // MARK: Drawing
 
     private func draw(in context: GraphicsContext, _ layout: Layout) {
+        drawPinpoints(in: context, layout)
+        drawPlayedLines(in: context, layout)
+        drawDots(in: context, layout)
+        drawInteractiveState(in: context, layout)
+    }
+
+    // Settled-vs-open grayscale coding: placeable points (a legal move
+    // exists) get a clearly visible pinpoint, all other empty points fade to
+    // near-nothing. Deliberately NOT a uniform lattice — a regular grid of
+    // faint marks under bright dots triggers the scintillating-grid illusion
+    // (phantom dark cores in the dots).
+    private func drawPinpoints(in context: GraphicsContext, _ layout: Layout) {
         let dots = session.game.dots
-        // Settled-vs-open grayscale coding: placeable points (a legal move
-        // exists) get a clearly visible pinpoint, all other empty points
-        // fade to near-nothing. Deliberately NOT a uniform lattice — a
-        // regular grid of faint marks under bright dots triggers the
-        // scintillating-grid illusion (phantom dark cores in the dots).
         for x in (layout.bounds.minX - 1)...(layout.bounds.maxX + 1) {
             for y in (layout.bounds.minY - 1)...(layout.bounds.maxY + 1) {
                 let p = Point(x, y)
@@ -87,7 +177,9 @@ public struct BoardView: View {
                 }
             }
         }
+    }
 
+    private func drawPlayedLines(in context: GraphicsContext, _ layout: Layout) {
         let lastLine = session.game.moves.last?.line
         for move in session.game.moves where move.line != lastLine {
             strokeLine(
@@ -98,25 +190,31 @@ public struct BoardView: View {
             strokeLine(
                 lastLine, .style(.tint), width: layout.lineWidth, in: context, layout)
         }
+    }
 
-        // Casing: a background-colour ring under each dot separates it from
-        // crossing lines — kills the bright-intersection clustering that
-        // feeds the illusion, and makes 5T's shared-endpoint dots readable.
+    // Casing: a background-colour ring under each dot separates it from
+    // crossing lines — kills the bright-intersection clustering that feeds
+    // the illusion, and makes 5T's shared-endpoint dots readable.
+    private func drawDots(in context: GraphicsContext, _ layout: Layout) {
+        let dots = session.game.dots
         for dot in dots {
             fillDot(dot, radius: layout.casingRadius, .style(.background), in: context, layout)
         }
         for dot in dots {
             fillDot(dot, radius: layout.dotRadius, .style(.primary), in: context, layout)
         }
+    }
 
+    private func drawInteractiveState(in context: GraphicsContext, _ layout: Layout) {
         for ghost in ghostGeometry(layout) {
             var path = Path()
             path.move(to: ghost.a)
             path.addLine(to: ghost.b)
+            let isHot = hot == .ghost(ghost.move)
             context.stroke(
-                path, with: .style(.tint.opacity(0.5)),
+                path, with: .style(.tint.opacity(isHot ? 0.9 : 0.5)),
                 style: StrokeStyle(
-                    lineWidth: layout.lineWidth, lineCap: .round,
+                    lineWidth: layout.lineWidth * (isHot ? 1.4 : 1), lineCap: .round,
                     dash: [layout.lineWidth * 2.5, layout.lineWidth * 2.5]))
         }
         if let tentative = session.tentative {
@@ -126,6 +224,29 @@ public struct BoardView: View {
                 tentative, radius: layout.dotRadius * 1.25, .style(.tint),
                 in: context, layout)
         }
+        // Hover / scrub preview: an accent ring on the would-be selection.
+        switch hot {
+        case .place(let p):
+            strokeRing(around: p, in: context, layout)
+        case .cancelTentative:
+            if let tentative = session.tentative {
+                strokeRing(around: tentative, in: context, layout)
+            }
+        case .ghost, nil:
+            break
+        }
+    }
+
+    private func strokeRing(around p: Point, in context: GraphicsContext, _ layout: Layout) {
+        let center = layout.position(of: p)
+        let radius = layout.dotRadius * 1.7
+        context.stroke(
+            Path(
+                ellipseIn: CGRect(
+                    x: center.x - radius, y: center.y - radius,
+                    width: radius * 2, height: radius * 2)),
+            with: .style(.tint),
+            style: StrokeStyle(lineWidth: layout.lineWidth * 0.8))
     }
 
     private func fillDot(
