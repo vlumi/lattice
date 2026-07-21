@@ -60,7 +60,6 @@ public struct BoardView: View {
                         camera.apply(zoomDelta: value, panDelta: .zero, in: size)
                     })
         }
-        .aspectRatio(1, contentMode: .fit)
         .clipped()
     }
 
