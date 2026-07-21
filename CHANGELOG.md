@@ -18,6 +18,9 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Board camera: pinch to zoom (up to 6×, drag to pan, clamped so the
+  board can't be lost off-screen), a Fit button (⌘0) to snap back, camera
+  reset on new game.
 - Playable solitaire: two-stage move input (tap a point → tentative dot +
   dashed candidate lines in the accent colour → tap a line to commit),
   free cancel, unlimited undo, new game, score header, and game-over
