@@ -23,6 +23,10 @@ public final class GameSession: ObservableObject {
     @Published public private(set) var movesByDot: [Point: [Move]]
     @Published public private(set) var bests: BestScores
     @Published public private(set) var dailyLog: DailyLog
+    /// The live game's openness so far (legal moves before each move + now).
+    @Published public private(set) var opennessHistory: [Int] = []
+    /// The personal-best game's openness curve — the ghost to race.
+    @Published public private(set) var pbCurve: [Int]?
 
     public let mode: Mode
 
@@ -64,6 +68,17 @@ public final class GameSession: ObservableObject {
         game = resolved.game
         gameID = resolved.id
         movesByDot = resolved.game.legalMovesByDot()
+        opennessHistory = resolved.game.opennessCurve()
+        pbCurve = Self.bestCurve(in: store, rules: resolved.game.rules)
+    }
+
+    /// The openness curve of the highest-scoring stored game of this
+    /// variant, if any.
+    private static func bestCurve(in store: LatticeStore, rules: Rules) -> [Int]? {
+        store.loadRecords()
+            .filter { $0.rules == rules }
+            .max { $0.score < $1.score }?
+            .legalMoveCurve()
     }
 
     public var candidates: [Move] {
@@ -110,6 +125,7 @@ public final class GameSession: ObservableObject {
         tentative = nil
         undoArmed = true
         refresh()
+        opennessHistory.append(totalLegalMoves)
         persist()
         if isOver { finishGame() }
     }
@@ -119,6 +135,7 @@ public final class GameSession: ObservableObject {
         tentative = nil
         undoArmed = false
         refresh()
+        if opennessHistory.count > 1 { opennessHistory.removeLast() }
         persist()
     }
 
@@ -129,7 +146,12 @@ public final class GameSession: ObservableObject {
         gameID = UUID()
         tentative = nil
         refresh()
+        opennessHistory = [totalLegalMoves]
         persist()
+    }
+
+    private var totalLegalMoves: Int {
+        movesByDot.values.reduce(0) { $0 + $1.count }
     }
 
     private func refresh() {
@@ -150,6 +172,8 @@ public final class GameSession: ObservableObject {
         store.saveRecord(GameRecord(game: game, id: gameID, finishedAt: Date()))
         if bests.register(game.score, for: game.rules) {
             store.saveBests(bests)
+            // The game just played becomes the ghost.
+            pbCurve = opennessHistory
         }
         if mode == .daily {
             dailyLog.record(
