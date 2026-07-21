@@ -18,6 +18,11 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Playable solitaire: two-stage move input (tap a point → tentative dot +
+  dashed candidate lines in the accent colour → tap a line to commit),
+  free cancel, unlimited undo, new game, score header, and game-over
+  detection. Played lines render monochrome with the last move
+  accent-highlighted.
 - Game engine: move validation for 5T and 5D (segment-reuse and
   disjoint-dot rules, no-free-lines by construction), legal-move
   enumeration, end detection, scoring, and undo — the move stack doubles

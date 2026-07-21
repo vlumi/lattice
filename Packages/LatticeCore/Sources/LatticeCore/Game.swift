@@ -76,6 +76,14 @@ public struct Game: Hashable, Sendable {
         return result
     }
 
+    /// Legal moves grouped by the dot they place — the shape the two-stage
+    /// input consumes (tap a dot → its candidate lines).
+    public func legalMovesByDot() -> [Point: [Move]] {
+        var result: [Point: [Move]] = [:]
+        enumerateLegalMoves { result[$0.dot, default: []].append($0) }
+        return result
+    }
+
     public var isOver: Bool {
         var found = false
         enumerateLegalMoves { _ in found = true }
