@@ -71,14 +71,33 @@ public struct GameView: View {
     }
 
     private var gameOver: some View {
-        Group {
-            if session.mode == .daily {
-                Text("Done for today — final score \(session.game.score)", bundle: .module)
-            } else {
-                Text("No moves left — final score \(session.game.score)", bundle: .module)
+        HStack(spacing: 12) {
+            Group {
+                if session.mode == .daily {
+                    Text("Done for today — final score \(session.game.score)", bundle: .module)
+                } else {
+                    Text("No moves left — final score \(session.game.score)", bundle: .module)
+                }
+            }
+            .font(.title3.weight(.semibold))
+            if let image = shareImage {
+                ShareLink(
+                    item: image,
+                    preview: SharePreview(
+                        Text("Lattice Five — \(session.game.score)", bundle: .module),
+                        image: image))
             }
         }
-        .font(.title3.weight(.semibold))
+    }
+
+    private var shareImage: Image? {
+        let subtitle =
+            session.dailyKey.map { key in
+                String(
+                    localized: "Daily \(key) — score \(session.game.score)", bundle: .module)
+            }
+            ?? String(localized: "Score \(session.game.score)", bundle: .module)
+        return ShareCard.render(game: session.game, subtitle: subtitle)
     }
 }
 

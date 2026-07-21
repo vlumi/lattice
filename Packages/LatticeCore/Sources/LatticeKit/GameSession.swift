@@ -83,6 +83,11 @@ public final class GameSession: ObservableObject {
         dailyLog.streak(today: dateKey)
     }
 
+    /// The daily's date key, for captions; nil in free mode.
+    public var dailyKey: String? {
+        mode == .daily ? dateKey : nil
+    }
+
     public var undoAllowed: Bool {
         guard !game.moves.isEmpty, !dailyDone else { return false }
         return mode == .free || undoArmed
