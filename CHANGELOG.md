@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Share card: a finished game exports as an image — the board rendered
+  ink-on-paper by the game's own drawing code, plus the score line (and
+  the daily's date). Share and Save Image buttons appear beside the
+  final score — save writes a PNG wherever you choose.
 - Daily challenge: one attempt per local date at the classic 5T cross,
   one undo per move, streak tracking (an unplayed day breaks it, an
   in-progress day doesn't), Free/Daily tabs; the daily attempt and

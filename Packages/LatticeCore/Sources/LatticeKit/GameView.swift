@@ -5,6 +5,8 @@ import SwiftUI
 public struct GameView: View {
     @ObservedObject private var session: GameSession
     @StateObject private var camera = BoardCamera()
+    @State private var exportDocument: PNGDocument?
+    @State private var isExporting = false
 
     public init(session: GameSession) {
         self.session = session
@@ -71,14 +73,52 @@ public struct GameView: View {
     }
 
     private var gameOver: some View {
-        Group {
-            if session.mode == .daily {
-                Text("Done for today — final score \(session.game.score)", bundle: .module)
-            } else {
-                Text("No moves left — final score \(session.game.score)", bundle: .module)
+        HStack(spacing: 12) {
+            Group {
+                if session.mode == .daily {
+                    Text("Done for today — final score \(session.game.score)", bundle: .module)
+                } else {
+                    Text("No moves left — final score \(session.game.score)", bundle: .module)
+                }
+            }
+            .font(.title3.weight(.semibold))
+            if let image = shareImage {
+                ShareLink(
+                    item: image,
+                    preview: SharePreview(
+                        Text("Lattice Five — \(session.game.score)", bundle: .module),
+                        image: image))
+            }
+            Button {
+                exportDocument = ShareCard.pngData(game: session.game, subtitle: cardSubtitle)
+                    .map(PNGDocument.init)
+                isExporting = exportDocument != nil
+            } label: {
+                Text("Save Image", bundle: .module)
+            }
+            .fileExporter(
+                isPresented: $isExporting, document: exportDocument,
+                contentType: .png, defaultFilename: exportFilename
+            ) { _ in
+                exportDocument = nil
             }
         }
-        .font(.title3.weight(.semibold))
+    }
+
+    private var cardSubtitle: String {
+        session.dailyKey.map { key in
+            String(localized: "Daily \(key) — score \(session.game.score)", bundle: .module)
+        }
+            ?? String(localized: "Score \(session.game.score)", bundle: .module)
+    }
+
+    private var exportFilename: String {
+        session.dailyKey.map { "lattice-daily-\($0)-\(session.game.score)" }
+            ?? "lattice-\(session.game.score)"
+    }
+
+    private var shareImage: Image? {
+        ShareCard.render(game: session.game, subtitle: cardSubtitle)
     }
 }
 
