@@ -30,13 +30,24 @@ public struct BoardView: View {
 
     private func draw(in context: GraphicsContext, _ layout: Layout) {
         let dots = session.game.dots
+        // Settled-vs-open grayscale coding: placeable points (a legal move
+        // exists) get a clearly visible pinpoint, all other empty points
+        // fade to near-nothing. Deliberately NOT a uniform lattice — a
+        // regular grid of faint marks under bright dots triggers the
+        // scintillating-grid illusion (phantom dark cores in the dots).
         for x in (layout.bounds.minX - 1)...(layout.bounds.maxX + 1) {
             for y in (layout.bounds.minY - 1)...(layout.bounds.maxY + 1) {
                 let p = Point(x, y)
                 if dots.contains(p) || p == session.tentative { continue }
-                fillDot(
-                    p, radius: layout.pinpointRadius, .style(.primary.opacity(0.18)),
-                    in: context, layout)
+                if session.isPlaceable(p) {
+                    fillDot(
+                        p, radius: layout.openPointRadius, .style(.primary.opacity(0.45)),
+                        in: context, layout)
+                } else {
+                    fillDot(
+                        p, radius: layout.pinpointRadius, .style(.primary.opacity(0.08)),
+                        in: context, layout)
+                }
             }
         }
 
@@ -51,16 +62,29 @@ public struct BoardView: View {
                 lastLine, .style(.tint), width: layout.lineWidth, in: context, layout)
         }
 
+        // Casing: a background-colour ring under each dot separates it from
+        // crossing lines — kills the bright-intersection clustering that
+        // feeds the illusion, and makes 5T's shared-endpoint dots readable.
+        for dot in dots {
+            fillDot(dot, radius: layout.casingRadius, .style(.background), in: context, layout)
+        }
         for dot in dots {
             fillDot(dot, radius: layout.dotRadius, .style(.primary), in: context, layout)
         }
 
-        for candidate in session.candidates {
-            strokeLine(
-                candidate.line, .style(.tint.opacity(0.5)), width: layout.lineWidth,
-                dashed: true, in: context, layout)
+        for ghost in ghostGeometry(layout) {
+            var path = Path()
+            path.move(to: ghost.a)
+            path.addLine(to: ghost.b)
+            context.stroke(
+                path, with: .style(.tint.opacity(0.5)),
+                style: StrokeStyle(
+                    lineWidth: layout.lineWidth, lineCap: .round,
+                    dash: [layout.lineWidth * 2.5, layout.lineWidth * 2.5]))
         }
         if let tentative = session.tentative {
+            fillDot(
+                tentative, radius: layout.casingRadius, .style(.background), in: context, layout)
             fillDot(
                 tentative, radius: layout.dotRadius * 1.25, .style(.tint),
                 in: context, layout)
@@ -118,17 +142,53 @@ public struct BoardView: View {
 
     private func closestCandidate(to location: CGPoint, _ layout: Layout) -> Move? {
         var best: (move: Move, distance: CGFloat)?
-        for candidate in session.candidates {
-            guard let first = candidate.line.points.first,
-                let last = candidate.line.points.last
-            else { continue }
-            let distance = distanceToSegment(
-                location, layout.position(of: first), layout.position(of: last))
+        for ghost in ghostGeometry(layout) {
+            let distance = distanceToSegment(location, ghost.a, ghost.b)
             if distance <= layout.cell * 0.4, distance < (best?.distance ?? .infinity) {
-                best = (candidate, distance)
+                best = (ghost.move, distance)
             }
         }
         return best?.move
+    }
+
+    /// Screen geometry of the candidate ghosts. Collinear candidates
+    /// overlapping lengthwise are indistinguishable drawn in place, so each
+    /// axis's candidates fan out side by side with a small perpendicular
+    /// offset — visually separate and individually tappable. A single
+    /// candidate on an axis stays exactly on-axis.
+    private struct Ghost {
+        let move: Move
+        let a: CGPoint
+        let b: CGPoint
+    }
+
+    private func ghostGeometry(_ layout: Layout) -> [Ghost] {
+        var result: [Ghost] = []
+        for axis in LatticeCore.Axis.allCases {
+            let step = axis.step
+            func rank(_ move: Move) -> Int {
+                step.dx * move.line.origin.x + step.dy * move.line.origin.y
+            }
+            let group = session.candidates
+                .filter { $0.line.axis == axis }
+                .sorted { rank($0) < rank($1) }
+            for (index, move) in group.enumerated() {
+                guard let first = move.line.points.first, let last = move.line.points.last
+                else { continue }
+                let a = layout.position(of: first)
+                let b = layout.position(of: last)
+                let length = hypot(b.x - a.x, b.y - a.y)
+                let shift = (CGFloat(index) - CGFloat(group.count - 1) / 2) * layout.cell * 0.2
+                let perp = CGPoint(
+                    x: -(b.y - a.y) / length * shift, y: (b.x - a.x) / length * shift)
+                result.append(
+                    Ghost(
+                        move: move, a: CGPoint(x: a.x + perp.x, y: a.y + perp.y),
+                        b: CGPoint(x: b.x + perp.x, y: b.y + perp.y)
+                    ))
+            }
+        }
+        return result
     }
 
     private func distanceToSegment(_ p: CGPoint, _ a: CGPoint, _ b: CGPoint) -> CGFloat {
@@ -179,7 +239,9 @@ struct Layout {
     }
 
     var dotRadius: CGFloat { cell * 0.18 }
+    var casingRadius: CGFloat { cell * 0.28 }
     var pinpointRadius: CGFloat { cell * 0.05 }
+    var openPointRadius: CGFloat { cell * 0.09 }
     var lineWidth: CGFloat { cell * 0.1 }
 
     // Model y grows upward, screen y grows downward.

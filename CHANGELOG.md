@@ -23,6 +23,11 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
   free cancel, unlimited undo, new game, score header, and game-over
   detection. Played lines render monochrome with the last move
   accent-highlighted.
+- Board readability: placeable points render as clearly visible pinpoints
+  while settled empty points fade out (open-frontier coding, and it
+  defuses the scintillating-grid illusion); dots sit on background-colour
+  casing rings; collinear candidate lines fan out side by side so
+  overlapping options are visually distinct and individually tappable.
 - Game engine: move validation for 5T and 5D (segment-reuse and
   disjoint-dot rules, no-free-lines by construction), legal-move
   enumeration, end detection, scoring, and undo — the move stack doubles
