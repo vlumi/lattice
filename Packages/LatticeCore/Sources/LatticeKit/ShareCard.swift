@@ -1,5 +1,7 @@
+import ImageIO
 import LatticeCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The shareable result card: the finished board rendered by the same
 /// drawing vocabulary as the game (ink-on-paper — fixed light monochrome so
@@ -7,11 +9,49 @@ import SwiftUI
 enum ShareCard {
     @MainActor
     static func render(game: Game, subtitle: String) -> Image? {
+        guard let cgImage = cgImage(game: game, subtitle: subtitle) else { return nil }
+        return Image(cgImage, scale: 2, label: Text(verbatim: "Lattice Five"))
+    }
+
+    /// The same card as PNG bytes, for saving to a file.
+    @MainActor
+    static func pngData(game: Game, subtitle: String) -> Data? {
+        guard let cgImage = cgImage(game: game, subtitle: subtitle) else { return nil }
+        let data = NSMutableData()
+        guard
+            let destination = CGImageDestinationCreateWithData(
+                data, UTType.png.identifier as CFString, 1, nil)
+        else { return nil }
+        CGImageDestinationAddImage(destination, cgImage, nil)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return data as Data
+    }
+
+    @MainActor
+    private static func cgImage(game: Game, subtitle: String) -> CGImage? {
         let renderer = ImageRenderer(
             content: ShareCardView(game: game, subtitle: subtitle))
         renderer.scale = 2
-        guard let cgImage = renderer.cgImage else { return nil }
-        return Image(cgImage, scale: 2, label: Text(verbatim: "Lattice Five"))
+        return renderer.cgImage
+    }
+}
+
+/// Write-only PNG wrapper for `.fileExporter`.
+struct PNGDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.png] }
+
+    let data: Data
+
+    init(data: Data) {
+        self.data = data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }
 

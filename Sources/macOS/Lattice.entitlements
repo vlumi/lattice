@@ -2,9 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Mac App Store requires App Sandbox. Nothing else yet: no network,
-	     no file access — Nearby play adds its entitlements when it lands. -->
+	<!-- Mac App Store requires App Sandbox. Nearby play adds its network
+	     entitlements when it lands. -->
 	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- Save the share-card PNG where the user chooses (.fileExporter —
+	     with read-only, the save panel silently no-ops). -->
+	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 </dict>
 </plist>
