@@ -145,6 +145,17 @@ final class GameTests: XCTestCase {
         XCTAssertEqual(Game(rules: .fiveD).legalMoves().count, 28)
     }
 
+    func testLegalMovesByDotMatchesFlatEnumeration() {
+        let game = Game()
+        let grouped = game.legalMovesByDot()
+        XCTAssertEqual(grouped.values.map(\.count).reduce(0, +), game.legalMoves().count)
+        for (dot, moves) in grouped {
+            for move in moves {
+                XCTAssertEqual(move.dot, dot)
+            }
+        }
+    }
+
     func testLegalMovesAreDistinctAndLegal() {
         var game = Game()
         game.play(firstMove)

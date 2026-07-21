@@ -1,0 +1,21 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Cancel" : {
+
+    },
+    "New Game" : {
+
+    },
+    "No moves left — final score %lld" : {
+
+    },
+    "Score: %lld" : {
+
+    },
+    "Undo" : {
+
+    }
+  },
+  "version" : "1.0"
+}

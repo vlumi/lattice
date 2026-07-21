@@ -1,53 +1,214 @@
 import LatticeCore
 import SwiftUI
 
-/// Renders a dot set on the lattice — monochrome, theme-aware via the
-/// environment foreground color. Scaffold scope: draws the dots; interaction
-/// and drawn lines arrive with the engine.
+/// The interactive board. Monochrome for committed state; the accent colour
+/// marks everything not yet final (tentative dot, candidate ghosts) plus the
+/// last-move highlight. Empty lattice positions render as faint pinpoints,
+/// not a hairline grid — lines are reserved for played moves.
 public struct BoardView: View {
-    private let dots: Set<Point>
+    @ObservedObject private var session: GameSession
 
-    public init(dots: Set<Point> = StartingPattern.standardCross) {
-        self.dots = dots
+    public init(session: GameSession) {
+        self.session = session
     }
 
     public var body: some View {
-        Canvas { context, size in
-            guard let bounds = Bounds(of: dots) else { return }
-            let layout = Layout(fitting: bounds, in: size)
-            // Empty lattice positions as faint pinpoints (not a hairline
-            // grid — lines are reserved for played moves). Rendered over the
-            // content bounds + margin only, so the void beyond stays clean.
-            for x in (bounds.minX - 1)...(bounds.maxX + 1) {
-                for y in (bounds.minY - 1)...(bounds.maxY + 1) {
-                    let p = Point(x, y)
-                    if dots.contains(p) { continue }
-                    fill(p, radius: layout.pinpointRadius, opacity: 0.18, in: context, layout)
+        GeometryReader { geometry in
+            let layout = Layout(fitting: Bounds(of: session.game.dots), in: geometry.size)
+            Canvas { context, _ in
+                draw(in: context, layout)
+            }
+            .gesture(
+                SpatialTapGesture().onEnded { tap in
+                    handleTap(at: tap.location, layout)
+                })
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+
+    // MARK: Drawing
+
+    private func draw(in context: GraphicsContext, _ layout: Layout) {
+        let dots = session.game.dots
+        // Settled-vs-open grayscale coding: placeable points (a legal move
+        // exists) get a clearly visible pinpoint, all other empty points
+        // fade to near-nothing. Deliberately NOT a uniform lattice — a
+        // regular grid of faint marks under bright dots triggers the
+        // scintillating-grid illusion (phantom dark cores in the dots).
+        for x in (layout.bounds.minX - 1)...(layout.bounds.maxX + 1) {
+            for y in (layout.bounds.minY - 1)...(layout.bounds.maxY + 1) {
+                let p = Point(x, y)
+                if dots.contains(p) || p == session.tentative { continue }
+                if session.isPlaceable(p) {
+                    fillDot(
+                        p, radius: layout.openPointRadius, .style(.primary.opacity(0.45)),
+                        in: context, layout)
+                } else {
+                    fillDot(
+                        p, radius: layout.pinpointRadius, .style(.primary.opacity(0.08)),
+                        in: context, layout)
                 }
             }
-            for dot in dots {
-                fill(dot, radius: layout.dotRadius, opacity: 1, in: context, layout)
-            }
+        }
+
+        let lastLine = session.game.moves.last?.line
+        for move in session.game.moves where move.line != lastLine {
+            strokeLine(
+                move.line, .style(.primary.opacity(0.75)),
+                width: layout.lineWidth, in: context, layout)
+        }
+        if let lastLine {
+            strokeLine(
+                lastLine, .style(.tint), width: layout.lineWidth, in: context, layout)
+        }
+
+        // Casing: a background-colour ring under each dot separates it from
+        // crossing lines — kills the bright-intersection clustering that
+        // feeds the illusion, and makes 5T's shared-endpoint dots readable.
+        for dot in dots {
+            fillDot(dot, radius: layout.casingRadius, .style(.background), in: context, layout)
+        }
+        for dot in dots {
+            fillDot(dot, radius: layout.dotRadius, .style(.primary), in: context, layout)
+        }
+
+        for ghost in ghostGeometry(layout) {
+            var path = Path()
+            path.move(to: ghost.a)
+            path.addLine(to: ghost.b)
+            context.stroke(
+                path, with: .style(.tint.opacity(0.5)),
+                style: StrokeStyle(
+                    lineWidth: layout.lineWidth, lineCap: .round,
+                    dash: [layout.lineWidth * 2.5, layout.lineWidth * 2.5]))
+        }
+        if let tentative = session.tentative {
+            fillDot(
+                tentative, radius: layout.casingRadius, .style(.background), in: context, layout)
+            fillDot(
+                tentative, radius: layout.dotRadius * 1.25, .style(.tint),
+                in: context, layout)
         }
     }
 
-    private func fill(
-        _ p: Point, radius: CGFloat, opacity: Double,
+    private func fillDot(
+        _ p: Point, radius: CGFloat, _ shading: GraphicsContext.Shading,
         in context: GraphicsContext, _ layout: Layout
     ) {
         let center = layout.position(of: p)
         let rect = CGRect(
             x: center.x - radius, y: center.y - radius,
             width: radius * 2, height: radius * 2)
-        context.fill(Path(ellipseIn: rect), with: .style(.primary.opacity(opacity)))
+        context.fill(Path(ellipseIn: rect), with: shading)
+    }
+
+    private func strokeLine(
+        _ line: Line, _ shading: GraphicsContext.Shading, width: CGFloat,
+        dashed: Bool = false, in context: GraphicsContext, _ layout: Layout
+    ) {
+        guard let first = line.points.first, let last = line.points.last else { return }
+        var path = Path()
+        path.move(to: layout.position(of: first))
+        path.addLine(to: layout.position(of: last))
+        let style = StrokeStyle(
+            lineWidth: width, lineCap: .round,
+            dash: dashed ? [width * 2.5, width * 2.5] : [])
+        context.stroke(path, with: shading, style: style)
+    }
+
+    // MARK: Input
+
+    private func handleTap(at location: CGPoint, _ layout: Layout) {
+        // Candidate ghosts win first: they overlap the dot grid.
+        if session.tentative != nil,
+            let chosen = closestCandidate(to: location, layout)
+        {
+            session.commit(chosen)
+            return
+        }
+        guard let p = layout.point(near: location) else {
+            session.cancel()
+            return
+        }
+        if p == session.tentative {
+            session.cancel()
+        } else if session.isPlaceable(p) {
+            session.place(p)
+        } else {
+            // Rejected in place; a shake/haptic is later polish.
+            session.cancel()
+        }
+    }
+
+    private func closestCandidate(to location: CGPoint, _ layout: Layout) -> Move? {
+        var best: (move: Move, distance: CGFloat)?
+        for ghost in ghostGeometry(layout) {
+            let distance = distanceToSegment(location, ghost.a, ghost.b)
+            if distance <= layout.cell * 0.4, distance < (best?.distance ?? .infinity) {
+                best = (ghost.move, distance)
+            }
+        }
+        return best?.move
+    }
+
+    /// Screen geometry of the candidate ghosts. Collinear candidates
+    /// overlapping lengthwise are indistinguishable drawn in place, so each
+    /// axis's candidates fan out side by side with a small perpendicular
+    /// offset — visually separate and individually tappable. A single
+    /// candidate on an axis stays exactly on-axis.
+    private struct Ghost {
+        let move: Move
+        let a: CGPoint
+        let b: CGPoint
+    }
+
+    private func ghostGeometry(_ layout: Layout) -> [Ghost] {
+        var result: [Ghost] = []
+        for axis in LatticeCore.Axis.allCases {
+            let step = axis.step
+            func rank(_ move: Move) -> Int {
+                step.dx * move.line.origin.x + step.dy * move.line.origin.y
+            }
+            let group = session.candidates
+                .filter { $0.line.axis == axis }
+                .sorted { rank($0) < rank($1) }
+            for (index, move) in group.enumerated() {
+                guard let first = move.line.points.first, let last = move.line.points.last
+                else { continue }
+                let a = layout.position(of: first)
+                let b = layout.position(of: last)
+                let length = hypot(b.x - a.x, b.y - a.y)
+                let shift = (CGFloat(index) - CGFloat(group.count - 1) / 2) * layout.cell * 0.2
+                let perp = CGPoint(
+                    x: -(b.y - a.y) / length * shift, y: (b.x - a.x) / length * shift)
+                result.append(
+                    Ghost(
+                        move: move, a: CGPoint(x: a.x + perp.x, y: a.y + perp.y),
+                        b: CGPoint(x: b.x + perp.x, y: b.y + perp.y)
+                    ))
+            }
+        }
+        return result
+    }
+
+    private func distanceToSegment(_ p: CGPoint, _ a: CGPoint, _ b: CGPoint) -> CGFloat {
+        let ab = CGPoint(x: b.x - a.x, y: b.y - a.y)
+        let ap = CGPoint(x: p.x - a.x, y: p.y - a.y)
+        let lengthSquared = ab.x * ab.x + ab.y * ab.y
+        let t = lengthSquared == 0 ? 0 : max(0, min(1, (ap.x * ab.x + ap.y * ab.y) / lengthSquared))
+        let nearest = CGPoint(x: a.x + ab.x * t, y: a.y + ab.y * t)
+        return hypot(p.x - nearest.x, p.y - nearest.y)
     }
 }
 
-private struct Bounds {
+struct Bounds {
     let minX, maxX, minY, maxY: Int
 
-    init?(of dots: Set<Point>) {
-        guard let first = dots.first else { return nil }
+    init(of dots: Set<Point>) {
+        guard let first = dots.first else {
+            (minX, maxX, minY, maxY) = (0, 0, 0, 0)
+            return
+        }
         var (minX, maxX, minY, maxY) = (first.x, first.x, first.y, first.y)
         for dot in dots {
             minX = min(minX, dot.x)
@@ -59,7 +220,7 @@ private struct Bounds {
     }
 }
 
-private struct Layout {
+struct Layout {
     let cell: CGFloat
     let originOffset: CGPoint
     let bounds: Bounds
@@ -78,12 +239,29 @@ private struct Layout {
     }
 
     var dotRadius: CGFloat { cell * 0.18 }
+    var casingRadius: CGFloat { cell * 0.28 }
     var pinpointRadius: CGFloat { cell * 0.05 }
+    var openPointRadius: CGFloat { cell * 0.09 }
+    var lineWidth: CGFloat { cell * 0.1 }
 
     // Model y grows upward, screen y grows downward.
     func position(of p: Point) -> CGPoint {
         CGPoint(
             x: originOffset.x + CGFloat(p.x - bounds.minX) * cell,
             y: originOffset.y + CGFloat(bounds.maxY - p.y) * cell)
+    }
+
+    /// The lattice point within grabbing distance of a screen location, if
+    /// any; inverse of `position(of:)`.
+    func point(near location: CGPoint) -> Point? {
+        guard cell > 0 else { return nil }
+        let x = (location.x - originOffset.x) / cell + CGFloat(bounds.minX)
+        let y = CGFloat(bounds.maxY) - (location.y - originOffset.y) / cell
+        let candidate = Point(Int(x.rounded()), Int(y.rounded()))
+        let center = position(of: candidate)
+        guard hypot(location.x - center.x, location.y - center.y) <= cell * 0.4 else {
+            return nil
+        }
+        return candidate
     }
 }

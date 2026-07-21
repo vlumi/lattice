@@ -5,8 +5,7 @@ import SwiftUI
 struct LatticeApp: App {
     var body: some Scene {
         WindowGroup {
-            BoardView()
-                .padding()
+            GameView()
         }
     }
 }
