@@ -2,7 +2,7 @@ import Foundation
 
 /// A finished game — the full replay plus its outcome. One record per game
 /// id; rewriting the same id is idempotent.
-public struct GameRecord: Codable, Sendable, Identifiable {
+public struct GameRecord: Codable, Hashable, Sendable, Identifiable {
     public static let currentVersion = 1
 
     public let version: Int

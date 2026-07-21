@@ -18,6 +18,9 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Replay viewer: open any finished game from History and scrub through
+  it — slider, frame-step and jump-to-end controls (arrow keys on Mac),
+  the current move highlighted in accent.
 - History tab: finished games as a score-over-time chart (with the
   running best as a step line) and a recent-games list.
 - Share card: a finished game exports as an image — the board rendered

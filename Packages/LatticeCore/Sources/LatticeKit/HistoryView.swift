@@ -14,16 +14,21 @@ public struct HistoryView: View {
     }
 
     public var body: some View {
-        Group {
-            if records.isEmpty {
-                Text("No finished games yet", bundle: .module)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                content
+        NavigationStack {
+            Group {
+                if records.isEmpty {
+                    Text("No finished games yet", bundle: .module)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    content
+                }
+            }
+            .padding()
+            .navigationDestination(for: GameRecord.self) { record in
+                ReplayView(record: record)
             }
         }
-        .padding()
         .onAppear { records = store.loadRecords() }
     }
 
@@ -32,17 +37,19 @@ public struct HistoryView: View {
             chart
                 .frame(height: 220)
             List(records) { record in
-                HStack {
-                    Text(record.finishedAt, format: .dateTime.year().month().day())
-                        .foregroundStyle(.secondary)
-                    Text(verbatim: record.rules.storageKey)
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.quaternary, in: Capsule())
-                    Spacer()
-                    Text(verbatim: "\(record.score)")
-                        .font(.headline.monospacedDigit())
+                NavigationLink(value: record) {
+                    HStack {
+                        Text(record.finishedAt, format: .dateTime.year().month().day())
+                            .foregroundStyle(.secondary)
+                        Text(verbatim: record.rules.storageKey)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.quaternary, in: Capsule())
+                        Spacer()
+                        Text(verbatim: "\(record.score)")
+                            .font(.headline.monospacedDigit())
+                    }
                 }
             }
             .listStyle(.plain)
