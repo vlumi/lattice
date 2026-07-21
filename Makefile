@@ -20,6 +20,18 @@ Lattice.xcodeproj: $(PROJECT_INPUTS)
 .PHONY: generate
 generate: Lattice.xcodeproj  ## Regenerate Lattice.xcodeproj from project.yml (if stale)
 
+.PHONY: run-mac
+run-mac: Lattice.xcodeproj  ## Build + launch the macOS app
+	@Scripts/run.sh
+
+.PHONY: run-iphone
+run-iphone: Lattice.xcodeproj  ## Build + launch on an iPhone simulator (DEVICE="SE" / "17 Pro" to pick)
+	@Scripts/run-ios.sh iphone "$(DEVICE)"
+
+.PHONY: run-ipad
+run-ipad: Lattice.xcodeproj  ## Build + launch on an iPad simulator (DEVICE="Air" / "13-inch" to pick)
+	@Scripts/run-ios.sh ipad "$(DEVICE)"
+
 .PHONY: build-mac
 build-mac: Lattice.xcodeproj  ## Build the macOS app (unsigned)
 	@xcodebuild build -project Lattice.xcodeproj -scheme Lattice-macOS \
