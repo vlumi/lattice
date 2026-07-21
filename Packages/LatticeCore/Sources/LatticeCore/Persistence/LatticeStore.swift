@@ -87,6 +87,31 @@ public struct LatticeStore {
             .sorted { $0.finishedAt > $1.finishedAt }
     }
 
+    // MARK: Daily
+
+    var dailyAttemptURL: URL { directory.appendingPathComponent("daily-attempt.json") }
+    private var dailyLogURL: URL { directory.appendingPathComponent("daily-log.json") }
+
+    public func saveDailyAttempt(_ attempt: DailyAttempt) {
+        write(attempt, to: dailyAttemptURL)
+    }
+
+    public func loadDailyAttempt() -> DailyAttempt? {
+        load(DailyAttempt.self, from: dailyAttemptURL, maxVersion: DailyAttempt.currentVersion)
+    }
+
+    public func clearDailyAttempt() {
+        try? fileManager.removeItem(at: dailyAttemptURL)
+    }
+
+    public func saveDailyLog(_ log: DailyLog) {
+        write(log, to: dailyLogURL)
+    }
+
+    public func loadDailyLog() -> DailyLog {
+        load(DailyLog.self, from: dailyLogURL, maxVersion: DailyLog.currentVersion) ?? DailyLog()
+    }
+
     // MARK: Bests
 
     private var bestsURL: URL { directory.appendingPathComponent("bests.json") }

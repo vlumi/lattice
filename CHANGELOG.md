@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Daily challenge: one attempt per local date at the classic 5T cross,
+  one undo per move, streak tracking (an unplayed day breaks it, an
+  in-progress day doesn't), Free/Daily tabs; the daily attempt and
+  results persist alongside the free game.
 - Persistence: the game in progress survives quitting (restored on
   launch), every finished game is stored as a full replay record, and
   personal bests are tracked per variant — the best shows in the header.

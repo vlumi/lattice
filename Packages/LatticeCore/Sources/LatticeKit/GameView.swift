@@ -1,12 +1,14 @@
 import LatticeCore
 import SwiftUI
 
-/// The whole solitaire screen: score header, the board, game-over state.
+/// One game screen (free or daily): score header, the board, end state.
 public struct GameView: View {
-    @StateObject private var session = GameSession()
+    @ObservedObject private var session: GameSession
     @StateObject private var camera = BoardCamera()
 
-    public init() {}
+    public init(session: GameSession) {
+        self.session = session
+    }
 
     public var body: some View {
         VStack(spacing: 12) {
@@ -23,7 +25,11 @@ public struct GameView: View {
         HStack {
             Text("Score: \(session.game.score)", bundle: .module)
                 .font(.headline.monospacedDigit())
-            if let best = session.best {
+            if session.mode == .daily, session.dailyStreak > 0 {
+                Text("Streak: \(session.dailyStreak)", bundle: .module)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            } else if let best = session.best {
                 Text("Best: \(best)", bundle: .module)
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
@@ -51,19 +57,45 @@ public struct GameView: View {
                 Text("Undo", bundle: .module)
             }
             .keyboardShortcut("z", modifiers: .command)
-            .disabled(session.game.moves.isEmpty)
-            Button {
-                session.newGame()
-                camera.reset()
-            } label: {
-                Text("New Game", bundle: .module)
+            .disabled(!session.undoAllowed)
+            if session.mode == .free {
+                Button {
+                    session.newGame()
+                    camera.reset()
+                } label: {
+                    Text("New Game", bundle: .module)
+                }
+                .keyboardShortcut("n", modifiers: .command)
             }
-            .keyboardShortcut("n", modifiers: .command)
         }
     }
 
     private var gameOver: some View {
-        Text("No moves left — final score \(session.game.score)", bundle: .module)
-            .font(.title3.weight(.semibold))
+        Group {
+            if session.mode == .daily {
+                Text("Done for today — final score \(session.game.score)", bundle: .module)
+            } else {
+                Text("No moves left — final score \(session.game.score)", bundle: .module)
+            }
+        }
+        .font(.title3.weight(.semibold))
+    }
+}
+
+/// The app root: Free and Daily as tabs, each keeping its own session and
+/// camera alive across switches.
+public struct RootView: View {
+    @StateObject private var freeSession = GameSession(mode: .free)
+    @StateObject private var dailySession = GameSession(mode: .daily)
+
+    public init() {}
+
+    public var body: some View {
+        TabView {
+            GameView(session: freeSession)
+                .tabItem { Text("Free", bundle: .module) }
+            GameView(session: dailySession)
+                .tabItem { Text("Daily", bundle: .module) }
+        }
     }
 }
