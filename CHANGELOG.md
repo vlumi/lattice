@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Input: hovering (Mac/iPad pointer) previews the point or candidate
+  line under the cursor; on touch, a drag starting on a selectable
+  target scrubs across targets and selects on lift — panning still
+  starts from empty space.
 - Personal-best ghost: once a best exists, a small chart under the live
   board races your position's openness against your best game's curve.
 - Post-game analysis in the replay viewer: the openness curve (legal

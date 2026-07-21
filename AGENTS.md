@@ -199,12 +199,15 @@ depend on Donpa):
   not "Designed for iPad". Pick concrete floors when scaffolding — Donpa
   uses iOS 16 / macOS 14; match unless a needed API forces higher.
 - **Input matrix** (rendering is shared; input idioms are the per-platform
-  work): iPhone — tap to place, drag from the tentative dot to pick the
-  line, one-finger drag from empty space pans, pinch zooms. iPad — adds
-  pointer hover (preview candidate ghosts over legal points), Apple Pencil,
-  hardware-keyboard shortcuts. Mac — hover as on iPad, scroll/trackpad
-  pan-zoom, Esc cancels, ⌘Z undo, menu-bar items (New Game / Undo /
-  Auto-fit). Nearby via MultipeerConnectivity works across iOS ↔ macOS.
+  work): iPhone — tap to place; **scrub-select**: a drag starting on a
+  selectable target (placeable point / ghost / tentative dot) highlights
+  the nearest target under the finger and selects it on lift, while a drag
+  starting elsewhere pans; pinch zooms. iPad — adds pointer hover (the same
+  hot-target preview the scrub uses), Apple Pencil, hardware-keyboard
+  shortcuts. Mac — hover preview, trackpad pan-zoom, Esc cancels, ⌘Z undo.
+  The hover/scrub preview renders as an accent ring (points) or a
+  brightened ghost (lines). Nearby via MultipeerConnectivity works across
+  iOS ↔ macOS.
 - **Toolchain:** Xcode + Swift 6, **XcodeGen** (the `.xcodeproj` is a generated
   artifact — gitignored, never edited or committed; signing/team live only in
   that local file, never in `project.yml`).
