@@ -4,6 +4,17 @@
 public enum StartingPattern {
     public static let standardCross: Set<Point> = makeStandardCross()
 
+    /// The smaller cross the 4T/4D games start from: 12 edges of 3 dots,
+    /// 24 dots, spanning [-3, 3]² — odd extent, so its center is the (empty)
+    /// origin dot, unlike the standard cross's between-dots center.
+    public static let smallCross: Set<Point> = makeSmallCross()
+
+    /// The standard start for a variant: the small cross for 4-length
+    /// games, the classic cross otherwise.
+    public static func standard(for rules: Rules) -> Set<Point> {
+        rules.lineLength == 4 ? smallCross : standardCross
+    }
+
     private static func makeStandardCross() -> Set<Point> {
         // The plus polygon's 12 corners, walked clockwise from the top-left
         // corner of the upper arm; dots collect along each 3-unit edge.
@@ -12,6 +23,19 @@ public enum StartingPattern {
             Point(4, -2), Point(1, -2), Point(1, -5), Point(-2, -5),
             Point(-2, -2), Point(-5, -2), Point(-5, 1), Point(-2, 1),
         ]
+        return outline(corners)
+    }
+
+    private static func makeSmallCross() -> Set<Point> {
+        let corners: [Point] = [
+            Point(-1, 3), Point(1, 3), Point(1, 1), Point(3, 1),
+            Point(3, -1), Point(1, -1), Point(1, -3), Point(-1, -3),
+            Point(-1, -1), Point(-3, -1), Point(-3, 1), Point(-1, 1),
+        ]
+        return outline(corners)
+    }
+
+    private static func outline(_ corners: [Point]) -> Set<Point> {
         var dots = Set<Point>()
         for (index, corner) in corners.enumerated() {
             let next = corners[(index + 1) % corners.count]

@@ -40,4 +40,37 @@ final class StartingPatternTests: XCTestCase {
             XCTAssertEqual(symmetry.apply(cross), cross, "\(symmetry)")
         }
     }
+
+    func testSmallCross() {
+        let small = StartingPattern.smallCross
+        XCTAssertEqual(small.count, 24)
+        XCTAssertEqual(small.map(\.x).min(), -3)
+        XCTAssertEqual(small.map(\.x).max(), 3)
+        XCTAssertEqual(small.map(\.y).min(), -3)
+        XCTAssertEqual(small.map(\.y).max(), 3)
+        XCTAssertFalse(small.contains(Point(0, 0)), "hollow")
+        // Odd extent: symmetric about the origin (plain negation), not the
+        // standard cross's between-dots center.
+        XCTAssertEqual(Set(small.map { Point(-$0.x, -$0.y) }), small)
+        XCTAssertEqual(Set(small.map { Point($0.y, $0.x) }), small)
+    }
+
+    func testStandardStartForRules() {
+        XCTAssertEqual(StartingPattern.standard(for: .fiveT), StartingPattern.standardCross)
+        XCTAssertEqual(StartingPattern.standard(for: .fiveD), StartingPattern.standardCross)
+        XCTAssertEqual(StartingPattern.standard(for: .fourT), StartingPattern.smallCross)
+        XCTAssertEqual(StartingPattern.standard(for: .fourD), StartingPattern.smallCross)
+    }
+
+    func testFourGameInitialMoveCount() {
+        // 40, engine-derived and verified by hand: the small cross's arm
+        // gap is a single cell, so the centre-gap dots (0,±1)/(±1,0) accept
+        // all four windows through them — 6 per row/column (24) — plus 2
+        // per arm-end edge (8) and 2 corner-threading diagonals per corner
+        // (8), e.g. (-1,-4),(0,-3),(1,-2),(2,-1).
+        let fourT = Game(rules: .fourT, start: StartingPattern.smallCross)
+        XCTAssertEqual(fourT.legalMoves().count, 40)
+        let fourD = Game(rules: .fourD, start: StartingPattern.smallCross)
+        XCTAssertEqual(fourD.legalMoves().count, 40)
+    }
 }

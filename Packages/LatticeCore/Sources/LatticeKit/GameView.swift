@@ -110,6 +110,25 @@ public struct GameView: View {
                     Text("New Game", bundle: .module)
                 }
                 .keyboardShortcut("n", modifiers: .command)
+                // Switching variant starts a new game of it.
+                Menu {
+                    ForEach(Rules.selectable, id: \.self) { rules in
+                        Button {
+                            session.newGame(rules: rules)
+                            camera.reset()
+                        } label: {
+                            if rules == session.game.rules {
+                                Label(rules.storageKey, systemImage: "checkmark")
+                            } else {
+                                Text(verbatim: rules.storageKey)
+                            }
+                        }
+                    }
+                } label: {
+                    Text(verbatim: session.game.rules.storageKey)
+                }
+                .menuStyle(.button)
+                .fixedSize()
             }
         }
     }

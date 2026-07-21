@@ -139,14 +139,18 @@ public final class GameSession: ObservableObject {
         persist()
     }
 
-    /// Free mode only — the daily is one attempt per day.
-    public func newGame() {
+    /// Free mode only — the daily is one attempt per day. Passing rules
+    /// switches variant (with its standard start); omitting keeps the
+    /// current one.
+    public func newGame(rules: Rules? = nil) {
         guard mode == .free else { return }
-        game = Game(rules: game.rules, start: game.start)
+        let newRules = rules ?? game.rules
+        game = Game(rules: newRules, start: StartingPattern.standard(for: newRules))
         gameID = UUID()
         tentative = nil
         refresh()
         opennessHistory = [totalLegalMoves]
+        pbCurve = Self.bestCurve(in: store, rules: newRules)
         persist()
     }
 
