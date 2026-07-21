@@ -15,15 +15,31 @@ public struct BoardView: View {
         Canvas { context, size in
             guard let bounds = Bounds(of: dots) else { return }
             let layout = Layout(fitting: bounds, in: size)
+            // Empty lattice positions as faint pinpoints (not a hairline
+            // grid — lines are reserved for played moves). Rendered over the
+            // content bounds + margin only, so the void beyond stays clean.
+            for x in (bounds.minX - 1)...(bounds.maxX + 1) {
+                for y in (bounds.minY - 1)...(bounds.maxY + 1) {
+                    let p = Point(x, y)
+                    if dots.contains(p) { continue }
+                    fill(p, radius: layout.pinpointRadius, opacity: 0.18, in: context, layout)
+                }
+            }
             for dot in dots {
-                let center = layout.position(of: dot)
-                let radius = layout.dotRadius
-                let rect = CGRect(
-                    x: center.x - radius, y: center.y - radius,
-                    width: radius * 2, height: radius * 2)
-                context.fill(Path(ellipseIn: rect), with: .style(.primary))
+                fill(dot, radius: layout.dotRadius, opacity: 1, in: context, layout)
             }
         }
+    }
+
+    private func fill(
+        _ p: Point, radius: CGFloat, opacity: Double,
+        in context: GraphicsContext, _ layout: Layout
+    ) {
+        let center = layout.position(of: p)
+        let rect = CGRect(
+            x: center.x - radius, y: center.y - radius,
+            width: radius * 2, height: radius * 2)
+        context.fill(Path(ellipseIn: rect), with: .style(.primary.opacity(opacity)))
     }
 }
 
@@ -62,6 +78,7 @@ private struct Layout {
     }
 
     var dotRadius: CGFloat { cell * 0.18 }
+    var pinpointRadius: CGFloat { cell * 0.05 }
 
     // Model y grows upward, screen y grows downward.
     func position(of p: Point) -> CGPoint {
