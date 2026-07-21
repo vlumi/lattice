@@ -104,7 +104,8 @@ iPad, and Mac; core coverage high; CI green; on TestFlight.
 
 ## v1.0.0 — The store release
 
-- [ ] App icon generated from game renders — light/dark/tinted variants
+- [ ] App icon generated from game renders — lines whose negative space
+      forms a "5" — light/dark/tinted variants
 - [ ] One ASC record (Universal Purchase), listing text + screenshots,
       privacy questionnaire (nothing collected)
 - [ ] Release lane (versioning lock-step, archive + upload both platforms)

@@ -17,3 +17,9 @@ Pre-code: planning docs only. The first code milestone is **v0.1.0 — the
 core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
+
+- Project scaffolding: XcodeGen project (iOS + macOS targets, Universal
+  Purchase bundle id), `LatticeCore` package with the grid model (points,
+  axes, canonical segments, symmetries, the standard 36-dot cross) and its
+  tests, a minimal monochrome board render, pinned lint/format tooling, and
+  CI (lint, tests + coverage, both platform builds).
