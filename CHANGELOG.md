@@ -18,6 +18,9 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Post-game analysis in the replay viewer: the openness curve (legal
+  moves per turn) charted under the board, synced to the scrubber — see
+  where the position peaked and where it died.
 - Replay viewer: open any finished game from History and scrub through
   it — autoplay cascades the whole game (space to play/pause; any manual
   control pauses), plus slider, frame-step and jump-to-end controls

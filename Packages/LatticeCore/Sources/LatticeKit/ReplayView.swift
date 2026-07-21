@@ -1,3 +1,4 @@
+import Charts
 import LatticeCore
 import SwiftUI
 
@@ -8,6 +9,8 @@ final class ReplayModel: ObservableObject {
     private static let autoplayInterval: TimeInterval = 0.15
 
     let record: GameRecord
+    /// Legal-move count before each move + the end — the openness curve.
+    let curve: [Int]
     @Published private(set) var game: Game
     @Published private(set) var step: Int
     @Published private(set) var isPlaying = false
@@ -16,6 +19,7 @@ final class ReplayModel: ObservableObject {
 
     init(record: GameRecord) {
         self.record = record
+        curve = record.legalMoveCurve()
         var replayed = Game(rules: record.rules, start: record.start)
         for move in record.moves where replayed.play(move) {}
         game = replayed
@@ -86,11 +90,56 @@ public struct ReplayView: View {
     public var body: some View {
         VStack(spacing: 12) {
             ReplayBoardView(game: model.game)
+            analysis
             controls
         }
         .padding()
         .navigationTitle(
             Text("Replay — \(model.record.score)", bundle: .module))
+    }
+
+    // The openness curve, synced to the scrubber: where it peaks is where
+    // the game held the most potential; the slide to zero is where the
+    // position died. Tapping/scrubbing the slider moves the marker.
+    private var analysis: some View {
+        Chart {
+            ForEach(Array(model.curve.enumerated()), id: \.offset) { index, count in
+                LineMark(
+                    x: .value("Move", index),
+                    y: .value("Open moves", count)
+                )
+                .foregroundStyle(.primary.opacity(0.45))
+            }
+            RuleMark(x: .value("Move", model.step))
+                .foregroundStyle(.tint)
+            if model.step < model.curve.count {
+                PointMark(
+                    x: .value("Move", model.step),
+                    y: .value("Open moves", model.curve[model.step])
+                )
+                .foregroundStyle(.tint)
+            }
+        }
+        .chartXScale(domain: 0...max(model.totalSteps, 1))
+        // The whole chart doubles as a scrubber: tap or drag anywhere to
+        // seek to that move.
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(.clear)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                let plotOrigin = geometry[proxy.plotAreaFrame].origin
+                                let x = value.location.x - plotOrigin.x
+                                if let move: Double = proxy.value(atX: x) {
+                                    model.seek(to: Int(move.rounded()))
+                                }
+                            })
+            }
+        }
+        .frame(height: 110)
     }
 
     private var controls: some View {
