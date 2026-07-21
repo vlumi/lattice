@@ -18,6 +18,8 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Personal-best ghost: once a best exists, a small chart under the live
+  board races your position's openness against your best game's curve.
 - Post-game analysis in the replay viewer: the openness curve (legal
   moves per turn) charted under the board, synced to the scrubber — see
   where the position peaked and where it died.

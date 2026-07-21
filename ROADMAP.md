@@ -68,10 +68,14 @@ iPad, and Mac; core coverage high; CI green; on TestFlight.
 
 ## v0.3.0 — Replay & analysis
 
-- [ ] Replay viewer (step/scrub through any stored game)
-- [ ] Personal-best **ghost** overlay on a live game
-- [ ] Post-game analysis: legal-move count per turn ("where the position
-      died"), sacrificed-line markers (placements that enabled two lines)
+- [x] Replay viewer (step/scrub/autoplay through any stored game)
+- [x] Personal-best **ghost** — implemented as a pace race: the PB game's
+      openness curve dimmed under the live game's (a board overlay of a
+      second game's dots would fight the visual identity)
+- [x] Post-game analysis: legal-move count per turn ("where the position
+      died"), charted in the replay viewer and scrubbable
+- [ ] Sacrificed-line markers (placements that enabled two lines) —
+      deferred from the analysis slice
 
 ## v0.4.0 — Variants & seeded starts
 

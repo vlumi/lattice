@@ -1,3 +1,4 @@
+import Charts
 import LatticeCore
 import SwiftUI
 
@@ -16,11 +17,52 @@ public struct GameView: View {
         VStack(spacing: 12) {
             header
             BoardView(session: session, camera: camera)
+            if session.pbCurve != nil {
+                ghost
+            }
             if session.isOver {
                 gameOver
             }
         }
         .padding()
+    }
+
+    // The personal-best ghost: the PB game's openness curve dimmed under
+    // the live game's — "is my position more alive than my best game was
+    // at this point?" A pace race, not a board overlay: two games' dots on
+    // one board would fight the visual identity.
+    private var ghost: some View {
+        Chart {
+            if let pbCurve = session.pbCurve {
+                ForEach(Array(pbCurve.enumerated()), id: \.offset) { index, count in
+                    LineMark(
+                        x: .value("Move", index),
+                        y: .value("Open", count),
+                        series: .value("Series", "best")
+                    )
+                    .foregroundStyle(.primary.opacity(0.2))
+                }
+            }
+            ForEach(Array(session.opennessHistory.enumerated()), id: \.offset) { index, count in
+                LineMark(
+                    x: .value("Move", index),
+                    y: .value("Open", count),
+                    series: .value("Series", "live")
+                )
+                .foregroundStyle(.primary.opacity(0.6))
+            }
+            if let current = session.opennessHistory.last {
+                PointMark(
+                    x: .value("Move", session.opennessHistory.count - 1),
+                    y: .value("Open", current)
+                )
+                .foregroundStyle(.tint)
+            }
+        }
+        .chartXScale(
+            domain: 0...max(session.pbCurve?.count ?? 1, session.opennessHistory.count, 2)
+        )
+        .frame(height: 80)
     }
 
     private var header: some View {
