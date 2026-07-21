@@ -122,11 +122,13 @@ public struct GameView: View {
     }
 }
 
-/// The app root: Free and Daily as tabs, each keeping its own session and
-/// camera alive across switches.
+/// The app root: Free, Daily, and History as tabs — the game tabs keep
+/// their sessions and cameras alive across switches, all over one store.
 public struct RootView: View {
-    @StateObject private var freeSession = GameSession(mode: .free)
-    @StateObject private var dailySession = GameSession(mode: .daily)
+    private static let store = LatticeStore.appSupport()
+
+    @StateObject private var freeSession = GameSession(mode: .free, store: store)
+    @StateObject private var dailySession = GameSession(mode: .daily, store: store)
 
     public init() {}
 
@@ -136,6 +138,8 @@ public struct RootView: View {
                 .tabItem { Text("Free", bundle: .module) }
             GameView(session: dailySession)
                 .tabItem { Text("Daily", bundle: .module) }
+            HistoryView(store: Self.store)
+                .tabItem { Text("History", bundle: .module) }
         }
     }
 }
