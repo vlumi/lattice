@@ -18,6 +18,9 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Variants: a picker in the free game switches between 5T (classic),
+  5D, and the solved 4T/4D games on their smaller cross; bests, ghosts,
+  and records are tracked per variant.
 - Input: hovering (Mac/iPad pointer) previews the point or candidate
   line under the cursor; on touch, a drag starting on a selectable
   target scrubs across targets and selects on lift — panning still
