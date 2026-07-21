@@ -121,6 +121,24 @@ public struct ReplayView: View {
             }
         }
         .chartXScale(domain: 0...max(model.totalSteps, 1))
+        // The whole chart doubles as a scrubber: tap or drag anywhere to
+        // seek to that move.
+        .chartOverlay { proxy in
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(.clear)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                let plotOrigin = geometry[proxy.plotAreaFrame].origin
+                                let x = value.location.x - plotOrigin.x
+                                if let move: Double = proxy.value(atX: x) {
+                                    model.seek(to: Int(move.rounded()))
+                                }
+                            })
+            }
+        }
         .frame(height: 110)
     }
 
