@@ -4,9 +4,15 @@ import SwiftUI
 /// Steps through a recorded game. Seeking replays or undoes moves through
 /// the live engine, so what you scrub is always a legal position.
 final class ReplayModel: ObservableObject {
+    /// Fast cascade — step manually to study individual moves.
+    private static let autoplayInterval: TimeInterval = 0.15
+
     let record: GameRecord
     @Published private(set) var game: Game
     @Published private(set) var step: Int
+    @Published private(set) var isPlaying = false
+
+    private var timer: Timer?
 
     init(record: GameRecord) {
         self.record = record
@@ -16,9 +22,50 @@ final class ReplayModel: ObservableObject {
         step = replayed.moves.count
     }
 
+    deinit {
+        timer?.invalidate()
+    }
+
     var totalSteps: Int { record.moves.count }
 
+    /// Manual seeking pauses autoplay — the user took the controls.
     func seek(to target: Int) {
+        pause()
+        move(to: target)
+    }
+
+    func togglePlay() {
+        if isPlaying {
+            pause()
+        } else {
+            play()
+        }
+    }
+
+    private func play() {
+        guard totalSteps > 0 else { return }
+        // Play at the end means "run the whole game again".
+        if step == totalSteps { move(to: 0) }
+        isPlaying = true
+        timer = Timer.scheduledTimer(
+            withTimeInterval: Self.autoplayInterval, repeats: true
+        ) { [weak self] _ in
+            self?.tick()
+        }
+    }
+
+    private func pause() {
+        isPlaying = false
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func tick() {
+        move(to: step + 1)
+        if step == totalSteps { pause() }
+    }
+
+    private func move(to target: Int) {
         let clamped = min(max(target, 0), totalSteps)
         while step < clamped, game.play(record.moves[step]) {
             step += 1
@@ -48,6 +95,13 @@ public struct ReplayView: View {
 
     private var controls: some View {
         HStack(spacing: 12) {
+            Button {
+                model.togglePlay()
+            } label: {
+                Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
+            }
+            .keyboardShortcut(.space, modifiers: [])
+            .disabled(model.totalSteps == 0)
             Button {
                 model.seek(to: 0)
             } label: {
