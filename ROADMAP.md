@@ -101,6 +101,8 @@ iPad, and Mac; core coverage high; CI green; on TestFlight.
 - [ ] Accessibility pass: VoiceOver on the board, Dynamic Type in chrome,
       keyboard-only play on Mac/iPad
 - [ ] Performance/battery sanity pass on the render loop
+- [ ] Revisit the replay slider: the analysis chart scrubs too — drop the
+      slider near release if it feels redundant (deferred 2026-07-21)
 
 ## v1.0.0 — The store release
 
