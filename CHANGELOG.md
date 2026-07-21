@@ -18,6 +18,8 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- History tab: finished games as a score-over-time chart (with the
+  running best as a step line) and a recent-games list.
 - Share card: a finished game exports as an image — the board rendered
   ink-on-paper by the game's own drawing code, plus the score line (and
   the daily's date). Share and Save Image buttons appear beside the
