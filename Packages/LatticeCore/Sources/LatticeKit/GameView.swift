@@ -186,21 +186,40 @@ public struct GameView: View {
 /// The app root: Free, Daily, and History as tabs — the game tabs keep
 /// their sessions and cameras alive across switches, all over one store.
 public struct RootView: View {
+    private enum Tab {
+        case free
+        case daily
+        case history
+    }
+
     private static let store = LatticeStore.appSupport()
 
     @StateObject private var freeSession = GameSession(mode: .free, store: store)
     @StateObject private var dailySession = GameSession(mode: .daily, store: store)
+    @State private var selection: Tab = .free
+    @State private var historyPath = NavigationPath()
 
     public init() {}
 
     public var body: some View {
-        TabView {
+        // Arriving at the History tab (or re-tapping it, where the platform
+        // reports that) always lands on the list, not a parked replay.
+        let selectionResettingHistory = Binding(
+            get: { selection },
+            set: { (newValue: Tab) in
+                if newValue == .history { historyPath = NavigationPath() }
+                selection = newValue
+            })
+        TabView(selection: selectionResettingHistory) {
             GameView(session: freeSession)
                 .tabItem { Text("Free", bundle: .module) }
+                .tag(Tab.free)
             GameView(session: dailySession)
                 .tabItem { Text("Daily", bundle: .module) }
-            HistoryView(store: Self.store)
+                .tag(Tab.daily)
+            HistoryView(store: Self.store, path: $historyPath)
                 .tabItem { Text("History", bundle: .module) }
+                .tag(Tab.history)
         }
     }
 }

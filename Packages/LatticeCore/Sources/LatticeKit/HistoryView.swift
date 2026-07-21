@@ -2,19 +2,22 @@ import Charts
 import LatticeCore
 import SwiftUI
 
-/// Finished games over time: a score chart with the running best, and the
-/// recent-games list. Read-only over the stored records; rows become replay
-/// entry points when the viewer lands.
+/// Finished games over time — one variant at a time (the variants are
+/// different games with different score scales): a score chart with the
+/// running best, and the games list; rows open replays.
 public struct HistoryView: View {
     private let store: LatticeStore
+    @Binding private var path: NavigationPath
     @State private var records: [GameRecord] = []
+    @State private var selectedVariant: String?
 
-    public init(store: LatticeStore) {
+    public init(store: LatticeStore, path: Binding<NavigationPath>) {
         self.store = store
+        _path = path
     }
 
     public var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if records.isEmpty {
                     Text("No finished games yet", bundle: .module)
@@ -29,23 +32,48 @@ public struct HistoryView: View {
                 ReplayView(record: record)
             }
         }
-        .onAppear { records = store.loadRecords() }
+        .onAppear {
+            records = store.loadRecords()
+            // Default to the most recent game's variant.
+            if selectedVariant == nil || !presentVariants.contains(selectedVariant ?? "") {
+                selectedVariant = records.first?.rules.storageKey
+            }
+        }
+    }
+
+    /// Variants that actually have records, in the canonical display order.
+    private var presentVariants: [String] {
+        let present = Set(records.map(\.rules.storageKey))
+        let ordered = Rules.selectable.map(\.storageKey).filter(present.contains)
+        // Anything stored under a variant no longer in the selectable list
+        // still shows up (defensive).
+        return ordered + present.subtracting(ordered).sorted()
+    }
+
+    private var filtered: [GameRecord] {
+        records.filter { $0.rules.storageKey == selectedVariant }
     }
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if presentVariants.count > 1 {
+                Picker(selection: $selectedVariant) {
+                    ForEach(presentVariants, id: \.self) { variant in
+                        Text(verbatim: variant).tag(String?.some(variant))
+                    }
+                } label: {
+                    Text("Variant", bundle: .module)
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+            }
             chart
                 .frame(height: 220)
-            List(records) { record in
+            List(filtered) { record in
                 NavigationLink(value: record) {
                     HStack {
                         Text(record.finishedAt, format: .dateTime.year().month().day())
                             .foregroundStyle(.secondary)
-                        Text(verbatim: record.rules.storageKey)
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(.quaternary, in: Capsule())
                         Spacer()
                         Text(verbatim: "\(record.score)")
                             .font(.headline.monospacedDigit())
@@ -59,7 +87,7 @@ public struct HistoryView: View {
     // Chronological scores as points, with the running best as a step line —
     // monochrome like the board; the accent stays reserved for interaction.
     private var chart: some View {
-        let chronological = records.sorted { $0.finishedAt < $1.finishedAt }
+        let chronological = filtered.sorted { $0.finishedAt < $1.finishedAt }
         var best = 0
         let running: [(date: Date, best: Int)] = chronological.map { record in
             best = max(best, record.score)

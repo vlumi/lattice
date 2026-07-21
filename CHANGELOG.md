@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- History polish: the chart and list show one variant at a time (a
+  filter appears once several exist; different variants score on
+  different scales), and returning to the History tab always lands on
+  the list rather than a parked replay.
 - Variants: a picker in the free game switches between 5T (classic),
   5D, and the solved 4T/4D games on their smaller cross; bests, ghosts,
   and records are tracked per variant.
