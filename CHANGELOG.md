@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Game engine: move validation for 5T and 5D (segment-reuse and
+  disjoint-dot rules, no-free-lines by construction), legal-move
+  enumeration, end detection, scoring, and undo — the move stack doubles
+  as the replay record.
 - Project scaffolding: XcodeGen project (iOS + macOS targets, Universal
   Purchase bundle id), `LatticeCore` package with the grid model (points,
   axes, canonical segments, symmetries, the standard 36-dot cross) and its
