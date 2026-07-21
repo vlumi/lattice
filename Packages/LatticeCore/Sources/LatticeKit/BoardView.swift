@@ -7,23 +7,60 @@ import SwiftUI
 /// not a hairline grid — lines are reserved for played moves.
 public struct BoardView: View {
     @ObservedObject private var session: GameSession
+    @ObservedObject private var camera: BoardCamera
 
-    public init(session: GameSession) {
+    // In-flight gesture deltas; committed (and clamped) into the camera on
+    // gesture end.
+    @State private var gestureZoom: CGFloat = 1
+    @State private var gesturePan: CGSize = .zero
+
+    public init(session: GameSession, camera: BoardCamera) {
         self.session = session
+        self.camera = camera
     }
 
     public var body: some View {
         GeometryReader { geometry in
-            let layout = Layout(fitting: Bounds(of: session.game.dots), in: geometry.size)
+            let size = geometry.size
+            let layout = Layout(fitting: Bounds(of: session.game.dots), in: size)
+            let zoom = BoardCamera.clampZoom(camera.zoom * gestureZoom)
+            let pan = BoardCamera.clampPan(
+                CGSize(
+                    width: camera.pan.width + gesturePan.width,
+                    height: camera.pan.height + gesturePan.height),
+                zoom: zoom, in: size)
             Canvas { context, _ in
+                context.translateBy(
+                    x: size.width / 2 + pan.width, y: size.height / 2 + pan.height)
+                context.scaleBy(x: zoom, y: zoom)
+                context.translateBy(x: -size.width / 2, y: -size.height / 2)
                 draw(in: context, layout)
             }
             .gesture(
                 SpatialTapGesture().onEnded { tap in
-                    handleTap(at: tap.location, layout)
-                })
+                    let world = CGPoint(
+                        x: (tap.location.x - size.width / 2 - pan.width) / zoom + size.width / 2,
+                        y: (tap.location.y - size.height / 2 - pan.height) / zoom + size.height / 2)
+                    handleTap(at: world, layout)
+                }
+            )
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 12)
+                    .onChanged { gesturePan = $0.translation }
+                    .onEnded { value in
+                        gesturePan = .zero
+                        camera.apply(zoomDelta: 1, panDelta: value.translation, in: size)
+                    }
+            )
+            .simultaneousGesture(
+                MagnificationGesture()
+                    .onChanged { gestureZoom = $0 }
+                    .onEnded { value in
+                        gestureZoom = 1
+                        camera.apply(zoomDelta: value, panDelta: .zero, in: size)
+                    })
         }
-        .aspectRatio(1, contentMode: .fit)
+        .clipped()
     }
 
     // MARK: Drawing
