@@ -65,6 +65,18 @@ public struct LatticeStore {
         try? fileManager.removeItem(at: currentURL)
     }
 
+    // MARK: Pass-and-play game (its own slot; never mixes with solitaire)
+
+    var versusURL: URL { directory.appendingPathComponent("current-versus.json") }
+
+    public func saveVersus(_ snapshot: GameSnapshot) {
+        write(snapshot, to: versusURL)
+    }
+
+    public func loadVersus() -> GameSnapshot? {
+        load(GameSnapshot.self, from: versusURL, maxVersion: GameSnapshot.currentVersion)
+    }
+
     // MARK: Finished-game records
 
     private func recordURL(for id: UUID) -> URL {

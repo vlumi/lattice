@@ -6,6 +6,7 @@ import SwiftUI
 public struct GameView: View {
     @ObservedObject private var session: GameSession
     @StateObject private var camera = BoardCamera()
+    @Environment(\.colorScheme) private var colorScheme
     @State private var exportDocument: PNGDocument?
     @State private var isExporting = false
     @State private var isEnteringCode = false
@@ -100,7 +101,16 @@ public struct GameView: View {
         HStack {
             Text("Score: \(session.game.score)", bundle: .module)
                 .font(.headline.monospacedDigit())
-            if session.mode == .daily, session.dailyStreak > 0 {
+            if session.mode == .passAndPlay {
+                // The turn chip: the current player's colour, filled — the
+                // same colour the board's interactive accent and their drawn
+                // lines wear.
+                if !session.isOver {
+                    playerChip(
+                        session.playerToMove,
+                        label: Text("Player \(session.playerToMove) to move", bundle: .module))
+                }
+            } else if session.mode == .daily, session.dailyStreak > 0 {
                 Text("Streak: \(session.dailyStreak)", bundle: .module)
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
@@ -154,7 +164,7 @@ public struct GameView: View {
             .keyboardShortcut("z", modifiers: .command)
             .disabled(!session.undoAllowed)
             .accessibilityLabel(Text("Undo", bundle: .module))
-            if session.mode == .free {
+            if session.mode != .daily {
                 // Restart: the same board again (same seed, or the fixed
                 // classic pattern).
                 Button {
@@ -165,6 +175,8 @@ public struct GameView: View {
                 }
                 .keyboardShortcut("n", modifiers: .command)
                 .accessibilityLabel(Text("New Game", bundle: .module))
+            }
+            if session.mode == .free {
                 // Switching variant starts a new game of it.
                 Menu {
                     ForEach(Rules.selectable, id: \.self) { rules in
@@ -232,7 +244,13 @@ public struct GameView: View {
     private var gameOver: some View {
         HStack(spacing: 12) {
             Group {
-                if session.mode == .daily {
+                if let winner = session.winner {
+                    playerChip(
+                        winner,
+                        label: Text(
+                            "Player \(winner) wins — \(session.game.score) lines",
+                            bundle: .module))
+                } else if session.mode == .daily {
                     Text("Done for today — final score \(session.game.score)", bundle: .module)
                 } else {
                     Text("No moves left — final score \(session.game.score)", bundle: .module)
@@ -277,6 +295,16 @@ public struct GameView: View {
     private var shareImage: Image? {
         ShareCard.render(game: session.game, subtitle: cardSubtitle)
     }
+
+    private func playerChip(_ player: Int, label: Text) -> some View {
+        label
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                Capsule().fill(PlayerStyle.color(for: player, scheme: colorScheme)))
+    }
 }
 
 /// The challenge hand-off: scan the QR (it's the universal link), share the
@@ -315,6 +343,7 @@ public struct RootView: View {
     private enum Tab {
         case free
         case daily
+        case versus
         case history
     }
 
@@ -322,6 +351,7 @@ public struct RootView: View {
 
     @StateObject private var freeSession = GameSession(mode: .free, store: store)
     @StateObject private var dailySession = GameSession(mode: .daily, store: store)
+    @StateObject private var versusSession = GameSession(mode: .passAndPlay, store: store)
     @State private var selection: Tab = .free
     @State private var historyPath = NavigationPath()
 
@@ -355,6 +385,15 @@ public struct RootView: View {
                     }
                 }
                 .tag(Tab.daily)
+            GameView(session: versusSession)
+                .tabItem {
+                    Label {
+                        Text("Versus", bundle: .module)
+                    } icon: {
+                        Image(systemName: "person.2")
+                    }
+                }
+                .tag(Tab.versus)
             HistoryView(store: Self.store, path: $historyPath)
                 .tabItem {
                     Label {

@@ -6,16 +6,21 @@ import SwiftUI
 /// placement. Placement and commit are separate steps, so cancel needs no
 /// mechanism — nothing reaches the engine until a candidate line is chosen.
 ///
-/// Two modes over the same engine:
+/// Three modes over the same engine:
 /// - `.free`: unlimited undo, New Game any time; auto-saves to the current
 ///   slot; finished games are recorded and count toward the best.
 /// - `.daily`: one attempt per local date at the day's challenge, one undo
 ///   per committed move; the finished board stays on display and the result
 ///   feeds the streak.
+/// - `.passAndPlay`: two players alternate moves on one device; the last
+///   player able to move wins. Undo only before the opponent replies (the
+///   same armed-undo rule as the daily). No records, bests, or ghost — a
+///   match is its own event.
 public final class GameSession: ObservableObject {
     public enum Mode {
         case free
         case daily
+        case passAndPlay
     }
 
     @Published public private(set) var game: Game
@@ -41,6 +46,12 @@ public final class GameSession: ObservableObject {
     /// Daily: armed by a commit, spent by an undo — one undo per move.
     private var undoArmed = false
 
+    private struct Resolved {
+        let game: Game
+        let id: UUID
+        let seed: UInt64?
+    }
+
     public init(mode: Mode = .free, rules: Rules = .fiveT, store: LatticeStore = .appSupport()) {
         self.mode = mode
         self.store = store
@@ -49,12 +60,24 @@ public final class GameSession: ObservableObject {
         let todayKey = DailyChallenge.dateKey()
         dateKey = todayKey
 
-        struct Resolved {
-            let game: Game
-            let id: UUID
-            let seed: UInt64?
-        }
-        let resolved: Resolved
+        let resolved = Self.resolve(mode: mode, rules: rules, store: store, todayKey: todayKey)
+        game = resolved.game
+        gameID = resolved.id
+        seed = resolved.seed
+        movesByDot = Self.linkedMovesByDot(of: resolved.game)
+        freeLines = resolved.game.freeLines()
+        opennessHistory = resolved.game.opennessCurve()
+        pbCurve =
+            mode == .passAndPlay
+            ? nil
+            : Self.bestCurve(
+                in: store, key: resolved.game.rules.variantKey(forStart: resolved.game.start))
+    }
+
+    /// Restore the mode's saved game, or start fresh.
+    private static func resolve(
+        mode: Mode, rules: Rules, store: LatticeStore, todayKey: String
+    ) -> Resolved {
         switch mode {
         case .free:
             let restored = store.loadCurrent().flatMap { snapshot in
@@ -62,7 +85,7 @@ public final class GameSession: ObservableObject {
                     Resolved(game: $0, id: snapshot.id, seed: snapshot.seed)
                 }
             }
-            resolved = restored ?? Resolved(game: Game(rules: rules), id: UUID(), seed: nil)
+            return restored ?? Resolved(game: Game(rules: rules), id: UUID(), seed: nil)
         case .daily:
             let attempt = store.loadDailyAttempt()
             let restored: Resolved? =
@@ -77,16 +100,15 @@ public final class GameSession: ObservableObject {
             let fresh = Game(
                 rules: board?.rules ?? .fiveT,
                 start: board?.start ?? StartingPattern.standardCross)
-            resolved = restored ?? Resolved(game: fresh, id: UUID(), seed: nil)
+            return restored ?? Resolved(game: fresh, id: UUID(), seed: nil)
+        case .passAndPlay:
+            let restored = store.loadVersus().flatMap { snapshot in
+                Game(snapshot: snapshot).map {
+                    Resolved(game: $0, id: snapshot.id, seed: nil)
+                }
+            }
+            return restored ?? Resolved(game: Game(rules: rules), id: UUID(), seed: nil)
         }
-        game = resolved.game
-        gameID = resolved.id
-        seed = resolved.seed
-        movesByDot = Self.linkedMovesByDot(of: resolved.game)
-        freeLines = resolved.game.freeLines()
-        opennessHistory = resolved.game.opennessCurve()
-        pbCurve = Self.bestCurve(
-            in: store, key: resolved.game.rules.variantKey(forStart: resolved.game.start))
     }
 
     /// Moves grouped by dot for the input flow — through-dot moves only;
@@ -144,6 +166,17 @@ public final class GameSession: ObservableObject {
         return mode == .free || undoArmed
     }
 
+    /// Pass-and-play: whose turn (1 or 2). Player 1 moves first.
+    public var playerToMove: Int { game.moves.count % 2 + 1 }
+
+    /// Pass-and-play, finished games: the winner — the LAST player able to
+    /// move. Nil while the match runs (or on an unstarted board, where
+    /// there is no last mover).
+    public var winner: Int? {
+        guard mode == .passAndPlay, isOver, !game.moves.isEmpty else { return nil }
+        return (game.moves.count - 1) % 2 + 1
+    }
+
     /// True if the point accepts a tentative dot: some line goes through
     /// it — or, with a free line standing, anywhere empty works.
     public func isPlaceable(_ p: Point) -> Bool {
@@ -178,12 +211,12 @@ public final class GameSession: ObservableObject {
         persist()
     }
 
-    /// Free mode only — the daily is one attempt per day. Passing rules
-    /// switches variant (with its standard start); omitting keeps the
+    /// Free and pass-and-play — the daily is one attempt per day. Passing
+    /// rules switches variant (with its standard start); omitting keeps the
     /// current rules. A seeded game's New Game replays the same seed —
     /// retrying the same challenge, like the classic cross.
     public func newGame(rules: Rules? = nil) {
-        guard mode == .free else { return }
+        guard mode != .daily else { return }
         let newRules = rules ?? game.rules
         if rules == nil, let seed {
             start(Game(rules: .fiveT, start: StartGenerator.pattern(seed: seed)), seed: seed)
@@ -226,10 +259,15 @@ public final class GameSession: ObservableObject {
             store.saveCurrent(snapshot)
         case .daily:
             store.saveDailyAttempt(DailyAttempt(dateKey: dateKey, snapshot: snapshot))
+        case .passAndPlay:
+            store.saveVersus(snapshot)
         }
     }
 
     private func finishGame() {
+        // A pass-and-play match is its own event: no records, bests, or
+        // daily side effects.
+        guard mode != .passAndPlay else { return }
         store.saveRecord(GameRecord(game: game, id: gameID, finishedAt: Date(), seed: seed))
         if bests.register(game.score, forKey: variantKey) {
             store.saveBests(bests)
