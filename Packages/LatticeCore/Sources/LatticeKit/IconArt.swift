@@ -20,27 +20,28 @@ public enum IconArt {
 
     static let gridMax = 14
 
-    /// The "5" as a chunky pixel glyph (2-cell strokes, 8×11) — these
-    /// lattice points stay empty; nothing is ever drawn on or through them.
+    /// The "5" as a chunky pixel glyph (2-cell strokes, 7×11, centred —
+    /// margins 4/4 on the 15-point grid) — these lattice points stay empty;
+    /// nothing is ever drawn on or through them.
     private static let glyphRows = [
-        "########",
-        "########",
-        "##......",
-        "##......",
-        "#######.",
-        "########",
-        "......##",
-        "......##",
-        "##....##",
-        "########",
-        ".######.",
+        "#######",
+        "#######",
+        "##.....",
+        "##.....",
+        "######.",
+        "#######",
+        ".....##",
+        ".....##",
+        "##...##",
+        "#######",
+        ".#####.",
     ]
 
     static var glyphPoints: Set<Point> {
         var points = Set<Point>()
         for (rowIndex, row) in glyphRows.enumerated() {
             for (columnIndex, char) in row.enumerated() where char == "#" {
-                points.insert(Point(columnIndex + 3, rowIndex + 2))
+                points.insert(Point(columnIndex + 4, rowIndex + 2))
             }
         }
         return points
@@ -96,6 +97,17 @@ public enum IconArt {
             picked.append(line)
         }
         picked += boundaryTrace(inField: inField, glyph: glyph, used: &used)
+        // Organic edges: thin the outermost ring — a seeded share of lines
+        // touching it is dropped, leaving frontier gaps and a few
+        // unconnected dots, like a live game's edge.
+        var edgeRng = SplitMix64(seed: seed ^ 0xED6E)
+        picked = picked.filter { line in
+            let touchesEdge = line.points.contains {
+                $0.x == 0 || $0.y == 0 || $0.x == gridMax || $0.y == gridMax
+            }
+            guard touchesEdge else { return true }
+            return edgeRng.next() % 100 < 55
+        }
         return picked
     }
 
