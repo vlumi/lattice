@@ -29,11 +29,14 @@ surface — no sync. Then the slices below land in later 0.5.0 builds.
       verify, so it ships as its own build after the pipeline is proven.
       - Payload: `BestScores` + the full `DailyLog` (bests + day-set —
         ~tens of KB, decades from the 1 MB per-app cap; replays stay local).
-      - Shape: one Codable blob per key (not key-per-record — dodges the
-        1024-key limit). Merge = union the day-sets + max the bests;
-        streak/longest fall out (see AGENTS.md "Daily variety").
-      - Seam: copy-adapt Donpa's `Ubiquitous*Store` — protocol + fake for
-        tests, opt-in toggle (off by default), needs a Settings surface.
+      - Shape: **one shared Codable blob, NOT per-device** — no DeviceID /
+        fork / clone-detection (unlike Donpa; its data is per-device, ours
+        merges commutatively). Read-merge-write, self-healing on
+        `didChangeExternally`. Merge = union the day-sets + max the bests;
+        streak/longest fall out. See AGENTS.md "iCloud sync model".
+      - Seam: copy Donpa's `Ubiquitous*Store` protocol + fake-for-tests
+        only (not its device model); opt-in toggle (off by default), needs
+        a Settings surface.
 
 ## v0.6.0 — Puzzle mode & polish
 
