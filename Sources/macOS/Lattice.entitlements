@@ -10,5 +10,10 @@
 	     with read-only, the save panel silently no-ops). -->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
+	<!-- Universal Links for challenge codes — see the iOS entitlements. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:lattice.misaki.fi</string>
+	</array>
 </dict>
 </plist>

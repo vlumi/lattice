@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Challenge links and QR codes: tapping the code in the header opens a
+  panel with a scannable QR and a shareable link
+  (lattice.misaki.fi/c/CODE) — opening one launches straight into the
+  board; without the app, the site shows the code for manual entry.
 - Challenge codes: Random Start (5T#) deals a fresh generated board and
   shows its six-character code; Enter Code plays a friend's — the code
   is the whole challenge, no server. Seeded games score in their own

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal Links for challenge codes: lattice.misaki.fi/c/<code>
+	     opens the app on the shared board. Backed by the static
+	     apple-app-site-association on lattice.misaki.fi (lattice-site repo);
+	     the seed rides in the URL — no server. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:lattice.misaki.fi</string>
+	</array>
+</dict>
+</plist>

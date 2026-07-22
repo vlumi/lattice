@@ -7,6 +7,9 @@
     "Cancel" : {
 
     },
+    "Challenge QR code" : {
+
+    },
     "Code" : {
 
     },
@@ -35,6 +38,9 @@
 
     },
     "Score %lld" : {
+
+    },
+    "Share Challenge" : {
 
     },
     "Done for today — final score %lld" : {

@@ -10,6 +10,7 @@ public struct GameView: View {
     @State private var isExporting = false
     @State private var isEnteringCode = false
     @State private var codeInput = ""
+    @State private var isShowingChallenge = false
 
     public init(session: GameSession) {
         self.session = session
@@ -80,11 +81,22 @@ public struct GameView: View {
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
-            if let code = session.seedCode {
-                Text("Code: \(code)", bundle: .module)
+            if let code = session.seedCode, let seed = session.seed {
+                Button {
+                    isShowingChallenge = true
+                } label: {
+                    Label {
+                        Text(verbatim: code)
+                    } icon: {
+                        Image(systemName: "qrcode")
+                    }
                     .font(.subheadline.monospaced())
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                }
+                .popover(isPresented: $isShowingChallenge) {
+                    ChallengeShareView(code: code, url: ChallengeLink.url(for: seed))
+                        .padding()
+                        .presentationCompactAdaptation(.popover)
+                }
             }
             Spacer()
             if !camera.isIdentity {
@@ -223,6 +235,36 @@ public struct GameView: View {
     }
 }
 
+/// The challenge hand-off: scan the QR (it's the universal link), share the
+/// link, or read the code aloud — three transports for the same seed.
+private struct ChallengeShareView: View {
+    let code: String
+    let url: URL
+
+    var body: some View {
+        VStack(spacing: 10) {
+            if let qr = QRCode.image(for: url.absoluteString) {
+                qr
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(width: 180, height: 180)
+                    .accessibilityLabel(Text("Challenge QR code", bundle: .module))
+            }
+            Text(verbatim: code)
+                .font(.title3.monospaced().weight(.semibold))
+                .textSelection(.enabled)
+            ShareLink(item: url) {
+                Label {
+                    Text("Share Challenge", bundle: .module)
+                } icon: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+        }
+    }
+}
+
 /// The app root: Free, Daily, and History as tabs — the game tabs keep
 /// their sessions and cameras alive across switches, all over one store.
 public struct RootView: View {
@@ -260,6 +302,12 @@ public struct RootView: View {
             HistoryView(store: Self.store, path: $historyPath)
                 .tabItem { Text("History", bundle: .module) }
                 .tag(Tab.history)
+        }
+        // Universal Links: a challenge link starts its board in Free.
+        .onOpenURL { url in
+            guard let seed = ChallengeLink.seed(from: url) else { return }
+            freeSession.newChallenge(seed: seed)
+            selection = .free
         }
     }
 }
