@@ -44,6 +44,10 @@ build-ios: Lattice.xcodeproj  ## Build the iOS app (simulator, unsigned)
 		-destination 'generic/platform=iOS Simulator' -derivedDataPath .build-xcode \
 		CODE_SIGNING_ALLOWED=NO -quiet
 
+.PHONY: icon
+icon:  ## Regenerate the app icon assets from IconArt (deterministic)
+	@Scripts/gen-icon.sh
+
 .PHONY: test
 test:  ## Run the package logic tests (no Xcode project needed)
 	@swift test --package-path Packages/LatticeCore

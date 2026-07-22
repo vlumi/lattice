@@ -23,7 +23,7 @@ let package = Package(
         ),
         .testTarget(
             name: "LatticeCoreTests",
-            dependencies: ["LatticeCore"]
+            dependencies: ["LatticeCore", "LatticeKit"]
         ),
     ]
 )
