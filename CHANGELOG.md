@@ -11,10 +11,12 @@ collects entries merged to `main` but not yet in a TestFlight build; cutting a
 release renames it to that build's heading and opens a fresh empty one. A
 user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
-## [Unreleased]
+## [0.5.0]
 
-Pre-code: planning docs only. The first code milestone is **v0.1.0 — the
-core, playable** (see [ROADMAP.md](ROADMAP.md)).
+The first TestFlight milestone: the full single-player game (solitaire,
+daily, variants, seeded challenges, replays with analysis) plus pass-and-play
+two-player. Entries below are promoted to a `### build N` heading when the
+release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 

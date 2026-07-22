@@ -49,7 +49,7 @@ targets:
         # User-visible app/bundle name; without this it'd be the target name
         # "Lattice-iOS".
         PRODUCT_NAME: Lattice Five
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.5.0"
         # Build number is shared across iOS + macOS, bumped in lock-step by
         # the release lane so the apps never diverge.
         CURRENT_PROJECT_VERSION: "1"
@@ -94,7 +94,7 @@ targets:
         # record spanning both platforms.
         PRODUCT_BUNDLE_IDENTIFIER: fi.misaki.lattice
         PRODUCT_NAME: Lattice Five
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.5.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
         ENABLE_HARDENED_RUNTIME: YES
