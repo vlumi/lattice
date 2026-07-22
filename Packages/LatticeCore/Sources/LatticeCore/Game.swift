@@ -31,16 +31,51 @@ public struct Game: Hashable, Sendable {
     public func isLegal(_ move: Move) -> Bool {
         guard move.line.length == rules.lineLength else { return false }
         let points = move.line.points
-        guard points.contains(move.dot), !dots.contains(move.dot) else { return false }
+        guard !dots.contains(move.dot) else { return false }
+        // Classic: the line must contain the placed dot (no free lines).
+        // Unlinked (the "+" family): any line of dots, the new one included
+        // or not.
+        if rules.linked {
+            guard points.contains(move.dot) else { return false }
+        }
         guard points.allSatisfy({ $0 == move.dot || dots.contains($0) }) else { return false }
+        return lineRespectsOverlap(move.line)
+    }
+
+    private func lineRespectsOverlap(_ line: Line) -> Bool {
         switch rules.overlap {
         case .touching:
-            return !move.line.segments.contains { usedSegments.contains($0) }
+            return !line.segments.contains { usedSegments.contains($0) }
         case .disjoint:
-            return !points.contains {
-                usedLineDots.contains(AxisUse(point: $0, axis: move.line.axis))
+            return !line.points.contains {
+                usedLineDots.contains(AxisUse(point: $0, axis: line.axis))
             }
         }
+    }
+
+    /// Lines drawable through existing dots alone — only legal in unlinked
+    /// ("+") rules, where they pair with a dot placed anywhere.
+    public func freeLines() -> [Line] {
+        guard !rules.linked, let first = dots.first else { return [] }
+        var (minX, maxX, minY, maxY) = (first.x, first.x, first.y, first.y)
+        for dot in dots {
+            minX = min(minX, dot.x)
+            maxX = max(maxX, dot.x)
+            minY = min(minY, dot.y)
+            maxY = max(maxY, dot.y)
+        }
+        var result: [Line] = []
+        for x in minX...maxX {
+            for y in minY...maxY {
+                for axis in Axis.allCases {
+                    let line = Line(origin: Point(x, y), axis: axis, length: rules.lineLength)
+                    if line.points.allSatisfy(dots.contains), lineRespectsOverlap(line) {
+                        result.append(line)
+                    }
+                }
+            }
+        }
+        return result
     }
 
     /// Plays the move if legal; returns whether it was.
@@ -114,6 +149,17 @@ public struct Game: Hashable, Sendable {
                         if isLegal(move) { body(move) }
                     }
                 }
+            }
+        }
+        // Unlinked rules: a free line pairs with a dot placed ANYWHERE — an
+        // infinite move set, so enumeration yields one representative
+        // placement per free line (a guaranteed-empty corner). Sufficient
+        // for end detection and counting; the session offers the real
+        // choice of placement.
+        if !rules.linked {
+            let spot = Point(minX - 1, minY - 1)
+            for line in freeLines() {
+                body(Move(dot: spot, line: line))
             }
         }
     }

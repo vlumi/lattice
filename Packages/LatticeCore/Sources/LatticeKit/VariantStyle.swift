@@ -7,14 +7,16 @@ import SwiftUI
 /// its own steps, not an automatic flip). The mapping is per-key and
 /// permanent: filtering must never repaint a variant.
 enum VariantStyle {
-    /// Canonical slot order; unknown keys share the fallback.
-    static let order = ["5T", "5T#", "5D", "5D#", "4T", "4D"]
+    /// Canonical slot order; unknown keys share the fallback. The 7-colour
+    /// display order re-validated (CVD + both surfaces) when 5T+ joined.
+    static let order = ["5T", "5T#", "5T+", "5D", "5D#", "4T", "4D"]
 
     static func color(for key: String, scheme: ColorScheme) -> Color {
         let dark = scheme == .dark
         switch key {
         case "5T": return rgb(dark ? 0x39_87E5 : 0x2A_78D6)
         case "5T#": return rgb(dark ? 0xD9_5926 : 0xEB_6834)
+        case "5T+", "5T+#": return rgb(dark ? 0x90_85E9 : 0x4A_3AA7)
         case "5D": return rgb(dark ? 0x19_9E70 : 0x1B_AF7A)
         case "5D#": return rgb(dark ? 0xC9_8500 : 0xED_A100)
         case "4T": return rgb(dark ? 0xD5_5181 : 0xE8_7BA4)
@@ -27,6 +29,7 @@ enum VariantStyle {
         switch key {
         case "5T": return .circle
         case "5T#": return .cross
+        case "5T+", "5T+#": return .plus
         case "5D": return .square
         case "5D#": return .asterisk
         case "4T": return .triangle
@@ -40,6 +43,7 @@ enum VariantStyle {
         switch key {
         case "5T": return "circle.fill"
         case "5T#": return "xmark"
+        case "5T+", "5T+#": return "plus"
         case "5D": return "square.fill"
         case "5D#": return "asterisk"
         case "4T": return "triangle.fill"

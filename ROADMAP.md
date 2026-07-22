@@ -79,8 +79,10 @@ iPad, and Mac; core coverage high; CI green; on TestFlight.
 
 ## v0.4.0 — Variants & seeded starts
 
-- [ ] Variant picker: **5D**, **4T/4D** (smaller cross; "find the perfect
+- [x] Variant picker: **5D**, **4T/4D** (smaller cross; "find the perfect
       62/35" completion goals), **5T+** casual ruleset
+- [x] Seeded random symmetric starts (5T#) with challenge codes, links,
+      QR share + scan; the daily varies per date
 - [ ] **Seeded random symmetric starts** (the 5T#/5D# form): generator +
       solver-validated playability, seed code as shareable challenge
       (URL/QR — encode variant + start; no server)
