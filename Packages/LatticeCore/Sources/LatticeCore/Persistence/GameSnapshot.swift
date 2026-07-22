@@ -11,13 +11,17 @@ public struct GameSnapshot: Codable, Sendable {
     public let rules: Rules
     public let start: Set<Point>
     public let moves: [Move]
+    /// The challenge seed the start was generated from, if any (optional —
+    /// absent in older saves, decodes as nil).
+    public let seed: UInt64?
 
-    public init(game: Game, id: UUID) {
+    public init(game: Game, id: UUID, seed: UInt64? = nil) {
         version = Self.currentVersion
         self.id = id
         rules = game.rules
         start = game.start
         moves = game.moves
+        self.seed = seed
     }
 }
 

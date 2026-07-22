@@ -34,24 +34,29 @@ public struct HistoryView: View {
         }
         .onAppear {
             records = store.loadRecords()
-            // Default to the most recent game's variant.
+            // Default to the most recent game's pool.
             if selectedVariant == nil || !presentVariants.contains(selectedVariant ?? "") {
-                selectedVariant = records.first?.rules.storageKey
+                selectedVariant = records.first?.variantKey
             }
         }
     }
 
-    /// Variants that actually have records, in the canonical display order.
+    /// Scoring pools that actually have records, in the canonical display
+    /// order — each base variant followed by its seeded form ("5T", "5T#").
     private var presentVariants: [String] {
-        let present = Set(records.map(\.rules.storageKey))
-        let ordered = Rules.selectable.map(\.storageKey).filter(present.contains)
-        // Anything stored under a variant no longer in the selectable list
-        // still shows up (defensive).
+        let present = Set(records.map(\.variantKey))
+        var ordered: [String] = []
+        for base in Rules.selectable.map(\.storageKey) {
+            if present.contains(base) { ordered.append(base) }
+            if present.contains(base + "#") { ordered.append(base + "#") }
+        }
+        // Anything stored under a key no longer listed still shows up
+        // (defensive).
         return ordered + present.subtracting(ordered).sorted()
     }
 
     private var filtered: [GameRecord] {
-        records.filter { $0.rules.storageKey == selectedVariant }
+        records.filter { $0.variantKey == selectedVariant }
     }
 
     private var content: some View {

@@ -7,7 +7,19 @@
     "Cancel" : {
 
     },
+    "Code" : {
+
+    },
+    "Code: %@" : {
+
+    },
     "Daily" : {
+
+    },
+    "Enter Code" : {
+
+    },
+    "Enter Code…" : {
 
     },
     "Daily %@ — score %lld" : {
@@ -44,6 +56,12 @@
 
     },
     "No moves left — final score %lld" : {
+
+    },
+    "Play" : {
+
+    },
+    "Random Start (5T#)" : {
 
     },
     "Score: %lld" : {

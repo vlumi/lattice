@@ -8,6 +8,8 @@ public struct GameView: View {
     @StateObject private var camera = BoardCamera()
     @State private var exportDocument: PNGDocument?
     @State private var isExporting = false
+    @State private var isEnteringCode = false
+    @State private var codeInput = ""
 
     public init(session: GameSession) {
         self.session = session
@@ -78,6 +80,12 @@ public struct GameView: View {
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
+            if let code = session.seedCode {
+                Text("Code: \(code)", bundle: .module)
+                    .font(.subheadline.monospaced())
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
             Spacer()
             if !camera.isIdentity {
                 Button {
@@ -117,18 +125,50 @@ public struct GameView: View {
                             session.newGame(rules: rules)
                             camera.reset()
                         } label: {
-                            if rules == session.game.rules {
+                            if rules.storageKey == session.variantKey {
                                 Label(rules.storageKey, systemImage: "checkmark")
                             } else {
                                 Text(verbatim: rules.storageKey)
                             }
                         }
                     }
+                    Divider()
+                    Button {
+                        session.newChallenge(seed: SeedCode.randomSeed())
+                        camera.reset()
+                    } label: {
+                        Text("Random Start (5T#)", bundle: .module)
+                    }
+                    Button {
+                        codeInput = ""
+                        isEnteringCode = true
+                    } label: {
+                        Text("Enter Code…", bundle: .module)
+                    }
                 } label: {
-                    Text(verbatim: session.game.rules.storageKey)
+                    Text(verbatim: session.variantKey)
                 }
                 .menuStyle(.button)
                 .fixedSize()
+                .alert(
+                    Text("Enter Code", bundle: .module), isPresented: $isEnteringCode
+                ) {
+                    TextField(text: $codeInput) {
+                        Text("Code", bundle: .module)
+                    }
+                    Button {
+                        if let seed = SeedCode.decode(codeInput) {
+                            session.newChallenge(seed: seed)
+                            camera.reset()
+                        }
+                    } label: {
+                        Text("Play", bundle: .module)
+                    }
+                    Button(role: .cancel) {
+                    } label: {
+                        Text("Cancel", bundle: .module)
+                    }
+                }
             }
         }
     }

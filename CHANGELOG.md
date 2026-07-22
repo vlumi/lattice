@@ -18,6 +18,11 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Challenge codes: Random Start (5T#) deals a fresh generated board and
+  shows its six-character code; Enter Code plays a friend's — the code
+  is the whole challenge, no server. Seeded games score in their own
+  "5T#" pool (chart, bests, and ghost included), so a generous start
+  never pollutes the classic records.
 - Daily variety: each date now generates its own symmetric 36-dot
   starting pattern (deterministic from the date — everyone gets the
   same board), rules staying classic 5T; the first day keeps the
