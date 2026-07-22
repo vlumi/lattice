@@ -1,10 +1,10 @@
 {
   "images" : [
     {
-      "filename" : "icon-light.png",
       "idiom" : "universal",
       "platform" : "ios",
-      "size" : "1024x1024"
+      "size" : "1024x1024",
+      "filename" : "icon-light.png"
     },
     {
       "appearances" : [
@@ -13,10 +13,10 @@
           "value" : "dark"
         }
       ],
-      "filename" : "icon-dark.png",
       "idiom" : "universal",
       "platform" : "ios",
-      "size" : "1024x1024"
+      "size" : "1024x1024",
+      "filename" : "icon-dark.png"
     },
     {
       "appearances" : [
@@ -25,70 +25,70 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "icon-tinted.png",
       "idiom" : "universal",
       "platform" : "ios",
-      "size" : "1024x1024"
+      "size" : "1024x1024",
+      "filename" : "icon-tinted.png"
     },
     {
-      "filename" : "mac-16.png",
       "idiom" : "mac",
       "scale" : "1x",
-      "size" : "16x16"
+      "size" : "16x16",
+      "filename" : "mac-16.png"
     },
     {
-      "filename" : "mac-16@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
-      "size" : "16x16"
+      "size" : "16x16",
+      "filename" : "mac-16@2x.png"
     },
     {
-      "filename" : "mac-32.png",
       "idiom" : "mac",
       "scale" : "1x",
-      "size" : "32x32"
+      "size" : "32x32",
+      "filename" : "mac-32.png"
     },
     {
-      "filename" : "mac-32@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
-      "size" : "32x32"
+      "size" : "32x32",
+      "filename" : "mac-32@2x.png"
     },
     {
-      "filename" : "mac-128.png",
       "idiom" : "mac",
       "scale" : "1x",
-      "size" : "128x128"
+      "size" : "128x128",
+      "filename" : "mac-128.png"
     },
     {
-      "filename" : "mac-128@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
-      "size" : "128x128"
+      "size" : "128x128",
+      "filename" : "mac-128@2x.png"
     },
     {
-      "filename" : "mac-256.png",
       "idiom" : "mac",
       "scale" : "1x",
-      "size" : "256x256"
+      "size" : "256x256",
+      "filename" : "mac-256.png"
     },
     {
-      "filename" : "mac-256@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
-      "size" : "256x256"
+      "size" : "256x256",
+      "filename" : "mac-256@2x.png"
     },
     {
-      "filename" : "mac-512.png",
       "idiom" : "mac",
       "scale" : "1x",
-      "size" : "512x512"
+      "size" : "512x512",
+      "filename" : "mac-512.png"
     },
     {
-      "filename" : "mac-512@2x.png",
       "idiom" : "mac",
       "scale" : "2x",
-      "size" : "512x512"
+      "size" : "512x512",
+      "filename" : "mac-512@2x.png"
     }
   ],
   "info" : {
