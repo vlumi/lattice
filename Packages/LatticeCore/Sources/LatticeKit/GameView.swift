@@ -10,6 +10,8 @@ public struct GameView: View {
     @State private var isExporting = false
     @State private var isEnteringCode = false
     @State private var codeInput = ""
+    @State private var isShowingChallenge = false
+    @State private var isScanning = false
 
     public init(session: GameSession) {
         self.session = session
@@ -27,6 +29,33 @@ public struct GameView: View {
             }
         }
         .padding()
+        #if os(iOS)
+        .sheet(isPresented: $isScanning) {
+            NavigationStack {
+                CodeScannerView { payload in
+                    // The QR encodes the universal link; accept a bare
+                    // code too.
+                    let seed =
+                        URL(string: payload).flatMap(ChallengeLink.seed(from:))
+                        ?? SeedCode.decode(payload)
+                    guard let seed else { return }
+                    isScanning = false
+                    session.newChallenge(seed: seed)
+                    camera.reset()
+                }
+                .ignoresSafeArea()
+                .navigationTitle(Text("Scan Code", bundle: .module))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    Button {
+                        isScanning = false
+                    } label: {
+                        Text("Cancel", bundle: .module)
+                    }
+                }
+            }
+        }
+        #endif
     }
 
     // The personal-best ghost: the PB game's openness curve dimmed under
@@ -80,20 +109,34 @@ public struct GameView: View {
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
-            if let code = session.seedCode {
-                Text("Code: \(code)", bundle: .module)
+            if let code = session.seedCode, let seed = session.seed {
+                Button {
+                    isShowingChallenge = true
+                } label: {
+                    Label {
+                        Text(verbatim: code)
+                    } icon: {
+                        Image(systemName: "qrcode")
+                    }
                     .font(.subheadline.monospaced())
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                }
+                // Popover on Mac/iPad; adapts to a sheet on iPhone (the
+                // compact-popover modifier needs iOS 16.4; floor is 16.0).
+                .popover(isPresented: $isShowingChallenge) {
+                    ChallengeShareView(code: code, url: ChallengeLink.url(for: seed))
+                        .padding()
+                        .presentationDetents([.medium])
+                }
             }
             Spacer()
             if !camera.isIdentity {
                 Button {
                     camera.reset()
                 } label: {
-                    Text("Fit", bundle: .module)
+                    Image(systemName: "viewfinder")
                 }
                 .keyboardShortcut("0", modifiers: .command)
+                .accessibilityLabel(Text("Fit", bundle: .module))
             }
             if session.tentative != nil {
                 Button {
@@ -106,18 +149,22 @@ public struct GameView: View {
             Button {
                 session.undo()
             } label: {
-                Text("Undo", bundle: .module)
+                Image(systemName: "arrow.uturn.backward")
             }
             .keyboardShortcut("z", modifiers: .command)
             .disabled(!session.undoAllowed)
+            .accessibilityLabel(Text("Undo", bundle: .module))
             if session.mode == .free {
+                // Restart: the same board again (same seed, or the fixed
+                // classic pattern).
                 Button {
                     session.newGame()
                     camera.reset()
                 } label: {
-                    Text("New Game", bundle: .module)
+                    Image(systemName: "arrow.counterclockwise")
                 }
                 .keyboardShortcut("n", modifiers: .command)
+                .accessibilityLabel(Text("New Game", bundle: .module))
                 // Switching variant starts a new game of it.
                 Menu {
                     ForEach(Rules.selectable, id: \.self) { rules in
@@ -145,6 +192,15 @@ public struct GameView: View {
                     } label: {
                         Text("Enter Code…", bundle: .module)
                     }
+                    #if os(iOS)
+                    if CodeScannerView.isSupported {
+                        Button {
+                            isScanning = true
+                        } label: {
+                            Text("Scan Code…", bundle: .module)
+                        }
+                    }
+                    #endif
                 } label: {
                     Text(verbatim: session.variantKey)
                 }
@@ -223,6 +279,36 @@ public struct GameView: View {
     }
 }
 
+/// The challenge hand-off: scan the QR (it's the universal link), share the
+/// link, or read the code aloud — three transports for the same seed.
+private struct ChallengeShareView: View {
+    let code: String
+    let url: URL
+
+    var body: some View {
+        VStack(spacing: 10) {
+            if let qr = QRCode.image(for: url.absoluteString) {
+                qr
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+                    .frame(width: 180, height: 180)
+                    .accessibilityLabel(Text("Challenge QR code", bundle: .module))
+            }
+            Text(verbatim: code)
+                .font(.title3.monospaced().weight(.semibold))
+                .textSelection(.enabled)
+            ShareLink(item: url) {
+                Label {
+                    Text("Share Challenge", bundle: .module)
+                } icon: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+        }
+    }
+}
+
 /// The app root: Free, Daily, and History as tabs — the game tabs keep
 /// their sessions and cameras alive across switches, all over one store.
 public struct RootView: View {
@@ -252,14 +338,38 @@ public struct RootView: View {
             })
         TabView(selection: selectionResettingHistory) {
             GameView(session: freeSession)
-                .tabItem { Text("Free", bundle: .module) }
+                .tabItem {
+                    Label {
+                        Text("Free", bundle: .module)
+                    } icon: {
+                        Image(systemName: "circle.grid.3x3")
+                    }
+                }
                 .tag(Tab.free)
             GameView(session: dailySession)
-                .tabItem { Text("Daily", bundle: .module) }
+                .tabItem {
+                    Label {
+                        Text("Daily", bundle: .module)
+                    } icon: {
+                        Image(systemName: "calendar")
+                    }
+                }
                 .tag(Tab.daily)
             HistoryView(store: Self.store, path: $historyPath)
-                .tabItem { Text("History", bundle: .module) }
+                .tabItem {
+                    Label {
+                        Text("History", bundle: .module)
+                    } icon: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                }
                 .tag(Tab.history)
+        }
+        // Universal Links: a challenge link starts its board in Free.
+        .onOpenURL { url in
+            guard let seed = ChallengeLink.seed(from: url) else { return }
+            freeSession.newChallenge(seed: seed)
+            selection = .free
         }
     }
 }

@@ -220,8 +220,10 @@ depend on Donpa):
   brightened ghost (lines). Nearby via MultipeerConnectivity works across
   iOS ↔ macOS.
 - **Toolchain:** Xcode + Swift 6, **XcodeGen** (the `.xcodeproj` is a generated
-  artifact — gitignored, never edited or committed; signing/team live only in
-  that local file, never in `project.yml`).
+  artifact — gitignored, never edited or committed). **DEVELOPMENT_TEAM is
+  committed in `project.yml`** (revised 2026-07-22, matching Donpa): the
+  generated project would wipe an Xcode-set team on every regeneration, and
+  the team ID is public anyway — it's in the site's AASA file.
 - **Bundle id:** `fi.misaki.lattice` (planned). **Name reserved in ASC:**
   "Lattice Five". **SKU:** `lattice`. **Universal Purchase from the start** —
   ONE App Store record spanning both platforms (do NOT create separate
