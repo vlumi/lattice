@@ -92,10 +92,12 @@ public struct GameView: View {
                     }
                     .font(.subheadline.monospaced())
                 }
+                // Popover on Mac/iPad; adapts to a sheet on iPhone (the
+                // compact-popover modifier needs iOS 16.4; floor is 16.0).
                 .popover(isPresented: $isShowingChallenge) {
                     ChallengeShareView(code: code, url: ChallengeLink.url(for: seed))
                         .padding()
-                        .presentationCompactAdaptation(.popover)
+                        .presentationDetents([.medium])
                 }
             }
             Spacer()
