@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Daily variety: each date now generates its own symmetric 36-dot
+  starting pattern (deterministic from the date — everyone gets the
+  same board), rules staying classic 5T; the first day keeps the
+  classic cross.
 - History polish: the chart and list show one variant at a time (a
   filter appears once several exist; different variants score on
   different scales), and returning to the History tab always lands on

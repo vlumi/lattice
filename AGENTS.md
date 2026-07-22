@@ -124,6 +124,17 @@ tap empty board, or Esc (macOS) — nothing was committed.
 - **Two-player:** undo only before the opponent replies; over Nearby it is a
   consent-request message (reuse the mutual-consent handshake shape).
 
+### Daily variety (decided)
+
+- **Rules stay classic 5T every day** — streaks compare like with like.
+  **The starting pattern varies per date**: a seeded symmetric 36-dot
+  start (the 5T# form) from the date key. The classic cross era covers
+  keys before 2026-07-22.
+- **Seed derivations are permanent.** The date-key hash, the generator's
+  construction, and its validation thresholds must never change once
+  shipped — any change silently changes every future daily and every
+  shared seed.
+
 ### Mode roadmap
 
 - **v1:** core engine + free solitaire + daily puzzle (deterministic seed,

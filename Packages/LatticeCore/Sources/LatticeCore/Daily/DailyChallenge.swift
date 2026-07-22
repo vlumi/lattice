@@ -4,13 +4,17 @@ import Foundation
 /// calendar date is the same challenge everywhere (timezones only shift when
 /// it flips; a date-changer only cheats themselves).
 ///
-/// Until variant rotation / generated starts arrive, every day is the
-/// classic 5T cross — the daily is one attempt per day at the classic
-/// position. The date key is the seed input for future variety, so adding it
-/// changes no stored data.
+/// Rules stay classic 5T every day (streaks compare like with like); the
+/// **starting pattern varies per date** — a seeded symmetric 36-dot start,
+/// the 5T# form. The derivation is PERMANENT: changing it would change
+/// every future day.
 public enum DailyChallenge {
     /// Day one, PERMANENT. The calendar clamps to [epoch, today].
     public static let epochKey = "2026-07-21"
+
+    /// Days before this played the classic cross; generated starts begin
+    /// here. PERMANENT.
+    static let generatedFromKey = "2026-07-22"
 
     /// "yyyy-MM-dd" in the user's calendar — the identity of a day.
     public static func dateKey(for date: Date = Date(), calendar: Calendar = .current) -> String {
@@ -28,6 +32,10 @@ public enum DailyChallenge {
     /// The challenge for a date key, or nil before the epoch.
     public static func board(for dateKey: String) -> Board? {
         guard dateKey >= epochKey else { return nil }
-        return Board(dateKey: dateKey, rules: .fiveT, start: StartingPattern.standardCross)
+        guard dateKey >= generatedFromKey else {
+            return Board(dateKey: dateKey, rules: .fiveT, start: StartingPattern.standardCross)
+        }
+        let seed = StableHash.fnv1a("lattice.daily." + dateKey)
+        return Board(dateKey: dateKey, rules: .fiveT, start: StartGenerator.pattern(seed: seed))
     }
 }
