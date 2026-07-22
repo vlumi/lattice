@@ -243,6 +243,26 @@ Mirror Donpa's split, scaled down:
   assets**), input handling, the two-player and Nearby flows.
 - **Two thin app targets** (iOS, macOS) over a generated `.xcodeproj`.
 
+### Plumbing stays in sync with Donpa (Donpa leads)
+
+**Project plumbing is kept identical across the sibling projects, with Donpa
+as the leading source of truth** — one implementation to maintain, not
+several subtly-different near-duplicates. "Plumbing" = the release lane
+(`Scripts/release-*.sh`, `distribute.sh`, `generate.sh`, `ExportOptions.plist`),
+CI (`.github/workflows/`), lint/format configs, the Makefile's target
+structure, and the signing/build-setting shape of `project.yml`.
+
+- **Copy wholesale, don't cherry-pick.** Replicate Donpa's plumbing verbatim;
+  the ONLY permitted local delta is per-app **identity** (bundle id, product
+  names, entitlement *paths*, category UTI, deployment floor, the starting
+  `CURRENT_PROJECT_VERSION`). Selectively imitating "the parts that matter"
+  is how you get a lane that looks right and breaks in the gaps — don't.
+- **Propagation is one-way: Donpa → here.** A plumbing improvement or bug fix
+  belongs **upstream in Donpa first**, then re-copied down. Never fix
+  plumbing only in Lattice, or the leader falls behind its followers.
+  (Game logic and *reasoned, recorded* design divergences — e.g. the
+  single-blob sync model — are exempt; this rule is about the plumbing.)
+
 ### Reusable seams to copy-adapt from Donpa
 
 Lift these patterns (copy the *approach*, rewrite for this game — don't
