@@ -22,9 +22,21 @@ final class DailyTests: XCTestCase {
 
     func testBoardExistsFromEpoch() {
         XCTAssertNil(DailyChallenge.board(for: "2026-07-20"))
+        // The classic-cross era: the epoch day itself.
         let board = DailyChallenge.board(for: DailyChallenge.epochKey)
         XCTAssertEqual(board?.rules, .fiveT)
         XCTAssertEqual(board?.start, StartingPattern.standardCross)
+    }
+
+    func testGeneratedDaysVary() {
+        let first = DailyChallenge.board(for: "2026-07-22")
+        let second = DailyChallenge.board(for: "2026-07-23")
+        XCTAssertEqual(first?.rules, .fiveT)
+        XCTAssertEqual(first?.start.count, 36)
+        XCTAssertNotEqual(first?.start, second?.start)
+        XCTAssertNotEqual(first?.start, StartingPattern.standardCross)
+        // Deterministic: the same key is the same board.
+        XCTAssertEqual(first?.start, DailyChallenge.board(for: "2026-07-22")?.start)
     }
 
     func testStreakCountsBackFromToday() {
