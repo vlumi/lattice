@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- UI polish from iPhone playtesting: in-app QR scanning (Scan Code… in
+  the variant menu; the Camera app works too), icons on the tabs, and
+  the header's Undo / New Game / Fit became icon buttons (New Game
+  restarts the same board).
 - Challenge links and QR codes: tapping the code in the header opens a
   panel with a scannable QR and a shareable link
   (lattice.misaki.fi/c/CODE) — opening one launches straight into the

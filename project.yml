@@ -31,6 +31,10 @@ targets:
         LSApplicationCategoryType: public.app-category.puzzle
         # System-default launch screen (plain background) — the board fades in.
         UILaunchScreen: {}
+        # Camera is used only to scan a challenge QR (opt-in, from the scan
+        # sheet). Never records or stores anything — the frame is discarded
+        # after a code is read.
+        NSCameraUsageDescription: Scan a challenge QR code to play a friend's board.
         # All four orientations: a universal (iPhone + iPad) app must support
         # them for iPad multitasking, or App Store validation rejects the
         # build. The board is orientation-agnostic.
