@@ -62,6 +62,49 @@ final class DailyTests: XCTestCase {
         XCTAssertEqual(log.streak(today: "2026-08-05", calendar: utc), 0)
     }
 
+    func testLongestStreakIsIndependentOfToday() {
+        var log = DailyLog()
+        // A 4-day run in the past, then a gap, then a 2-day run at "now".
+        for key in ["2026-08-01", "2026-08-02", "2026-08-03", "2026-08-04"] {
+            log.record(.init(score: 10, finishedAt: date(key)), for: key)
+        }
+        for key in ["2026-08-10", "2026-08-11"] {
+            log.record(.init(score: 10, finishedAt: date(key)), for: key)
+        }
+        XCTAssertEqual(log.longestStreak(calendar: utc), 4)
+        XCTAssertEqual(log.streak(today: "2026-08-11", calendar: utc), 2)
+        XCTAssertEqual(
+            log.longestStreak(calendar: utc) >= log.streak(today: "2026-08-11", calendar: utc), true
+        )
+    }
+
+    func testMergingUnsyncedDeviceLogsEmergesLongerStreak() {
+        // Three devices, each played one day of a would-be run while unsynced —
+        // each alone shows current + longest 1. Union (the merge) reveals a
+        // 3-day longest streak, retroactively. Intended for a solo
+        // multi-device player (AGENTS.md).
+        func single(_ key: String) -> DailyLog {
+            var log = DailyLog()
+            log.record(.init(score: 10, finishedAt: date(key)), for: key)
+            return log
+        }
+        for device in ["2026-08-01", "2026-08-02", "2026-08-03"] {
+            XCTAssertEqual(single(device).longestStreak(calendar: utc), 1)
+        }
+        var merged = DailyLog()
+        for key in ["2026-08-01", "2026-08-02", "2026-08-03"] {
+            merged.results[key] = .init(score: 10, finishedAt: date(key))
+        }
+        XCTAssertEqual(merged.longestStreak(calendar: utc), 3)
+    }
+
+    func testLongestStreakEmptyAndSingle() {
+        XCTAssertEqual(DailyLog().longestStreak(calendar: utc), 0)
+        var one = DailyLog()
+        one.record(.init(score: 5, finishedAt: date("2026-08-05")), for: "2026-08-05")
+        XCTAssertEqual(one.longestStreak(calendar: utc), 1)
+    }
+
     func testMonthBoundaryStreak() {
         var log = DailyLog()
         log.record(.init(score: 10, finishedAt: date("2026-07-31")), for: "2026-07-31")

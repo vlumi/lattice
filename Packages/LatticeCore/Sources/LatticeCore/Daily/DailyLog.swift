@@ -50,6 +50,29 @@ public struct DailyLog: Codable, Equatable, Sendable {
         return count
     }
 
+    /// The longest run of consecutive completed days anywhere in the log —
+    /// derived from the full history, never stored as a running max, so it
+    /// stays correct after syncing merges two devices' logs (a long past run
+    /// can emerge from two gapped ones, unrelated to the current streak).
+    public func longestStreak(calendar: Calendar = .current) -> Int {
+        let days = Set(results.keys.compactMap { Self.date(of: $0, calendar: calendar) })
+        var longest = 0
+        for day in days {
+            // Count a run only from its start (no completed day the step before),
+            // so each run is measured once.
+            let dayBefore = calendar.date(byAdding: .day, value: -1, to: day)
+            if let dayBefore, days.contains(dayBefore) { continue }
+            var length = 0
+            var cursor: Date? = day
+            while let current = cursor, days.contains(current) {
+                length += 1
+                cursor = calendar.date(byAdding: .day, value: 1, to: current)
+            }
+            longest = max(longest, length)
+        }
+        return longest
+    }
+
     static func date(of dateKey: String, calendar: Calendar = .current) -> Date? {
         let parts = dateKey.split(separator: "-").compactMap { Int($0) }
         guard parts.count == 3 else { return nil }
