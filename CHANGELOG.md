@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 1 — 2026-07-22
+
 Grouped by area (newest first within each group):
 
 - **Modes & rules**
