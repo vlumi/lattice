@@ -111,9 +111,12 @@ public struct GameView: View {
                         label: Text("Player \(session.playerToMove) to move", bundle: .module))
                 }
             } else if session.mode == .daily, session.dailyStreak > 0 {
-                Text("Streak: \(session.dailyStreak)", bundle: .module)
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                Text(
+                    "Streak: \(session.dailyStreak) (best \(session.dailyLongestStreak))",
+                    bundle: .module
+                )
+                .font(.subheadline.monospacedDigit())
+                .foregroundStyle(.secondary)
             } else if let best = session.best {
                 Text("Best: \(best)", bundle: .module)
                     .font(.subheadline.monospacedDigit())

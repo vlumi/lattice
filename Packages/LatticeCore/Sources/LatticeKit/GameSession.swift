@@ -156,6 +156,10 @@ public final class GameSession: ObservableObject {
         dailyLog.streak(today: dateKey)
     }
 
+    public var dailyLongestStreak: Int {
+        dailyLog.longestStreak()
+    }
+
     /// The daily's date key, for captions; nil in free mode.
     public var dailyKey: String? {
         mode == .daily ? dateKey : nil

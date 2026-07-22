@@ -134,6 +134,19 @@ tap empty board, or Esc (macOS) — nothing was committed.
   construction, and its validation thresholds must never change once
   shipped — any change silently changes every future daily and every
   shared seed.
+- **Streaks are derived from the day-set, never stored as counters.** Both
+  the current streak and the **longest** streak are pure functions over the
+  set of completed date keys (`DailyLog`). Storing running maxima would not
+  merge; the day-set does. Longest streak can therefore emerge retroactively
+  *in the past* after a sync — it is not tied to the current streak.
+- **Streak is device-agnostic by definition**: contiguous distinct dates
+  completed, across all synced devices. Merging several devices' logs that
+  were each played unsynced on different days *can* lengthen a streak beyond
+  what any device saw alone — **intended** for a solo multi-device player
+  (the daily is the same board per date; playing it on any device counts).
+  No provenance tracking; consistent with the no-anti-cheat stance. Would
+  only be wrong if streaks became a cross-*person* compared number, which is
+  out of scope (no server, no leaderboards).
 
 ### Mode roadmap
 

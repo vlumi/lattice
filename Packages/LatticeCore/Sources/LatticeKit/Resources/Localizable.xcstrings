@@ -88,7 +88,7 @@
     "Score: %lld" : {
 
     },
-    "Streak: %lld" : {
+    "Streak: %lld (best %lld)" : {
 
     },
     "Undo" : {
