@@ -172,6 +172,27 @@ tap empty board, or Esc (macOS) — nothing was committed.
   only be wrong if streaks became a cross-*person* compared number, which is
   out of scope (no server, no leaderboards).
 
+### iCloud sync model (decided)
+
+- **A single shared KVS blob, not one blob per device — and therefore NO
+  DeviceID, fork, or clone-detection machinery.** Donpa needs all of that
+  because its synced data is *per-device, timed, non-commutative* score
+  records (and it surfaces a per-device view). Lattice's synced data is
+  neither: `BestScores` merges by `max`, `DailyLog` by set-**union** — both
+  idempotent and commutative, so *which* device contributed is irrelevant.
+- **Every device reads the one shared blob, merges its local state in, and
+  writes the merged result back.** Migrations, restores, reinstalls, and
+  several simultaneous devices all "just work" — there is nothing
+  device-specific to migrate. A near-simultaneous double write is
+  self-healing: always merge-into (never overwrite), and re-merge on KVS's
+  `didChangeExternally` notification, so a lost update is recovered on the
+  next change. We have no clock and no unmergeable data, so last-writer
+  races are harmless.
+- Payload + shape unchanged from the roadmap: `BestScores` + full
+  `DailyLog`, one Codable blob, opt-in toggle (off by default), Donpa's
+  `Ubiquitous*Store` *protocol + fake-for-tests* seam is still worth
+  copying — just not its device model.
+
 ### Mode roadmap
 
 - **v1:** core engine + free solitaire + daily puzzle (deterministic seed,
