@@ -137,7 +137,7 @@ public enum IconArt {
     @MainActor
     public static func render(pixels: Int, appearance: Appearance) -> CGImage? {
         let renderer = ImageRenderer(
-            content: IconView(appearance: appearance).frame(
+            content: IconView(appearance: appearance, pixels: pixels).frame(
                 width: CGFloat(pixels), height: CGFloat(pixels)))
         renderer.scale = 1
         return renderer.cgImage
@@ -159,6 +159,11 @@ public enum IconArt {
 
 struct IconView: View {
     let appearance: IconArt.Appearance
+    var pixels: Int = 1024
+
+    /// Tiny raster sizes (16/32 pt Mac slots) lose the thin strokes — the
+    /// same art renders bolder there.
+    private var isTiny: Bool { pixels <= 32 }
 
     private var paper: Color {
         switch appearance {
@@ -195,15 +200,16 @@ struct IconView: View {
                 path.move(to: position(first))
                 path.addLine(to: position(last))
                 context.stroke(
-                    path, with: .color(ink.opacity(0.55)),
-                    style: StrokeStyle(lineWidth: cell * 0.10, lineCap: .round))
+                    path, with: .color(ink.opacity(isTiny ? 0.85 : 0.55)),
+                    style: StrokeStyle(
+                        lineWidth: cell * (isTiny ? 0.18 : 0.10), lineCap: .round))
             }
             for x in 0...IconArt.gridMax {
                 for y in 0...IconArt.gridMax {
                     let p = Point(x, y)
                     guard !glyph.contains(p) else { continue }
                     let center = position(p)
-                    let radius = cell * 0.20
+                    let radius = cell * (isTiny ? 0.28 : 0.20)
                     context.fill(
                         Path(
                             ellipseIn: CGRect(
