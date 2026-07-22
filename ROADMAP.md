@@ -91,6 +91,14 @@ iPad, and Mac; core coverage high; CI green; on TestFlight.
 
 ## v0.5.0 — Two-player
 
+Ships to **TestFlight** when done — the release lane moves up from v1.0:
+
+- [ ] **Release lane** (port Donpa's `make release`: preflight → publish →
+      tag → distribute) + `RELEASING.md`; first TestFlight build cut from
+      the v0.5 milestone
+- [ ] **App icon** (moved up from v1.0 — TestFlight needs it): generated
+      from game renders, lines whose negative space forms a "5";
+      light/dark/tinted variants
 - [ ] **Pass-and-play**: alternate moves, last player able to move wins
 - [ ] **Nearby** (MultipeerConnectivity, iOS ↔ macOS): mutual-consent
       handshake, one small message per move, consent-based undo
@@ -112,17 +120,18 @@ iPad, and Mac; core coverage high; CI green; on TestFlight.
 
 ## v1.0.0 — The store release
 
-- [ ] App icon generated from game renders — lines whose negative space
-      forms a "5" — light/dark/tinted variants
 - [ ] One ASC record (Universal Purchase), listing text + screenshots,
       privacy questionnaire (nothing collected)
-- [ ] Release lane (versioning lock-step, archive + upload both platforms)
-      and `RELEASING.md`
 - [ ] Submit, await review, release
 
 ## Backlog (unversioned)
 
-- [ ] Cross-device sync of bests/streaks via the user's iCloud KVS
+- [ ] Cross-device sync via the user's iCloud KVS — bests, streaks, and
+      the daily log only (KVS caps at 1 MB total; replays stay local).
+      Mirror Donpa's Ubiquitous*Store seam: protocol + fake for tests,
+      opt-in toggle, off by default
+- [ ] Reset progress: per-pool and full reset behind destructive
+      confirmations — arrives with a Settings surface (none exists yet)
 - [ ] Finnish/Japanese localization (String Catalog makes this
       translation-only)
 - [ ] Game-controller support for board navigation

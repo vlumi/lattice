@@ -76,6 +76,12 @@
     "Play" : {
 
     },
+    "Player %lld to move" : {
+
+    },
+    "Player %lld wins — %lld lines" : {
+
+    },
     "Random Start (5T#)" : {
 
     },
@@ -89,6 +95,9 @@
 
     },
     "Variant" : {
+
+    },
+    "Versus" : {
 
     }
   },

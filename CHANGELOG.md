@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Versus: pass-and-play two-player on one device — players alternate
+  moves and the last player able to move wins; one undo before the
+  opponent replies; its own resumable game slot, outside records and
+  bests.
 - 5T+ variant: the relaxed schoolyard rules (a.k.a. MS2) — the dot goes
   anywhere and the line through any five dots, so "free lines" are
   legal; they show as standing faint offers on the board. Its 1974
