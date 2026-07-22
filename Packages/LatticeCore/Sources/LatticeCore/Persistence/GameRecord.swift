@@ -12,8 +12,11 @@ public struct GameRecord: Codable, Hashable, Sendable, Identifiable {
     public let moves: [Move]
     public let score: Int
     public let finishedAt: Date
+    /// The challenge seed the start was generated from, if any (optional —
+    /// absent in older records, decodes as nil).
+    public let seed: UInt64?
 
-    public init(game: Game, id: UUID, finishedAt: Date) {
+    public init(game: Game, id: UUID, finishedAt: Date, seed: UInt64? = nil) {
         version = Self.currentVersion
         self.id = id
         rules = game.rules
@@ -21,5 +24,9 @@ public struct GameRecord: Codable, Hashable, Sendable, Identifiable {
         moves = game.moves
         score = game.score
         self.finishedAt = finishedAt
+        self.seed = seed
     }
+
+    /// The scoring pool this game belongs to ("5T", "5T#", …).
+    public var variantKey: String { rules.variantKey(forStart: start) }
 }

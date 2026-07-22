@@ -91,15 +91,18 @@ final class PersistenceTests: XCTestCase {
 
     func testBestScores() {
         var bests = store.loadBests()
-        XCTAssertNil(bests.best(for: .fiveT))
-        XCTAssertTrue(bests.register(10, for: .fiveT))
-        XCTAssertFalse(bests.register(7, for: .fiveT))
-        XCTAssertTrue(bests.register(12, for: .fiveT))
-        XCTAssertTrue(bests.register(3, for: .fiveD))
+        XCTAssertNil(bests.best(forKey: "5T"))
+        XCTAssertTrue(bests.register(10, forKey: "5T"))
+        XCTAssertFalse(bests.register(7, forKey: "5T"))
+        XCTAssertTrue(bests.register(12, forKey: "5T"))
+        XCTAssertTrue(bests.register(3, forKey: "5D"))
+        // The seeded pool is separate from the classic one.
+        XCTAssertTrue(bests.register(40, forKey: "5T#"))
         store.saveBests(bests)
         let loaded = store.loadBests()
-        XCTAssertEqual(loaded.best(for: .fiveT), 12)
-        XCTAssertEqual(loaded.best(for: .fiveD), 3)
+        XCTAssertEqual(loaded.best(forKey: "5T"), 12)
+        XCTAssertEqual(loaded.best(forKey: "5D"), 3)
+        XCTAssertEqual(loaded.best(forKey: "5T#"), 40)
     }
 
     func testGarbageFilesYieldNil() throws {

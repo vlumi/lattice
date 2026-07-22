@@ -28,4 +28,12 @@ public struct Rules: Hashable, Codable, Sendable {
 
     /// Stable key for persistence maps ("5T", "5D", later "4T"…).
     public var storageKey: String { "\(lineLength)\(overlap.rawValue)" }
+
+    /// The scoring pool for a rules + start combination: games on the
+    /// standard pattern key as e.g. "5T"; any other start keys as "5T#"
+    /// (the literature's name for any-36-dot-start games) — a generous
+    /// generated start must not pollute the classic bests.
+    public func variantKey(forStart start: Set<Point>) -> String {
+        start == StartingPattern.standard(for: self) ? storageKey : storageKey + "#"
+    }
 }

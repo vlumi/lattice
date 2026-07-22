@@ -27,6 +27,8 @@ public final class GameSession: ObservableObject {
     @Published public private(set) var opennessHistory: [Int] = []
     /// The personal-best game's openness curve — the ghost to race.
     @Published public private(set) var pbCurve: [Int]?
+    /// The challenge seed of the current game, if it's a seeded start.
+    @Published public private(set) var seed: UInt64?
 
     public let mode: Mode
 
@@ -44,39 +46,50 @@ public final class GameSession: ObservableObject {
         let todayKey = DailyChallenge.dateKey()
         dateKey = todayKey
 
-        let resolved: (game: Game, id: UUID)
+        struct Resolved {
+            let game: Game
+            let id: UUID
+            let seed: UInt64?
+        }
+        let resolved: Resolved
         switch mode {
         case .free:
             let restored = store.loadCurrent().flatMap { snapshot in
-                Game(snapshot: snapshot).map { ($0, snapshot.id) }
+                Game(snapshot: snapshot).map {
+                    Resolved(game: $0, id: snapshot.id, seed: snapshot.seed)
+                }
             }
-            resolved = restored ?? (Game(rules: rules), UUID())
+            resolved = restored ?? Resolved(game: Game(rules: rules), id: UUID(), seed: nil)
         case .daily:
             let attempt = store.loadDailyAttempt()
-            let restored: (Game, UUID)? =
+            let restored: Resolved? =
                 attempt?.dateKey == todayKey
                 ? attempt.flatMap { stored in
-                    Game(snapshot: stored.snapshot).map { ($0, stored.snapshot.id) }
+                    Game(snapshot: stored.snapshot).map {
+                        Resolved(game: $0, id: stored.snapshot.id, seed: nil)
+                    }
                 }
                 : nil
             let board = DailyChallenge.board(for: todayKey)
             let fresh = Game(
                 rules: board?.rules ?? .fiveT,
                 start: board?.start ?? StartingPattern.standardCross)
-            resolved = restored ?? (fresh, UUID())
+            resolved = restored ?? Resolved(game: fresh, id: UUID(), seed: nil)
         }
         game = resolved.game
         gameID = resolved.id
+        seed = resolved.seed
         movesByDot = resolved.game.legalMovesByDot()
         opennessHistory = resolved.game.opennessCurve()
-        pbCurve = Self.bestCurve(in: store, rules: resolved.game.rules)
+        pbCurve = Self.bestCurve(
+            in: store, key: resolved.game.rules.variantKey(forStart: resolved.game.start))
     }
 
-    /// The openness curve of the highest-scoring stored game of this
-    /// variant, if any.
-    private static func bestCurve(in store: LatticeStore, rules: Rules) -> [Int]? {
+    /// The openness curve of the highest-scoring stored game in this
+    /// scoring pool, if any.
+    private static func bestCurve(in store: LatticeStore, key: String) -> [Int]? {
         store.loadRecords()
-            .filter { $0.rules == rules }
+            .filter { $0.variantKey == key }
             .max { $0.score < $1.score }?
             .legalMoveCurve()
     }
@@ -87,7 +100,12 @@ public final class GameSession: ObservableObject {
 
     public var isOver: Bool { movesByDot.isEmpty }
 
-    public var best: Int? { bests.best(for: game.rules) }
+    /// The scoring pool of the current game ("5T", "5T#", …).
+    public var variantKey: String { game.rules.variantKey(forStart: game.start) }
+
+    public var best: Int? { bests.best(forKey: variantKey) }
+
+    public var seedCode: String? { seed.map(SeedCode.encode) }
 
     /// Daily: today's result is in — the board is display-only.
     public var dailyDone: Bool {
@@ -141,16 +159,33 @@ public final class GameSession: ObservableObject {
 
     /// Free mode only — the daily is one attempt per day. Passing rules
     /// switches variant (with its standard start); omitting keeps the
-    /// current one.
+    /// current rules. A seeded game's New Game replays the same seed —
+    /// retrying the same challenge, like the classic cross.
     public func newGame(rules: Rules? = nil) {
         guard mode == .free else { return }
         let newRules = rules ?? game.rules
-        game = Game(rules: newRules, start: StartingPattern.standard(for: newRules))
+        if rules == nil, let seed {
+            start(Game(rules: .fiveT, start: StartGenerator.pattern(seed: seed)), seed: seed)
+        } else {
+            start(Game(rules: newRules, start: StartingPattern.standard(for: newRules)), seed: nil)
+        }
+    }
+
+    /// Free mode only: a seeded-start challenge (the 5T# form). The code is
+    /// the whole challenge — same seed, same board, anywhere.
+    public func newChallenge(seed: UInt64) {
+        guard mode == .free else { return }
+        start(Game(rules: .fiveT, start: StartGenerator.pattern(seed: seed)), seed: seed)
+    }
+
+    private func start(_ newGame: Game, seed: UInt64?) {
+        game = newGame
+        self.seed = seed
         gameID = UUID()
         tentative = nil
         refresh()
         opennessHistory = [totalLegalMoves]
-        pbCurve = Self.bestCurve(in: store, rules: newRules)
+        pbCurve = Self.bestCurve(in: store, key: variantKey)
         persist()
     }
 
@@ -163,7 +198,7 @@ public final class GameSession: ObservableObject {
     }
 
     private func persist() {
-        let snapshot = GameSnapshot(game: game, id: gameID)
+        let snapshot = GameSnapshot(game: game, id: gameID, seed: seed)
         switch mode {
         case .free:
             store.saveCurrent(snapshot)
@@ -173,8 +208,8 @@ public final class GameSession: ObservableObject {
     }
 
     private func finishGame() {
-        store.saveRecord(GameRecord(game: game, id: gameID, finishedAt: Date()))
-        if bests.register(game.score, for: game.rules) {
+        store.saveRecord(GameRecord(game: game, id: gameID, finishedAt: Date(), seed: seed))
+        if bests.register(game.score, forKey: variantKey) {
             store.saveBests(bests)
             // The game just played becomes the ghost.
             pbCurve = opennessHistory

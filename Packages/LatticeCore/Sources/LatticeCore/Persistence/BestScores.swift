@@ -10,15 +10,15 @@ public struct BestScores: Codable, Sendable, Equatable {
         byVariant = [:]
     }
 
-    public func best(for rules: Rules) -> Int? {
-        byVariant[rules.storageKey]
+    public func best(forKey key: String) -> Int? {
+        byVariant[key]
     }
 
     /// Registers a final score; returns true if it's a new best.
     @discardableResult
-    public mutating func register(_ score: Int, for rules: Rules) -> Bool {
-        guard score > (byVariant[rules.storageKey] ?? 0) else { return false }
-        byVariant[rules.storageKey] = score
+    public mutating func register(_ score: Int, forKey key: String) -> Bool {
+        guard score > (byVariant[key] ?? 0) else { return false }
+        byVariant[key] = score
         return true
     }
 }
