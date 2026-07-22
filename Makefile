@@ -15,7 +15,7 @@ PROJECT_INPUTS := project.yml \
 	$(wildcard Sources/*/*.xcstrings)
 
 Lattice.xcodeproj: $(PROJECT_INPUTS)
-	@xcodegen generate
+	@Scripts/generate.sh
 
 .PHONY: generate
 generate: Lattice.xcodeproj  ## Regenerate Lattice.xcodeproj from project.yml (if stale)
@@ -67,3 +67,47 @@ format:  ## Rewrite sources with swift-format
 clean:  ## Remove the generated project + local build output
 	@rm -rf Lattice.xcodeproj .build-xcode Packages/LatticeCore/.build
 	@echo "removed Lattice.xcodeproj, .build-xcode, package .build"
+
+# ── Release lane ─────────────────────────────────────────────────────────────
+# The cut is split by concern, one script each, chained here in order:
+#   preflight → publish → tag → distribute
+# The pure ends (preflight, tag, distribute) re-derive their inputs from git +
+# project.yml, so each runs standalone. The dirty middle (publish: version-bump
+# prompts + auto-merging PR + CI-wait) is the one stateful script; state crosses
+# to the later steps via the merged commit on the base, not through Make.
+# PLATFORM selects scope (default all); UPLOAD=0 stops after export.
+PLATFORM ?= all
+UPLOAD ?= 1
+DIST_FLAGS := $(if $(filter 0,$(UPLOAD)),--no-upload,)
+
+.PHONY: release
+release: release-distribute  ## Cut a release (PLATFORM=all|ios|macos, UPLOAD=0 to skip ASC)
+	@echo "✓ release complete (PLATFORM=$(PLATFORM))."
+
+.PHONY: release-build
+release-build:  ## Like `release` but stop after export (no upload)
+	@$(MAKE) release UPLOAD=0
+
+.PHONY: release-preflight
+release-preflight:  ## Release step 1: verify a clean, up-to-date base (main or release/X.Y.x)
+	@Scripts/release-preflight.sh
+
+.PHONY: release-publish
+release-publish: release-preflight  ## Release step 2: bump, open auto-merging PR, wait for CI
+	@Scripts/release-publish.sh $(PLATFORM)
+
+.PHONY: release-tag
+release-tag: release-publish  ## Release step 3: tag the merge commit + publish GitHub releases
+	@Scripts/release-tag.sh $(PLATFORM)
+
+.PHONY: release-distribute
+release-distribute: release-tag  ## Release step 4: archive/export (+ upload unless UPLOAD=0)
+	@Scripts/release-distribute.sh $(PLATFORM) $(DIST_FLAGS)
+
+.PHONY: release-distribute-retry
+release-distribute-retry:  ## Re-distribute an already-tagged release (no PR/tag steps)
+	@Scripts/release-distribute.sh $(PLATFORM) $(DIST_FLAGS) --require-tag
+
+.PHONY: release-upload
+release-upload:  ## Upload the already-built dist/ package (no rebuild)
+	@Scripts/release-distribute.sh $(PLATFORM) --upload-only"
