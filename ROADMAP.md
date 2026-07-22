@@ -96,9 +96,9 @@ Ships to **TestFlight** when done — the release lane moves up from v1.0:
 - [ ] **Release lane** (port Donpa's `make release`: preflight → publish →
       tag → distribute) + `RELEASING.md`; first TestFlight build cut from
       the v0.5 milestone
-- [ ] **App icon** (moved up from v1.0 — TestFlight needs it): generated
+- [x] **App icon** (moved up from v1.0 — TestFlight needs it): generated
       from game renders, lines whose negative space forms a "5";
-      light/dark/tinted variants
+      light/dark/tinted variants (`make icon` regenerates)
 - [ ] **Pass-and-play**: alternate moves, last player able to move wins
 - [ ] **Nearby** (MultipeerConnectivity, iOS ↔ macOS): mutual-consent
       handshake, one small message per move, consent-based undo
