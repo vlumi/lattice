@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- History "All" view (the new default): every scoring pool on one
+  chart, each with a fixed colour AND symbol (colour-vision-safe
+  palette, dark mode uses its own steps) — points, per-pool running-best
+  lines, legend, and list-row badges all carry the same identity.
 - UI polish from iPhone playtesting: in-app QR scanning (Scan Code… in
   the variant menu; the Camera app works too), icons on the tabs, and
   the header's Undo / New Game / Fit became icon buttons (New Game
