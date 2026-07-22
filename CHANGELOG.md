@@ -18,6 +18,9 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- Release lane: `make release` cuts a build end to end — version/build
+  bump PR with CI gate, per-platform tags + GitHub releases, archive/
+  export/upload to App Store Connect (see RELEASING.md).
 - App icon: a dense field of dots and drawn lines (a legal 5T-style
   packing, seeded and deterministic) with a "5" erased out of it —
   negative space, per the design doc. Light, dark, and tinted variants,
