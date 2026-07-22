@@ -38,4 +38,20 @@ final class IconRender: XCTestCase {
             }
         }
     }
+
+    @MainActor
+    func testMarketingIconsHaveNoAlpha() throws {
+        // App Store marketing icons are rejected (shown blank) if they carry
+        // an alpha channel. Light/dark must be opaque; tinted is the alpha
+        // punch-out and keeps it.
+        for appearance in [IconArt.Appearance.light, .dark] {
+            let data = try XCTUnwrap(IconArt.pngData(pixels: 64, appearance: appearance))
+            XCTAssertEqual(pngColorType(data), 2, "\(appearance) must be opaque RGB (no alpha)")
+        }
+        let tinted = try XCTUnwrap(IconArt.pngData(pixels: 64, appearance: .tinted))
+        XCTAssertEqual(pngColorType(tinted), 6, "tinted keeps its alpha punch-out")
+    }
+
+    /// The IHDR colour-type byte of a PNG (offset 25): 2 = RGB, 6 = RGBA.
+    private func pngColorType(_ data: Data) -> Int { Int(data[25]) }
 }

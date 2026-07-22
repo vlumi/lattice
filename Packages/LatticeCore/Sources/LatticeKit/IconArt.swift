@@ -145,7 +145,14 @@ public enum IconArt {
 
     @MainActor
     public static func pngData(pixels: Int, appearance: Appearance) -> Data? {
-        guard let image = render(pixels: pixels, appearance: appearance) else { return nil }
+        guard var image = render(pixels: pixels, appearance: appearance) else { return nil }
+        // App Store marketing icons must have NO alpha channel; ImageRenderer
+        // always produces RGBA. The light/dark variants are visually opaque
+        // (they fill a paper/slate ground), so flatten them to true opaque
+        // RGB. The tinted variant is a genuine alpha punch-out — leave it.
+        if appearance != .tinted, let opaque = flattenedOpaque(image) {
+            image = opaque
+        }
         let data = NSMutableData()
         guard
             let destination = CGImageDestinationCreateWithData(
@@ -154,6 +161,20 @@ public enum IconArt {
         CGImageDestinationAddImage(destination, image, nil)
         guard CGImageDestinationFinalize(destination) else { return nil }
         return data as Data
+    }
+
+    /// Redraw into an alpha-less (opaque) bitmap so the encoded PNG carries
+    /// no alpha channel — required for the App Store icon.
+    private static func flattenedOpaque(_ image: CGImage) -> CGImage? {
+        guard
+            let context = CGContext(
+                data: nil, width: image.width, height: image.height,
+                bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
+        else { return nil }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        return context.makeImage()
     }
 }
 
