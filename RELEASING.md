@@ -75,6 +75,22 @@ Every step is re-runnable; `make release` resumes where it left off:
 - Export compliance is pre-answered (`ITSAppUsesNonExemptEncryption: false`
   in both Info.plists), so builds go straight to testable.
 
+### Internal testing only (no beta review)
+
+Lattice's TestFlight is **internal only** — testers added under ASC's
+*Internal Testing* (App Store Connect users on the team, up to 100). Internal
+builds are available **immediately with no beta review**; the version string
+is purely organizational. Deliberately **not** using External Testing (public
+testers, TestFlight beta review per build) — so no review gates any build.
+
+### Version scheme
+
+`MARKETING_VERSION` tracks the **roadmap milestone** shipping (0.5.0 = the
+v0.5 milestone), climbing 0.6.0, 0.7.0, … as milestones land. **`1.0.0` is
+reserved for the eventual public App Store launch** — it is spent once, on the
+real release, never on a TestFlight build. Everything `0.x` is beta by
+definition.
+
 ## Platform deltas
 
 - **iOS** exports an `.ipa`; **macOS** exports a `.pkg` (App Sandbox is
