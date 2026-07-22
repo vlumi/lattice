@@ -22,6 +22,7 @@ public struct BoardView: View {
 
     @ObservedObject private var session: GameSession
     @ObservedObject private var camera: BoardCamera
+    @Environment(\.colorScheme) private var colorScheme
 
     // In-flight gesture deltas; committed (and clamped) into the camera on
     // gesture end.
@@ -151,6 +152,25 @@ public struct BoardView: View {
 // MARK: Drawing
 
 extension BoardView {
+    /// The interactive accent: the system tint — except in pass-and-play,
+    /// where it's the CURRENT player's fixed colour, so the board itself
+    /// says whose turn it is.
+    private func accent(_ opacity: Double = 1) -> GraphicsContext.Shading {
+        guard session.mode == .passAndPlay else { return .style(.tint.opacity(opacity)) }
+        return .color(
+            PlayerStyle.color(for: session.playerToMove, scheme: colorScheme)
+                .opacity(opacity))
+    }
+
+    /// Pass-and-play: a played line keeps its owner's colour.
+    private func lineShading(forMoveAt index: Int, opacity: Double) -> GraphicsContext.Shading {
+        guard session.mode == .passAndPlay else {
+            return .style(.primary.opacity(opacity))
+        }
+        return .color(
+            PlayerStyle.color(for: index % 2 + 1, scheme: colorScheme).opacity(opacity))
+    }
+
     private func draw(in context: GraphicsContext, _ layout: Layout) {
         drawPinpoints(in: context, layout)
         drawPlayedLines(in: context, layout)
@@ -183,15 +203,20 @@ extension BoardView {
     }
 
     private func drawPlayedLines(in context: GraphicsContext, _ layout: Layout) {
-        let lastLine = session.game.moves.last?.line
-        for move in session.game.moves where move.line != lastLine {
+        let moves = session.game.moves
+        for (index, move) in moves.enumerated() where index != moves.count - 1 {
             strokeLine(
-                move.line, .style(.primary.opacity(0.75)),
+                move.line, lineShading(forMoveAt: index, opacity: 0.75),
                 width: layout.lineWidth, in: context, layout)
         }
-        if let lastLine {
-            strokeLine(
-                lastLine, .style(.tint), width: layout.lineWidth, in: context, layout)
+        if let last = moves.last {
+            // The freshest line pops: full-strength owner colour in versus,
+            // the accent otherwise.
+            let shading =
+                session.mode == .passAndPlay
+                ? lineShading(forMoveAt: moves.count - 1, opacity: 1)
+                : .style(.tint)
+            strokeLine(last.line, shading, width: layout.lineWidth * 1.2, in: context, layout)
         }
     }
 
@@ -214,7 +239,7 @@ extension BoardView {
         if session.tentative == nil {
             for line in session.freeLines {
                 strokeLine(
-                    line, .style(.tint.opacity(0.3)), width: layout.lineWidth * 0.8,
+                    line, accent(0.3), width: layout.lineWidth * 0.8,
                     dashed: true, in: context, layout)
             }
         }
@@ -224,7 +249,7 @@ extension BoardView {
             path.addLine(to: ghost.b)
             let isHot = hot == .ghost(ghost.move)
             context.stroke(
-                path, with: .style(.tint.opacity(isHot ? 0.9 : 0.5)),
+                path, with: accent(isHot ? 0.9 : 0.5),
                 style: StrokeStyle(
                     lineWidth: layout.lineWidth * (isHot ? 1.4 : 1), lineCap: .round,
                     dash: [layout.lineWidth * 2.5, layout.lineWidth * 2.5]))
@@ -233,7 +258,7 @@ extension BoardView {
             fillDot(
                 tentative, radius: layout.casingRadius, .style(.background), in: context, layout)
             fillDot(
-                tentative, radius: layout.dotRadius * 1.25, .style(.tint),
+                tentative, radius: layout.dotRadius * 1.25, accent(),
                 in: context, layout)
         }
         // Hover / scrub preview: an accent ring on the would-be selection.
@@ -257,7 +282,7 @@ extension BoardView {
                 ellipseIn: CGRect(
                     x: center.x - radius, y: center.y - radius,
                     width: radius * 2, height: radius * 2)),
-            with: .style(.tint),
+            with: accent(),
             style: StrokeStyle(lineWidth: layout.lineWidth * 0.8))
     }
 
@@ -368,70 +393,5 @@ extension BoardView {
         let t = lengthSquared == 0 ? 0 : max(0, min(1, (ap.x * ab.x + ap.y * ab.y) / lengthSquared))
         let nearest = CGPoint(x: a.x + ab.x * t, y: a.y + ab.y * t)
         return hypot(p.x - nearest.x, p.y - nearest.y)
-    }
-}
-
-struct Bounds {
-    let minX, maxX, minY, maxY: Int
-
-    init(of dots: Set<Point>) {
-        guard let first = dots.first else {
-            (minX, maxX, minY, maxY) = (0, 0, 0, 0)
-            return
-        }
-        var (minX, maxX, minY, maxY) = (first.x, first.x, first.y, first.y)
-        for dot in dots {
-            minX = min(minX, dot.x)
-            maxX = max(maxX, dot.x)
-            minY = min(minY, dot.y)
-            maxY = max(maxY, dot.y)
-        }
-        (self.minX, self.maxX, self.minY, self.maxY) = (minX, maxX, minY, maxY)
-    }
-}
-
-struct Layout {
-    let cell: CGFloat
-    let originOffset: CGPoint
-    let bounds: Bounds
-
-    init(fitting bounds: Bounds, in size: CGSize) {
-        // One empty cell of margin on every side.
-        let columns = CGFloat(bounds.maxX - bounds.minX + 3)
-        let rows = CGFloat(bounds.maxY - bounds.minY + 3)
-        cell = min(size.width / columns, size.height / rows)
-        let contentWidth = columns * cell
-        let contentHeight = rows * cell
-        originOffset = CGPoint(
-            x: (size.width - contentWidth) / 2 + cell * 1.5,
-            y: (size.height - contentHeight) / 2 + cell * 1.5)
-        self.bounds = bounds
-    }
-
-    var dotRadius: CGFloat { cell * 0.18 }
-    var casingRadius: CGFloat { cell * 0.28 }
-    var pinpointRadius: CGFloat { cell * 0.05 }
-    var openPointRadius: CGFloat { cell * 0.09 }
-    var lineWidth: CGFloat { cell * 0.1 }
-
-    // Model y grows upward, screen y grows downward.
-    func position(of p: Point) -> CGPoint {
-        CGPoint(
-            x: originOffset.x + CGFloat(p.x - bounds.minX) * cell,
-            y: originOffset.y + CGFloat(bounds.maxY - p.y) * cell)
-    }
-
-    /// The lattice point within grabbing distance of a screen location, if
-    /// any; inverse of `position(of:)`.
-    func point(near location: CGPoint) -> Point? {
-        guard cell > 0 else { return nil }
-        let x = (location.x - originOffset.x) / cell + CGFloat(bounds.minX)
-        let y = CGFloat(bounds.maxY) - (location.y - originOffset.y) / cell
-        let candidate = Point(Int(x.rounded()), Int(y.rounded()))
-        let center = position(of: candidate)
-        guard hypot(location.x - center.x, location.y - center.y) <= cell * 0.4 else {
-            return nil
-        }
-        return candidate
     }
 }

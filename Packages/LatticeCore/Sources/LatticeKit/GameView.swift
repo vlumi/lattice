@@ -6,6 +6,7 @@ import SwiftUI
 public struct GameView: View {
     @ObservedObject private var session: GameSession
     @StateObject private var camera = BoardCamera()
+    @Environment(\.colorScheme) private var colorScheme
     @State private var exportDocument: PNGDocument?
     @State private var isExporting = false
     @State private var isEnteringCode = false
@@ -101,10 +102,13 @@ public struct GameView: View {
             Text("Score: \(session.game.score)", bundle: .module)
                 .font(.headline.monospacedDigit())
             if session.mode == .passAndPlay {
+                // The turn chip: the current player's colour, filled — the
+                // same colour the board's interactive accent and their drawn
+                // lines wear.
                 if !session.isOver {
-                    Text("Player \(session.playerToMove) to move", bundle: .module)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                    playerChip(
+                        session.playerToMove,
+                        label: Text("Player \(session.playerToMove) to move", bundle: .module))
                 }
             } else if session.mode == .daily, session.dailyStreak > 0 {
                 Text("Streak: \(session.dailyStreak)", bundle: .module)
@@ -241,7 +245,11 @@ public struct GameView: View {
         HStack(spacing: 12) {
             Group {
                 if let winner = session.winner {
-                    Text("Player \(winner) wins — \(session.game.score) lines", bundle: .module)
+                    playerChip(
+                        winner,
+                        label: Text(
+                            "Player \(winner) wins — \(session.game.score) lines",
+                            bundle: .module))
                 } else if session.mode == .daily {
                     Text("Done for today — final score \(session.game.score)", bundle: .module)
                 } else {
@@ -286,6 +294,16 @@ public struct GameView: View {
 
     private var shareImage: Image? {
         ShareCard.render(game: session.game, subtitle: cardSubtitle)
+    }
+
+    private func playerChip(_ player: Int, label: Text) -> some View {
+        label
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                Capsule().fill(PlayerStyle.color(for: player, scheme: colorScheme)))
     }
 }
 

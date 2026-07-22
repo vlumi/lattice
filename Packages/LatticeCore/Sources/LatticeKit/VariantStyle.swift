@@ -53,9 +53,25 @@ enum VariantStyle {
     }
 
     private static func rgb(_ value: UInt32) -> Color {
-        Color(
-            red: Double((value >> 16) & 0xFF) / 255,
-            green: Double((value >> 8) & 0xFF) / 255,
-            blue: Double(value & 0xFF) / 255)
+        paletteRGB(value)
     }
+}
+
+/// Pass-and-play: each player owns a colour, on board and in chrome — two
+/// pens on one sheet. Blue/vermillion is the palette's validated
+/// CVD-safe adjacent pair.
+enum PlayerStyle {
+    static func color(for player: Int, scheme: ColorScheme) -> Color {
+        let dark = scheme == .dark
+        return player == 1
+            ? paletteRGB(dark ? 0x39_87E5 : 0x2A_78D6)
+            : paletteRGB(dark ? 0xD9_5926 : 0xEB_6834)
+    }
+}
+
+func paletteRGB(_ value: UInt32) -> Color {
+    Color(
+        red: Double((value >> 16) & 0xFF) / 255,
+        green: Double((value >> 8) & 0xFF) / 255,
+        blue: Double(value & 0xFF) / 255)
 }
