@@ -18,6 +18,10 @@ core, playable** (see [ROADMAP.md](ROADMAP.md)).
 
 ### Unreleased (next build)
 
+- 5T+ variant: the relaxed schoolyard rules (a.k.a. MS2) — the dot goes
+  anywhere and the line through any five dots, so "free lines" are
+  legal; they show as standing faint offers on the board. Its 1974
+  hand-set record of 216 has never been beaten.
 - History "All" view (the new default): every scoring pool on one
   chart, each with a fixed colour AND symbol (colour-vision-safe
   palette, dark mode uses its own steps) — points, per-pool running-best

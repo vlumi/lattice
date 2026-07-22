@@ -146,8 +146,11 @@ public struct BoardView: View {
         }
     }
 
-    // MARK: Drawing
+}
 
+// MARK: Drawing
+
+extension BoardView {
     private func draw(in context: GraphicsContext, _ layout: Layout) {
         drawPinpoints(in: context, layout)
         drawPlayedLines(in: context, layout)
@@ -206,6 +209,15 @@ public struct BoardView: View {
     }
 
     private func drawInteractiveState(in context: GraphicsContext, _ layout: Layout) {
+        // Unlinked ("+") rules: free lines stand as faint offers even before
+        // a dot is placed — placing any dot makes them selectable.
+        if session.tentative == nil {
+            for line in session.freeLines {
+                strokeLine(
+                    line, .style(.tint.opacity(0.3)), width: layout.lineWidth * 0.8,
+                    dashed: true, in: context, layout)
+            }
+        }
         for ghost in ghostGeometry(layout) {
             var path = Path()
             path.move(to: ghost.a)

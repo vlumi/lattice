@@ -29,6 +29,9 @@ public final class GameSession: ObservableObject {
     @Published public private(set) var pbCurve: [Int]?
     /// The challenge seed of the current game, if it's a seeded start.
     @Published public private(set) var seed: UInt64?
+    /// Unlinked ("+") rules: lines drawable through existing dots alone —
+    /// standing offers that pair with a dot placed anywhere.
+    @Published public private(set) var freeLines: [Line] = []
 
     public let mode: Mode
 
@@ -79,10 +82,21 @@ public final class GameSession: ObservableObject {
         game = resolved.game
         gameID = resolved.id
         seed = resolved.seed
-        movesByDot = resolved.game.legalMovesByDot()
+        movesByDot = Self.linkedMovesByDot(of: resolved.game)
+        freeLines = resolved.game.freeLines()
         opennessHistory = resolved.game.opennessCurve()
         pbCurve = Self.bestCurve(
             in: store, key: resolved.game.rules.variantKey(forStart: resolved.game.start))
+    }
+
+    /// Moves grouped by dot for the input flow — through-dot moves only;
+    /// unlinked rules' representative free-line pairings are excluded (free
+    /// lines are offered with whatever dot the player places).
+    private static func linkedMovesByDot(of game: Game) -> [Point: [Move]] {
+        game.legalMovesByDot().compactMapValues { moves in
+            let linked = moves.filter { $0.line.points.contains($0.dot) }
+            return linked.isEmpty ? nil : linked
+        }
     }
 
     /// The openness curve of the highest-scoring stored game in this
@@ -95,10 +109,14 @@ public final class GameSession: ObservableObject {
     }
 
     public var candidates: [Move] {
-        tentative.flatMap { movesByDot[$0] } ?? []
+        guard let tentative else { return [] }
+        var result = movesByDot[tentative] ?? []
+        // Any free line can be taken with this placement.
+        result += freeLines.map { Move(dot: tentative, line: $0) }
+        return result
     }
 
-    public var isOver: Bool { movesByDot.isEmpty }
+    public var isOver: Bool { movesByDot.isEmpty && freeLines.isEmpty }
 
     /// The scoring pool of the current game ("5T", "5T#", …).
     public var variantKey: String { game.rules.variantKey(forStart: game.start) }
@@ -126,8 +144,11 @@ public final class GameSession: ObservableObject {
         return mode == .free || undoArmed
     }
 
-    /// True if the point accepts a tentative dot (some line goes through it).
-    public func isPlaceable(_ p: Point) -> Bool { movesByDot[p] != nil }
+    /// True if the point accepts a tentative dot: some line goes through
+    /// it — or, with a free line standing, anywhere empty works.
+    public func isPlaceable(_ p: Point) -> Bool {
+        movesByDot[p] != nil || (!freeLines.isEmpty && !game.dots.contains(p))
+    }
 
     public func place(_ p: Point) {
         guard !dailyDone, isPlaceable(p) else { return }
@@ -190,11 +211,12 @@ public final class GameSession: ObservableObject {
     }
 
     private var totalLegalMoves: Int {
-        movesByDot.values.reduce(0) { $0 + $1.count }
+        movesByDot.values.reduce(0) { $0 + $1.count } + freeLines.count
     }
 
     private func refresh() {
-        movesByDot = game.legalMovesByDot()
+        movesByDot = Self.linkedMovesByDot(of: game)
+        freeLines = game.freeLines()
     }
 
     private func persist() {
