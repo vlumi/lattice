@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 3 — 2026-07-23
+
 - Nearby duel (MultipeerConnectivity, same room, iOS ↔ macOS): host a
   game and others join over the local network — no accounts, no server.
   - **Host-advertises lobby:** one player taps "Host a game", picks a
