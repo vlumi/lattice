@@ -35,6 +35,9 @@
     "Choose the challenge" : {
 
     },
+    "Close" : {
+
+    },
     "Code" : {
 
     },
@@ -127,6 +130,9 @@
 
     },
     "Replay — %lld" : {
+
+    },
+    "Resign" : {
 
     },
     "Save Image" : {
