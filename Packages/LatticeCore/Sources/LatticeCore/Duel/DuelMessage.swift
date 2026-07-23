@@ -1,23 +1,36 @@
 import Foundation
 
-/// The duel wire format — small Codable messages exchanged over the live
-/// Nearby session. The transport (a later slice) encodes/decodes these; the
-/// pure `DuelProtocol` produces and consumes them, so the whole conversation
-/// is testable without a network.
+/// The duel wire format — small Codable messages exchanged over the live Nearby
+/// session. The transport (`NearbyMatch`) encodes/decodes these and drives the
+/// pure `DuelMatch` from them.
+///
+/// Host-advertises model: a host advertises a configured game; a guest connects
+/// and `requestJoin`s; the host accepts and, on Start, broadcasts `start` with
+/// the full roster. Then `move`/`score`/`eliminated` carry the match. Messages
+/// don't embed a sender — the transport knows it from the receiving peer.
 public enum DuelMessage: Codable, Equatable, Sendable {
-    /// Opening handshake: my display name, my per-variant bests (for the
-    /// tier gate), and my clock reading (to measure skew once).
-    case hello(name: String, bests: BestScores, clock: TimeInterval)
-    /// The host proposes the agreed match parameters.
-    case setup(seed: UInt64, variantKey: String, tier: Int)
-    /// Accept the proposed setup — both accepted ⇒ the duel starts.
-    case accept
-    /// A committed move, with the mover's clock reading at commit (skew-
-    /// adjusted by the receiver) so the opponent's countdown starts correctly.
-    case move(Move, clock: TimeInterval)
-    /// I reached the target tier — a win claim the opponent can verify by
-    /// replaying my moves.
-    case reachedTier
-    /// My clock expired / I quit — I lose.
-    case resign
+    /// Sent on connect (both directions) to exchange display names.
+    case hello(name: String)
+    /// Guest → host: please add me to the game you're advertising.
+    case requestJoin
+    /// Host → all guests: the match is starting. `roster` is the agreed player
+    /// order as (tag, name) pairs, including the host; `seed` + `variantKey`
+    /// build the identical board on every device.
+    case start(seed: UInt64, mode: DuelMode, variantKey: String, roster: [RosterEntry])
+    /// A committed move (lock-step: also marks the mover done this round).
+    case move(Move)
+    /// A new score (race — drives the opponents' live HUD).
+    case score(Int)
+    /// I'm out — clock expired, dead-ended, or resigned.
+    case eliminated
+
+    /// One roster slot: the peer's stable tag and display name.
+    public struct RosterEntry: Codable, Equatable, Sendable {
+        public let tag: String
+        public let name: String
+        public init(tag: String, name: String) {
+            self.tag = tag
+            self.name = name
+        }
+    }
 }
