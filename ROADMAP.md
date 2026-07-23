@@ -1,14 +1,11 @@
 # Roadmap
 
-**Open work only.** Shipped milestones live in [CHANGELOG.md](CHANGELOG.md);
-settled rules and design decisions in [AGENTS.md](AGENTS.md). This file is
-only *what's next* — versions are indicative, not contractual, and everything
-before 1.0 is beta (internal TestFlight; see [RELEASING.md](RELEASING.md)).
-
-**Shipped so far** (detail in the changelog): v0.1 core engine + playable
-solitaire · v0.2 persistence, daily, share card, history · v0.3 replay
-viewer, analysis, PB ghost · v0.4 variants (5T/5D/4T/4D/5T+), seeded starts,
-challenge codes/links/QR · v0.5 pass-and-play, app icon, release lane.
+**Open work only.** Shipped work: high-level in the [README version
+history](README.md#version-history), full detail in
+[CHANGELOG.md](CHANGELOG.md); settled rules and design decisions in
+[AGENTS.md](AGENTS.md). This file is only *what's next* — versions are
+indicative, not contractual, and everything before 1.0 is beta (internal
+TestFlight; see [RELEASING.md](RELEASING.md)).
 
 ---
 
