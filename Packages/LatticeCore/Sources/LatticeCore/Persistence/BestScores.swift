@@ -21,4 +21,15 @@ public struct BestScores: Codable, Sendable, Equatable {
         byVariant[key] = score
         return true
     }
+
+    /// Commutative, idempotent merge: the higher best per variant wins. Order-
+    /// and duplicate-independent, so syncing two devices' bests in any order
+    /// converges (see AGENTS.md "iCloud sync model").
+    public func merged(with other: BestScores) -> BestScores {
+        var result = self
+        for (key, score) in other.byVariant where score > (result.byVariant[key] ?? 0) {
+            result.byVariant[key] = score
+        }
+        return result
+    }
 }

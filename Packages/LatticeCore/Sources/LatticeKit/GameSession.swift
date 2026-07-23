@@ -42,6 +42,9 @@ public final class GameSession: ObservableObject {
 
     private let store: LatticeStore
     private var gameID: UUID
+    /// Set by the app layer: called when a best/daily result is persisted, so
+    /// sync can fold it up. No-op (nil) when sync isn't wired.
+    public var onSyncedChange: (() -> Void)?
     private var dateKey: String
     /// Daily: armed by a commit, spent by an undo — one undo per move.
     private var undoArmed = false
@@ -119,6 +122,14 @@ public final class GameSession: ObservableObject {
             let linked = moves.filter { $0.line.points.contains($0.dot) }
             return linked.isEmpty ? nil : linked
         }
+    }
+
+    /// Re-read bests + daily log after a sync merge changed local state, so
+    /// the header's best/streak reflect the pulled data. Does not disturb the
+    /// in-progress game.
+    public func reloadSyncedState() {
+        bests = store.loadBests()
+        dailyLog = store.loadDailyLog()
     }
 
     /// The openness curve of the highest-scoring stored game in this
@@ -273,15 +284,21 @@ public final class GameSession: ObservableObject {
         // daily side effects.
         guard mode != .passAndPlay else { return }
         store.saveRecord(GameRecord(game: game, id: gameID, finishedAt: Date(), seed: seed))
+        var syncedChange = false
         if bests.register(game.score, forKey: variantKey) {
             store.saveBests(bests)
             // The game just played becomes the ghost.
             pbCurve = opennessHistory
+            syncedChange = true
         }
         if mode == .daily {
             dailyLog.record(
                 DailyLog.Result(score: game.score, finishedAt: Date()), for: dateKey)
             store.saveDailyLog(dailyLog)
+            syncedChange = true
         }
+        // A new best or daily result is sync-relevant; nudge the coordinator
+        // (no-op when sync is off — set only by the app layer).
+        if syncedChange { onSyncedChange?() }
     }
 }
