@@ -1,27 +1,31 @@
-/// The target line-counts a Nearby duel can race to. A tier is offerable only
-/// when BOTH players have reached it in single-player (their per-variant
-/// `BestScores`), so it's provably achievable on the chosen variant — and the
-/// intersection doubles as fairness/matchmaking (a strong+weak pairing is
-/// capped at what the weaker has done). See AGENTS.md / the duel plan.
+/// The target line-counts a Nearby duel can race to. Higher rungs are offerable
+/// only when BOTH players have reached them in single-player (their per-variant
+/// `BestScores`), so they're provably achievable and fair (a strong+weak
+/// pairing is capped at what the weaker has done). The FLOOR rung is always
+/// offerable — anyone who knows the rules can reach it — so a brand-new player
+/// can still duel. See AGENTS.md / the duel plan.
 public enum DuelTier {
     /// The fixed ladder. 5 is dropped — too trivial to be a contest.
     public static let ladder = [10, 20, 30, 50, 80, 120]
 
-    /// Variants both players have a best in — the duel-eligible set.
-    public static func eligibleVariants(mine: BestScores, theirs: BestScores) -> [String] {
-        let shared = Set(mine.byVariant.keys).intersection(theirs.byVariant.keys)
-        // Canonical display order (5T, 5T#, …); unknown keys trail, sorted.
-        let ordered = VariantOrder.canonical.filter(shared.contains)
-        return ordered + shared.subtracting(ordered).sorted()
+    /// The entry rung, always offerable regardless of proven best.
+    public static let floor = 10
+
+    /// The duel-eligible variants: the standard selectable set (both apps share
+    /// these inherently — no recorded best required, since the floor tier is
+    /// universal). Emitted in canonical display order.
+    public static var eligibleVariants: [String] {
+        let standard = Set(Rules.selectable.map(\.storageKey))
+        return VariantOrder.canonical.filter(standard.contains)
     }
 
-    /// The tiers offerable for a variant: ladder rungs both players have
-    /// reached (each `best >= rung`).
+    /// The tiers offerable for a variant: the floor (always), plus any higher
+    /// ladder rung both players have reached (each `best >= rung`).
     public static func offerableTiers(
         variantKey: String, mine: BestScores, theirs: BestScores
     ) -> [Int] {
         let cap = min(mine.best(forKey: variantKey) ?? 0, theirs.best(forKey: variantKey) ?? 0)
-        return ladder.filter { $0 <= cap }
+        return ladder.filter { $0 == floor || $0 <= cap }
     }
 }
 

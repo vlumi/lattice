@@ -4,6 +4,7 @@ import SwiftUI
 /// join here later (roadmap).
 struct SettingsView: View {
     @ObservedObject var sync: SyncController
+    @State private var name: String = PlayerName.current()
 
     private var syncFooter: Text {
         if sync.isAvailable {
@@ -28,6 +29,17 @@ struct SettingsView: View {
             } footer: {
                 syncFooter
             }
+            Section {
+                TextField(text: $name) {
+                    Text("Name", bundle: .module)
+                }
+                .onChangeCompat(of: name) { PlayerName.set($0) }
+            } header: {
+                Text("Nearby", bundle: .module)
+            } footer: {
+                Text("The name other players see when you duel nearby.", bundle: .module)
+            }
         }
+        .formStyle(.grouped)
     }
 }
