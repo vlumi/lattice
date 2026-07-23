@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 2 — 2026-07-23
+
 - iCloud sync (opt-in, off by default): best scores and the daily log
   sync across your devices via a single shared iCloud key-value blob —
   commutative merge (max bests, union daily days), self-healing, no
