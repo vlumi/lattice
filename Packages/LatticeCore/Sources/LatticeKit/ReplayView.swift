@@ -131,8 +131,8 @@ public struct ReplayView: View {
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                let plotOrigin = geometry[proxy.plotAreaFrame].origin
-                                let x = value.location.x - plotOrigin.x
+                                guard let anchor = Self.plotAnchor(proxy) else { return }
+                                let x = value.location.x - geometry[anchor].origin.x
                                 if let move: Double = proxy.value(atX: x) {
                                     model.seek(to: Int(move.rounded()))
                                 }
@@ -140,6 +140,21 @@ public struct ReplayView: View {
             }
         }
         .frame(height: 110)
+    }
+
+    /// `plotFrame` is the current name; `plotAreaFrame` the pre-iOS-17 one.
+    /// macOS floor is already 14 (where `plotFrame` exists), so only the iOS
+    /// build needs the old name, and only below 17 — `#if os(iOS)` keeps the
+    /// deprecated symbol off the macOS compile path entirely (no warning).
+    private static func plotAnchor(_ proxy: ChartProxy) -> Anchor<CGRect>? {
+        if #available(iOS 17, macOS 14, *) {
+            return proxy.plotFrame
+        }
+        #if os(iOS)
+        return proxy.plotAreaFrame
+        #else
+        return proxy.plotFrame
+        #endif
     }
 
     private var controls: some View {

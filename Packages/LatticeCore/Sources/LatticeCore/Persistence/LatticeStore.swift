@@ -137,6 +137,20 @@ public struct LatticeStore {
             ?? BestScores()
     }
 
+    // MARK: Synced state (bests + daily log — the cross-device subset)
+
+    /// The device-local synced state, assembled from the same bests/daily-log
+    /// files the app already uses; saving splits it back to them. This is the
+    /// bridge the SyncCoordinator drives — sync introduces no new local store.
+    public func loadSyncedState() -> SyncedState {
+        SyncedState(bests: loadBests(), dailyLog: loadDailyLog())
+    }
+
+    public func saveSyncedState(_ state: SyncedState) {
+        saveBests(state.bests)
+        saveDailyLog(state.dailyLog)
+    }
+
     // MARK: Plumbing
 
     private struct VersionProbe: Decodable {

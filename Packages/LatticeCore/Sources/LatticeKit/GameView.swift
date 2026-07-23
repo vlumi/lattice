@@ -348,6 +348,7 @@ public struct RootView: View {
         case daily
         case versus
         case history
+        case settings
     }
 
     private static let store = LatticeStore.appSupport()
@@ -355,10 +356,19 @@ public struct RootView: View {
     @StateObject private var freeSession = GameSession(mode: .free, store: store)
     @StateObject private var dailySession = GameSession(mode: .daily, store: store)
     @StateObject private var versusSession = GameSession(mode: .passAndPlay, store: store)
+    @StateObject private var sync = SyncController(store: store, cloud: Self.makeCloud())
     @State private var selection: Tab = .free
     @State private var historyPath = NavigationPath()
 
     public init() {}
+
+    private static func makeCloud() -> CloudStore {
+        #if os(Linux)
+        return FakeCloudStore(isAvailable: false)
+        #else
+        return UbiquitousCloudStore()
+        #endif
+    }
 
     public var body: some View {
         // Arriving at the History tab (or re-tapping it, where the platform
@@ -406,12 +416,33 @@ public struct RootView: View {
                     }
                 }
                 .tag(Tab.history)
+            SettingsView(sync: sync)
+                .tabItem {
+                    Label {
+                        Text("Settings", bundle: .module)
+                    } icon: {
+                        Image(systemName: "gearshape")
+                    }
+                }
+                .tag(Tab.settings)
         }
         // Universal Links: a challenge link starts its board in Free.
         .onOpenURL { url in
             guard let seed = ChallengeLink.seed(from: url) else { return }
             freeSession.newChallenge(seed: seed)
             selection = .free
+        }
+        // Route finished-game persistence into sync (no-op when sync is off).
+        .onAppear {
+            freeSession.onSyncedChange = { [weak sync] in sync?.localDidChange() }
+            dailySession.onSyncedChange = { [weak sync] in sync?.localDidChange() }
+        }
+        // A cloud pull changed local bests/daily — refresh the live sessions.
+        // onChangeCompat bridges the iOS-16 floor without the macOS-14
+        // deprecation (copied from Donpa; see Support/OnChangeCompat).
+        .onChangeCompat(of: sync.revision) { _ in
+            freeSession.reloadSyncedState()
+            dailySession.reloadSyncedState()
         }
     }
 }

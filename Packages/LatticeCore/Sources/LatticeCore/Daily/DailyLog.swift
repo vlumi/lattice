@@ -27,6 +27,21 @@ public struct DailyLog: Codable, Equatable, Sendable {
         results[dateKey] = result
     }
 
+    /// Commutative, idempotent merge: the union of completed days, keeping the
+    /// higher score on any date both logs hold (so a re-play that improved a
+    /// day wins, and the merge is order-independent). Streak and longest-streak
+    /// derive from the merged day-set (see AGENTS.md "Daily variety").
+    public func merged(with other: DailyLog) -> DailyLog {
+        var result = self
+        for (key, incoming) in other.results {
+            if let existing = result.results[key], existing.score >= incoming.score {
+                continue
+            }
+            result.results[key] = incoming
+        }
+        return result
+    }
+
     /// Consecutive completed days ending today — or ending yesterday when
     /// today isn't played yet (an unplayed today doesn't break the streak,
     /// it just doesn't extend it).

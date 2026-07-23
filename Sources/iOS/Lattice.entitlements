@@ -10,5 +10,10 @@
 	<array>
 		<string>applinks:lattice.misaki.fi</string>
 	</array>
+	<!-- iCloud Key-Value Storage for opt-in cross-device sync (bests +
+	     daily log). Pinned explicitly and IDENTICAL to the macOS app's, so
+	     the two share one store. -->
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)fi.misaki.lattice</string>
 </dict>
 </plist>

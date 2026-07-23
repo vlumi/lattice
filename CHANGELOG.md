@@ -20,6 +20,12 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- iCloud sync (opt-in, off by default): best scores and the daily log
+  sync across your devices via a single shared iCloud key-value blob —
+  commutative merge (max bests, union daily days), self-healing, no
+  device IDs. Games and replays stay local. New Settings tab with the
+  toggle.
+
 ### build 1 — 2026-07-22
 
 Grouped by area (newest first within each group):

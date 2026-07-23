@@ -15,5 +15,12 @@
 	<array>
 		<string>applinks:lattice.misaki.fi</string>
 	</array>
+	<!-- iCloud Key-Value Storage for opt-in cross-device sync (bests +
+	     daily log — a tiny Codable blob; no CloudKit container). The
+	     identifier is pinned EXPLICITLY and is IDENTICAL on iOS + macOS so
+	     the two apps share one store; without this they'd derive separate
+	     stores from the (shared) bundle id and never see each other. -->
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)fi.misaki.lattice</string>
 </dict>
 </plist>
