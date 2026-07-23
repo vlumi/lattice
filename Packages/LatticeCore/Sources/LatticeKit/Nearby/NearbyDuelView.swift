@@ -254,15 +254,27 @@ struct NearbyDuelView: View {
 
     // MARK: Result
 
-    private func result(_ standings: [String]) -> some View {
-        VStack(spacing: 12) {
+    private func result(_ standings: [NearbyMatch.Standing]) -> some View {
+        // Competition ranking: equal scores share a position (1, 2, 2, 4).
+        var ranks: [Int] = []
+        for (i, s) in standings.enumerated() {
+            if i > 0, s.score == standings[i - 1].score {
+                ranks.append(ranks[i - 1])  // tie → same position as the one above
+            } else {
+                ranks.append(i + 1)  // else this row's 1-based position
+            }
+        }
+        return VStack(spacing: 12) {
             Text("Result", bundle: .module).font(.largeTitle.weight(.bold))
-            ForEach(Array(standings.enumerated()), id: \.offset) { index, name in
+            ForEach(Array(standings.enumerated()), id: \.offset) { index, standing in
                 HStack {
-                    Text(verbatim: "\(index + 1).")
-                    Text(verbatim: name)
+                    Text(verbatim: "\(ranks[index]).")
+                    Text(verbatim: standing.name)
+                    Spacer()
+                    Text("\(standing.score)", bundle: .module).monospacedDigit()
+                        .foregroundStyle(.secondary)
                 }
-                .font(index == 0 ? .title3.weight(.bold) : .body)
+                .font(ranks[index] == 1 ? .title3.weight(.bold) : .body)
             }
         }
     }

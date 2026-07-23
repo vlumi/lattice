@@ -162,6 +162,15 @@ public struct DuelMatch {
         return players[local]?.movedThisRound == true
     }
 
+    /// The local player is stuck — still in the match, it's their turn (not
+    /// waiting at the lock-step barrier), and the board has no legal move. The
+    /// transport calls `noLegalMoves(local)` when this becomes true so a
+    /// dead-end eliminates immediately instead of waiting out the clock.
+    public var localHasNoMove: Bool {
+        guard !isOver, isActive(local), !localWaitingForRound else { return false }
+        return game.legalMoves().isEmpty
+    }
+
     // MARK: Lock-step mechanics
 
     /// Register a commit: mark the player moved, stop their clock, and — if
@@ -242,25 +251,17 @@ public struct DuelMatch {
         return dropOut(local)
     }
 
-    /// End the match once no player is still `.active`. Standings: tier-reachers
-    /// first, by placement number; then everyone who's out, best final score
-    /// first (a genuine tiebreak — they never reached the tier).
+    /// End the match once no player is still `.active`. Final standings are by
+    /// final score, highest first — equal scores are equal positions (the
+    /// result view assigns tied ranks). `order` breaks ties stably so the list
+    /// is deterministic, but same-score players display the same position.
     private mutating func finishIfSettled() -> [Action] {
         guard !isOver, activePlayers.isEmpty else { return [] }
         isOver = true
-        let placed =
-            order
-            .compactMap { id -> (PlayerID, Int)? in
-                if case .placed(let rank) = players[id]?.status { return (id, rank) }
-                return nil
-            }
-            .sorted { $0.1 < $1.1 }
-            .map(\.0)
-        let out =
-            order
-            .filter { players[$0]?.status == .eliminated }
-            .sorted { (players[$0]?.score ?? 0) > (players[$1]?.score ?? 0) }
-        return [.finish(standings: placed + out)]
+        let standings = order.sorted {
+            (players[$0]?.score ?? 0) > (players[$1]?.score ?? 0)
+        }
+        return [.finish(standings: standings)]
     }
 
     private static func rules(for variantKey: String) -> Rules {

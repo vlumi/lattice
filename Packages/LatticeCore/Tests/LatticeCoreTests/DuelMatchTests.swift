@@ -165,17 +165,32 @@ final class DuelMatchTests: XCTestCase {
         XCTAssertTrue(actions.isEmpty)
     }
 
-    // MARK: Race — 3 players + placement ordering
+    // MARK: Race — 3 players, standings by score
 
-    func testRaceThreePlayersPlacementOrder() {
+    func testRaceThreePlayersStandingsByScore() {
+        var m = match(.race(tier: 5), players: ["A", "B", "C"])
+        _ = m.remoteScored("C", score: 5)  // C reaches tier (top score)
+        _ = m.remoteEliminated("B")  // B out with score 0 (below the field)
+        // A reaches the tier too (equal to C). The move that reaches it and
+        // settles the match carries the finish.
+        var finish: DuelMatch.Action?
+        for _ in 0..<5 {
+            let actions = m.localMove(firstLegalMove(m.game))
+            if let f = actions.last, case .finish = f { finish = f }
+        }
+        // Standings by final score, highest first: A & C at 5, then B at 0.
+        // A and C tie — roster order breaks the list stably, ranks are equal.
+        XCTAssertEqual(finish, .finish(standings: ["A", "C", "B"]))
+    }
+
+    func testRaceStandingsAllEqualScore() {
+        // Everyone finishes on the same score → a fully tied standings list,
+        // stably in roster order (the result view shows them at equal rank).
         var m = match(.race(tier: 1), players: ["A", "B", "C"])
-        _ = m.localMove(firstLegalMove(m.game))  // A 1st
-        _ = m.remoteScored("C", score: 1)  // C 2nd
-        let actions = m.remoteScored("B", score: 1)  // B 3rd → done
-        XCTAssertEqual(m.players["A"]?.status, .placed(1))
-        XCTAssertEqual(m.players["C"]?.status, .placed(2))
-        XCTAssertEqual(m.players["B"]?.status, .placed(3))
-        XCTAssertEqual(actions.last, .finish(standings: ["A", "C", "B"]))
+        _ = m.localMove(firstLegalMove(m.game))  // A → 1
+        _ = m.remoteScored("C", score: 1)
+        let actions = m.remoteScored("B", score: 1)
+        XCTAssertEqual(actions.last, .finish(standings: ["A", "B", "C"]))
     }
 
     func testRaceDeadEndIsEliminatedNotPlaced() {

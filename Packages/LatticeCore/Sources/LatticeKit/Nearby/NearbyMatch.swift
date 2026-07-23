@@ -53,11 +53,17 @@ final class NearbyMatch: NSObject, ObservableObject {
         var id: MCPeerID { peer }
     }
 
+    /// A final-standings row: the player's name and their final move count.
+    struct Standing: Equatable {
+        let name: String
+        let score: Int
+    }
+
     enum Stage: Equatable {
         case lobby
         case waitingForHost  // guest: requested, waiting for start
         case dueling
-        case finished(standings: [String])  // display names, winner-first
+        case finished(standings: [Standing])  // by score, highest first
     }
 
     // Lobby state. Setters are internal (not private) where the delegate
@@ -204,6 +210,7 @@ final class NearbyMatch: NSObject, ObservableObject {
             mode: mode, seed: seed, variantKey: variantKey, local: selfTag,
             roster: roster.map { ($0.tag, $0.name) })
         stage = .dueling
+        checkLocalDeadEnd()  // a starting board with no move (unlikely) still ends us
     }
 
     /// The local player committed a move in the duel UI.
@@ -215,19 +222,23 @@ final class NearbyMatch: NSObject, ObservableObject {
             "localMove \(self.selfTag, privacy: .public) n=\(actions.count) wait=\(wait)")
         apply(actions)
         match = m
-    }
-
-    /// The local player has no legal move (board exhausted for them).
-    func localStuck() {
-        guard var m = match else { return }
-        apply(m.noLegalMoves(selfTag))
-        match = m
+        checkLocalDeadEnd()
     }
 
     /// The local player resigned — they're out (others are told via
     /// `eliminated`; in a 2-player match that ends it).
     func resign() {
         guard var m = match, stage == .dueling else { return }
+        apply(m.noLegalMoves(selfTag))
+        match = m
+    }
+
+    /// If the local player's turn has opened with no legal move, eliminate them
+    /// at once — a dead-end shouldn't have to wait out the 10s clock. Called
+    /// after every event that can start a new local turn.
+    func checkLocalDeadEnd() {
+        guard var m = match, m.localHasNoMove else { return }
+        matchLog.info("localDeadEnd \(self.selfTag, privacy: .public)")
         apply(m.noLegalMoves(selfTag))
         match = m
     }
@@ -250,8 +261,12 @@ final class NearbyMatch: NSObject, ObservableObject {
         clockTimer = nil
         clockDeadlines = [:]
         clocks = [:]
-        let names = standings.map { tag in match?.players[tag]?.name ?? tag }
-        stage = .finished(standings: names)
+        let rows = standings.map { tag in
+            Standing(
+                name: match?.players[tag]?.name ?? tag,
+                score: match?.players[tag]?.score ?? 0)
+        }
+        stage = .finished(standings: rows)
     }
 
     // MARK: Per-player reactive clocks (transport-owned; match stays pure)
@@ -354,6 +369,9 @@ final class NearbyMatch: NSObject, ObservableObject {
         // Star topology: guests connect only to the host, so the host relays
         // each guest's event to the OTHERS (the actor tag survives the hop).
         if role == .hosting { relay(message, from: peer) }
+        // A remote move may have completed the round, opening our next turn —
+        // if it has no legal move, we're out immediately.
+        checkLocalDeadEnd()
     }
 
     /// Host-only: forward a guest's message to the other connected guests.
