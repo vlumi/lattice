@@ -13,6 +13,7 @@ public struct GameView: View {
     @State private var codeInput = ""
     @State private var isShowingChallenge = false
     @State private var isScanning = false
+    @State private var isShowingNearby = false
 
     public init(session: GameSession) {
         self.session = session
@@ -30,6 +31,9 @@ public struct GameView: View {
             }
         }
         .padding()
+        .sheet(isPresented: $isShowingNearby) {
+            NearbyDuelView(name: PlayerName.current(), bests: session.bests)
+        }
         #if os(iOS)
         .sheet(isPresented: $isScanning) {
             NavigationStack {
@@ -110,6 +114,14 @@ public struct GameView: View {
                         session.playerToMove,
                         label: Text("Player \(session.playerToMove) to move", bundle: .module))
                 }
+                // Live same-room duel — the one online mode. Distinct from
+                // pass-and-play's shared device; a match is its own event.
+                Button {
+                    isShowingNearby = true
+                } label: {
+                    Image(systemName: "wifi")
+                }
+                .accessibilityLabel(Text("Nearby", bundle: .module))
             } else if session.mode == .daily, session.dailyStreak > 0 {
                 Text(
                     "Streak: \(session.dailyStreak) (best \(session.dailyLongestStreak))",
