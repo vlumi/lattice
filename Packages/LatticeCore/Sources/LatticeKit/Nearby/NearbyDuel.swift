@@ -1,12 +1,6 @@
 import Foundation
 import LatticeCore
 import MultipeerConnectivity
-import OSLog
-
-/// Connection diagnostics — visible in Console.app / `log stream` filtered to
-/// subsystem "fi.misaki.lattice", category "nearby". Temporary while the live
-/// transport is being verified on real devices.
-private let nearbyLog = Logger(subsystem: "fi.misaki.lattice", category: "nearby")
 
 /// Live Nearby duel over MultipeerConnectivity. Discovery + mutual-consent
 /// handshake are copy-adapted from Donpa's `NearbyExchange` (plumbing kept in
@@ -92,8 +86,6 @@ final class NearbyDuel: NSObject, ObservableObject {
 
     /// The local player tapped a peer to duel.
     func invite(_ peer: MCPeerID) {
-        nearbyLog.info(
-            "tapped \(peer.displayName, privacy: .public); selfTag=\(self.selfTag, privacy: .public)")
         stage = .connecting
         perform(flow.userTapped(peer))
     }
@@ -104,7 +96,6 @@ final class NearbyDuel: NSObject, ObservableObject {
         for action in actions {
             switch action {
             case .invite(let peer):
-                nearbyLog.info("invite → \(peer.displayName, privacy: .public)")
                 browser.invitePeer(
                     peer, to: session, withContext: Data(selfTag.utf8), timeout: 30)
             case .sendReady(let peer):
@@ -127,7 +118,6 @@ final class NearbyDuel: NSObject, ObservableObject {
             }
         }
         handshakePhase = flow.phase
-        nearbyLog.info("flow phase → \(String(describing: self.flow.phase), privacy: .public)")
         // The handshake can reach `.done` from EITHER a connection event or a
         // message-receive (the final card can arrive after we're connected) —
         // both funnel through here, so detect the edge in one place and start
@@ -317,9 +307,6 @@ extension NearbyDuel: MCSessionDelegate {
     nonisolated func session(
         _ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState
     ) {
-        let name = peerID.displayName
-        nearbyLog.info(
-            "state \(name, privacy: .public) → \(state.rawValue, privacy: .public) (0=off 1=…ing 2=on)")
         Task { @MainActor in
             switch state {
             case .connected:
@@ -368,7 +355,6 @@ extension NearbyDuel: MCNearbyServiceAdvertiserDelegate {
         didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?,
         invitationHandler: @escaping (Bool, MCSession?) -> Void
     ) {
-        nearbyLog.info("invitation from \(peerID.displayName, privacy: .public)")
         Task { @MainActor in
             let theirTag =
                 context.flatMap { String(bytes: $0, encoding: .utf8) }
@@ -383,13 +369,9 @@ extension NearbyDuel: MCNearbyServiceAdvertiserDelegate {
                 !NearbyFlow<MCPeerID>.acceptsCrossedInvite(
                     myTag: self.selfTag, theirTag: theirTag)
             {
-                let tags = "mine=\(self.selfTag) theirs=\(theirTag)"
-                nearbyLog.info("reject crossed: \(tags, privacy: .public)")
                 invitationHandler(false, nil)
                 return
             }
-            nearbyLog.info(
-                "accept \(peerID.displayName, privacy: .public) crossed=\(crossed, privacy: .public)")
             invitationHandler(true, self.session)
         }
     }
@@ -404,8 +386,6 @@ extension NearbyDuel: MCNearbyServiceBrowserDelegate {
             guard info?["k"] != self.selfTag else { return }
             self.peerTags[peerID] = info?["k"] ?? ""
             if !self.peers.contains(peerID) { self.peers.append(peerID) }
-            nearbyLog.info(
-                "found \(peerID.displayName, privacy: .public) tag=\(info?["k"] ?? "?", privacy: .public)")
         }
     }
 
