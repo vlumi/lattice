@@ -24,8 +24,15 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.puzzle</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_lattice-duel._tcp</string>
+		<string>_lattice-duel._udp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan a challenge QR code to play a friend's board.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Find a nearby player to duel directly.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

@@ -35,6 +35,12 @@ targets:
         # sheet). Never records or stores anything — the frame is discarded
         # after a code is read.
         NSCameraUsageDescription: Scan a challenge QR code to play a friend's board.
+        # Nearby duel (MultipeerConnectivity/Bonjour): finds the other player's
+        # open Nearby screen on the local network. Nothing leaves the room.
+        NSLocalNetworkUsageDescription: Find a nearby player to duel directly.
+        NSBonjourServices:
+          - _lattice-duel._tcp
+          - _lattice-duel._udp
         # All four orientations: a universal (iPhone + iPad) app must support
         # them for iPad multitasking, or App Store validation rejects the
         # build. The board is orientation-agnostic.
@@ -88,6 +94,11 @@ targets:
         # the build-setting-derived minimum.
         LSMinimumSystemVersion: "14.0"
         NSHighResolutionCapable: true
+        # Nearby duel — see the iOS target's note.
+        NSLocalNetworkUsageDescription: Find a nearby player to duel directly.
+        NSBonjourServices:
+          - _lattice-duel._tcp
+          - _lattice-duel._udp
     settings:
       base:
         # Shares the iOS bundle ID for Universal Purchase: one App Store

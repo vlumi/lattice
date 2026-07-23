@@ -22,5 +22,11 @@
 	     stores from the (shared) bundle id and never see each other. -->
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)fi.misaki.lattice</string>
+	<!-- Nearby duel (MultipeerConnectivity/Bonjour): the sandbox needs both
+	     directions to advertise and browse on the local network. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
+	<true/>
 </dict>
 </plist>
