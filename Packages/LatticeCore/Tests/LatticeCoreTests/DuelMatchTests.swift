@@ -99,7 +99,10 @@ final class DuelMatchTests: XCTestCase {
         let actions = m.clockExpired("C")  // C times out
         XCTAssertEqual(m.players["C"]?.status, .eliminated)
         XCTAssertFalse(m.isOver)  // A and B still racing
-        XCTAssertFalse(actions.contains(where: { if case .finish = $0 { return true }; return false }))
+        XCTAssertFalse(
+            actions.contains(where: {
+                if case .finish = $0 { return true }; return false
+            }))
         // With C gone and A+B both having moved, the round resolves and resets.
         XCTAssertFalse(m.players["A"]?.movedThisRound ?? true)
         XCTAssertFalse(m.players["B"]?.movedThisRound ?? true)
@@ -166,7 +169,10 @@ final class DuelMatchTests: XCTestCase {
         // Dead-enders never took a placement — they rank below tier-reachers.
         XCTAssertEqual(m.players["B"]?.status, .eliminated)
         XCTAssertFalse(m.isOver)  // A still going
-        XCTAssertFalse(actions.contains(where: { if case .finish = $0 { return true }; return false }))
+        XCTAssertFalse(
+            actions.contains(where: {
+                if case .finish = $0 { return true }; return false
+            }))
     }
 
     func testRaceStandingsTierReacherBeatsDeadEnderRegardlessOfScore() {
@@ -190,7 +196,10 @@ final class DuelMatchTests: XCTestCase {
         let actions = m.disconnected("B")
         XCTAssertEqual(m.players["B"]?.status, .eliminated)
         XCTAssertFalse(m.isOver)  // A, C continue
-        XCTAssertFalse(actions.contains(where: { if case .finish = $0 { return true }; return false }))
+        XCTAssertFalse(
+            actions.contains(where: {
+                if case .finish = $0 { return true }; return false
+            }))
     }
 
     func testDisconnectIsEliminatedInRace() {

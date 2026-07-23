@@ -236,14 +236,16 @@ public struct DuelMatch {
     private mutating func finishIfSettled() -> [Action] {
         guard !isOver, activePlayers.isEmpty else { return [] }
         isOver = true
-        let placed = order
+        let placed =
+            order
             .compactMap { id -> (PlayerID, Int)? in
                 if case .placed(let rank) = players[id]?.status { return (id, rank) }
                 return nil
             }
             .sorted { $0.1 < $1.1 }
             .map(\.0)
-        let out = order
+        let out =
+            order
             .filter { players[$0]?.status == .eliminated }
             .sorted { (players[$0]?.score ?? 0) > (players[$1]?.score ?? 0) }
         return [.finish(standings: placed + out)]
