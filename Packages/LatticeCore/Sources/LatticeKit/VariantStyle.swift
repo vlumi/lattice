@@ -1,4 +1,5 @@
 import Charts
+import LatticeCore
 import SwiftUI
 
 /// Fixed visual identity per scoring pool — colour AND symbol, so identity
@@ -9,7 +10,9 @@ import SwiftUI
 enum VariantStyle {
     /// Canonical slot order; unknown keys share the fallback. The 7-colour
     /// display order re-validated (CVD + both surfaces) when 5T+ joined.
-    static let order = ["5T", "5T#", "5T+", "5D", "5D#", "4T", "4D"]
+    /// Canonical order lives in core (`VariantOrder`) so the duel tier gate
+    /// and this share one definition.
+    static let order = VariantOrder.canonical
 
     static func color(for key: String, scheme: ColorScheme) -> Color {
         let dark = scheme == .dark
