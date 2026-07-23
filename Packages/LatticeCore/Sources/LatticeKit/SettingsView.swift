@@ -40,5 +40,6 @@ struct SettingsView: View {
                 Text("The name other players see when you duel nearby.", bundle: .module)
             }
         }
+        .formStyle(.grouped)
     }
 }
