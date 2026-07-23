@@ -119,7 +119,7 @@ public struct GameView: View {
                 Button {
                     isShowingNearby = true
                 } label: {
-                    Image(systemName: "wifi")
+                    Image(systemName: "person.line.dotted.person.fill")
                 }
                 .accessibilityLabel(Text("Nearby", bundle: .module))
             } else if session.mode == .daily, session.dailyStreak > 0 {
