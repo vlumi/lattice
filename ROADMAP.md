@@ -7,33 +7,10 @@ history](README.md#version-history), full detail in
 indicative, not contractual, and everything before 1.0 is beta (internal
 TestFlight; see [RELEASING.md](RELEASING.md)).
 
+**v0.5.0 has shipped** (two-player, iCloud sync, Nearby duel, first
+TestFlight). Next up is v0.6.0.
+
 ---
-
-## v0.5.0 — Two-player + first TestFlight
-
-Suggested build sequence: **build 1** cuts as-is to validate the release
-pipeline (signing, ASC record, TestFlight processing) with the smallest
-surface — no sync. Then the slices below land in later 0.5.0 builds.
-
-- [ ] **Nearby** (MultipeerConnectivity, iOS ↔ macOS): mutual-consent
-      handshake, one small message per move, consent-based undo
-- [ ] **Same-seed duel**: both play the same start solo, higher score wins —
-      pass-and-play and Nearby
-- [ ] Local network privacy strings + Bonjour service declarations
-- [ ] **iCloud KVS sync** — pulled into 0.5.0 (was backlog) so the cloud blob
-      schema lands before any user data exists, while it's cheap to shape.
-      NOT in build 1 — it's the one feature needing two real devices to
-      verify, so it ships as its own build after the pipeline is proven.
-      - Payload: `BestScores` + the full `DailyLog` (bests + day-set —
-        ~tens of KB, decades from the 1 MB per-app cap; replays stay local).
-      - Shape: **one shared Codable blob, NOT per-device** — no DeviceID /
-        fork / clone-detection (unlike Donpa; its data is per-device, ours
-        merges commutatively). Read-merge-write, self-healing on
-        `didChangeExternally`. Merge = union the day-sets + max the bests;
-        streak/longest fall out. See AGENTS.md "iCloud sync model".
-      - Seam: copy Donpa's `Ubiquitous*Store` protocol + fake-for-tests
-        only (not its device model); opt-in toggle (off by default), needs
-        a Settings surface.
 
 ## v0.6.0 — Puzzle mode & polish
 
@@ -64,6 +41,9 @@ surface — no sync. Then the slices below land in later 0.5.0 builds.
 
 ## Backlog (unversioned)
 
+- [ ] Nearby duel follow-ups: rematch / back-to-lobby (Close currently
+      tears the match down); record each player's own duel game as a
+      GameRecord (a duel currently leaves no history).
 - [ ] Reset progress: per-pool and full reset behind destructive
       confirmations — arrives with a Settings surface (shared with the sync
       toggle above)

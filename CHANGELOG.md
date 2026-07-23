@@ -20,6 +20,26 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Nearby duel (MultipeerConnectivity, same room, iOS ↔ macOS): host a
+  game and others join over the local network — no accounts, no server.
+  - **Host-advertises lobby:** one player taps "Host a game", picks a
+    mode and variant (and target, for race), and advertises it; others
+    browse the nearby games and tap to request; the host accepts or
+    declines each, then starts. Up to 8 players.
+  - **Lock-step mode:** everyone races the same board with no target —
+    when anyone commits a move, everyone who hasn't gets a 10-second
+    clock; let yours run out, or dead-end while others can still play,
+    and you're out. Last player standing wins. You can't move again
+    until everyone has committed the current move.
+  - **Race mode:** everyone plays the same board in parallel to a target
+    line count; first to reach it wins, the rest keep going for
+    placement. Live scores show throughout.
+  - Final standings rank everyone by move count; equal counts tie.
+  - A Nearby display name (Settings) is the only identity — no records,
+    no win/loss history; a match is its own event.
+- Local-network privacy strings + Bonjour service declarations for
+  Nearby play on both platforms.
+
 ### build 2 — 2026-07-23
 
 - iCloud sync (opt-in, off by default): best scores and the daily log
