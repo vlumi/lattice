@@ -121,8 +121,9 @@ tap empty board, or Esc (macOS) — nothing was committed.
   game.
 - **Daily:** one undo per move, as slip protection only; unlimited undo would
   turn the shared daily into tree search.
-- **Two-player:** undo only before the opponent replies; over Nearby it is a
-  consent-request message (reuse the mutual-consent handshake shape).
+- **Two-player (pass-and-play):** undo only before the opponent replies.
+- **Nearby duel:** no undo — moves are committed and broadcast at once
+  (lock-step's whole point is that speed is a weapon).
 
 ### Two-player identity & records (decided)
 
@@ -141,9 +142,15 @@ tap empty board, or Esc (macOS) — nothing was committed.
   Validation: trimmed user name if non-empty, else device name, else
   "Lattice player"; clamp to MC's 63-byte UTF-8 display-name limit,
   never empty.
-- **Same-seed duel** results *are* recorded — but as each player's own
-  solo `GameRecord` ("played seed X, scored N"), comparable in the moment
-  by both looking at their screens. No opponent identity involved.
+- **Nearby duel** is host-advertises (a host configures a game and
+  advertises it; others browse and request; the host accepts and starts),
+  up to 8 players, star topology (the host relays each guest's events to the
+  others). Two modes: **lock-step** (reactive 10s clock, no target, hard
+  per-round barrier — a dead-end or a clock expiry eliminates, last standing
+  wins) and **race** (parallel to a target line count, first there wins,
+  others place after). Each device runs the clock only for itself and reports
+  its own expiry; standings rank by move count with ties equal. A duel
+  currently records **no** `GameRecord` (a backlog follow-up).
 - A richer social layer (share-a-score **challenge cards**, peer-to-peer,
   self-verified) is the honest form of "rivalry" if ever wanted —
   post-1.0, not a W/L ledger.
@@ -203,9 +210,9 @@ tap empty board, or Esc (macOS) — nothing was committed.
   seeded random symmetric starting patterns (the seed code *is* a shareable
   challenge, no server); line-length-4 variants (shorter games, good for
   learning and two-player); solver-generated puzzle mode ("find N more
-  moves"); two-player **last-to-move-wins** (pass-and-play + Nearby) and
-  **same-seed duel** (both play the same start solo, highest score wins —
-  works asynchronously and across skill gaps).
+  moves"); **pass-and-play** last-to-move-wins on one device, and **Nearby
+  duel** — live same-room MultipeerConnectivity play (host-advertises, up to
+  8 players, lock-step or race to a target; see the two-player section).
 - **Score ladder:** grade scores against known reference points (human record
   170, best machine result 178 on classic 5T) as **local milestones** — the
   long single-player arc, no server needed.
@@ -276,9 +283,13 @@ depend on Donpa):
 - **Deterministic daily seed** — a daily puzzle is natural here (everyone plays
   the same start + rule variant for the day); copy Donpa's stable-hash /
   local-date-key daily pattern.
-- **Nearby (MultipeerConnectivity)** — Donpa's two-way swap stack. Turn-based
-  play makes this *easier* to reuse: a move is one small message, no realtime
-  sync. Reuse the mutual-consent handshake shape.
+- **Nearby (MultipeerConnectivity)** — the transport plumbing follows Donpa's
+  stack ([[donpa-is-design-reference]]), but Lattice's duel is its own model:
+  **host-advertises** (not Donpa's mutual-consent swap), N-player star
+  topology with host relay, and a pure `DuelMatch` state machine driving it.
+  Plumbing stays in sync with Donpa; the duel model is Lattice-specific.
+  A move is one small message; each device runs its own clock. See the
+  two-player section for the rules.
 
 ## Platforms & project facts
 
