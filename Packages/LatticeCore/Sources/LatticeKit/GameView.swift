@@ -163,14 +163,17 @@ public struct GameView: View {
                 .keyboardShortcut("0", modifiers: .command)
                 .accessibilityLabel(Text("Fit", bundle: .module))
             }
-            if session.tentative != nil {
-                Button {
-                    session.cancel()
-                } label: {
-                    Text("Cancel", bundle: .module)
-                }
-                .keyboardShortcut(.cancelAction)
+            // Always present (hidden when there's nothing to cancel) so the
+            // header's size stays constant — otherwise the button appearing
+            // reflowed the row and nudged the board's fitted size (a wobble).
+            Button {
+                session.cancel()
+            } label: {
+                Text("Cancel", bundle: .module)
             }
+            .keyboardShortcut(.cancelAction)
+            .disabled(session.tentative == nil)
+            .opacity(session.tentative == nil ? 0 : 1)
             Button {
                 session.undo()
             } label: {
