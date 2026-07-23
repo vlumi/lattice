@@ -17,12 +17,15 @@ public enum DuelMessage: Codable, Equatable, Sendable {
     /// order as (tag, name) pairs, including the host; `seed` + `variantKey`
     /// build the identical board on every device.
     case start(seed: UInt64, mode: DuelMode, variantKey: String, roster: [RosterEntry])
-    /// A committed move (lock-step: also marks the mover done this round).
-    case move(Move)
-    /// A new score (race — drives the opponents' live HUD).
-    case score(Int)
-    /// I'm out — clock expired, dead-ended, or resigned.
-    case eliminated
+    /// A committed move by `from` (lock-step: also marks that player done this
+    /// round). The acting player's tag is carried explicitly so the host can
+    /// relay it to other guests without losing who moved (guests connect only
+    /// to the host, so the physical sender isn't the actor).
+    case move(from: String, Move)
+    /// A new score for `from` (race — drives the opponents' live HUD).
+    case score(from: String, Int)
+    /// `from` is out — clock expired, dead-ended, or resigned.
+    case eliminated(from: String)
 
     /// One roster slot: the peer's stable tag and display name.
     public struct RosterEntry: Codable, Equatable, Sendable {

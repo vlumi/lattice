@@ -1,6 +1,12 @@
 import Foundation
 import LatticeCore
 import MultipeerConnectivity
+import OSLog
+
+/// Match diagnostics — `log stream --predicate 'subsystem == "fi.misaki.lattice"
+/// && category == "match"'`. Temporary while the redesigned transport is being
+/// verified on real devices.
+let matchLog = Logger(subsystem: "fi.misaki.lattice", category: "match")
 
 /// Live Nearby duel over MultipeerConnectivity — host-advertises model,
 /// 2–8 players, both `DuelMode`s. Runs a pure `DuelMatch` over the session,
@@ -54,35 +60,39 @@ final class NearbyMatch: NSObject, ObservableObject {
         case finished(standings: [String])  // display names, winner-first
     }
 
-    // Lobby state
+    // Lobby state. Setters are internal (not private) where the delegate
+    // conformances in NearbyMatch+Delegates.swift mutate them.
     @Published private(set) var role: Role = .idle
-    @Published private(set) var games: [AdvertisedGame] = []
-    @Published private(set) var joinRequests: [JoinRequest] = []
+    @Published internal(set) var games: [AdvertisedGame] = []
+    @Published internal(set) var joinRequests: [JoinRequest] = []
     /// Accepted players in the host's lobby (display names), self first.
-    @Published private(set) var lobbyNames: [String] = []
+    @Published internal(set) var lobbyNames: [String] = []
 
     // Match state
     @Published private(set) var stage: Stage = .lobby
-    @Published private(set) var match: DuelMatch?
+    @Published internal(set) var match: DuelMatch?
     /// Seconds left on each running clock, by player tag (lock-step HUD).
     @Published private(set) var clocks: [String: TimeInterval] = [:]
 
     static let service = "lattice-duel"
 
-    private let myName: String
+    // Members marked non-private are reached by the delegate conformances in
+    // NearbyMatch+Delegates.swift (same module; a `final` class's internal
+    // members aren't part of LatticeKit's public API).
+    let myName: String
     private let myBests: BestScores
     private let myPeer: MCPeerID
-    private let selfTag = UUID().uuidString.prefix(9).description
-    private var session: MCSession
+    let selfTag = UUID().uuidString.prefix(9).description
+    var session: MCSession
     private var advertiser: MCNearbyServiceAdvertiser?
     private let browser: MCNearbyServiceBrowser
 
     /// Discovery tag per connected/known peer (their advertised "k").
-    private var peerTags: [MCPeerID: String] = [:]
+    var peerTags: [MCPeerID: String] = [:]
     /// Display name per peer (from their hello).
-    private var peerNames: [MCPeerID: String] = [:]
+    var peerNames: [MCPeerID: String] = [:]
     /// Host: peers accepted into the game, in acceptance order.
-    private var acceptedPeers: [MCPeerID] = []
+    var acceptedPeers: [MCPeerID] = []
 
     // Host's chosen config, set in host(config:).
     private var hostMode: DuelMode?
@@ -199,7 +209,11 @@ final class NearbyMatch: NSObject, ObservableObject {
     /// The local player committed a move in the duel UI.
     func commitMove(_ move: Move) {
         guard var m = match else { return }
-        apply(m.localMove(move))
+        let actions = m.localMove(move)
+        let wait = m.localWaitingForRound
+        matchLog.info(
+            "localMove \(self.selfTag, privacy: .public) n=\(actions.count) wait=\(wait)")
+        apply(actions)
         match = m
     }
 
@@ -218,12 +232,12 @@ final class NearbyMatch: NSObject, ObservableObject {
         match = m
     }
 
-    private func apply(_ actions: [DuelMatch.Action]) {
+    func apply(_ actions: [DuelMatch.Action]) {
         for action in actions {
             switch action {
-            case .sendMove(let move): broadcast(.move(move))
-            case .sendScore(let score): broadcast(.score(score))
-            case .sendEliminated: broadcast(.eliminated)
+            case .sendMove(let move): broadcast(.move(from: selfTag, move))
+            case .sendScore(let score): broadcast(.score(from: selfTag, score))
+            case .sendEliminated: broadcast(.eliminated(from: selfTag))
             case .startClock(let tag, let seconds): startClock(tag, seconds)
             case .stopClock(let tag): stopClock(tag)
             case .finish(let standings): finish(standings)
@@ -276,6 +290,7 @@ final class NearbyMatch: NSObject, ObservableObject {
             if left <= 0, tag == selfTag { localExpired = true }
         }
         if localExpired {
+            matchLog.info("localClockExpired \(self.selfTag, privacy: .public)")
             stopClock(selfTag)
             apply(m.clockExpired(selfTag))
             match = m
@@ -290,12 +305,12 @@ final class NearbyMatch: NSObject, ObservableObject {
         try? session.send(data, toPeers: peers, with: .reliable)
     }
 
-    private func send(_ message: DuelMessage, to peer: MCPeerID) {
+    func send(_ message: DuelMessage, to peer: MCPeerID) {
         guard let data = try? JSONEncoder().encode(message) else { return }
         try? session.send(data, toPeers: [peer], with: .reliable)
     }
 
-    private func received(_ data: Data, from peer: MCPeerID) {
+    func received(_ data: Data, from peer: MCPeerID) {
         guard let message = try? JSONDecoder().decode(DuelMessage.self, from: data) else { return }
         switch message {
         case .hello(let name):
@@ -319,16 +334,25 @@ final class NearbyMatch: NSObject, ObservableObject {
     }
 
     private func receivedMatchEvent(_ message: DuelMessage, from peer: MCPeerID) {
-        guard var m = match, let tag = peerTags[peer] else { return }
+        // Route by the actor carried IN the message, not the physical sender —
+        // relayed events arrive from the host but belong to another guest.
+        let actor: String
         switch message {
-        case .move: apply(m.remoteMoved(tag))
-        case .score(let score): apply(m.remoteScored(tag, score: score))
-        case .eliminated: apply(m.remoteEliminated(tag))
+        case .move(let from, _), .score(let from, _), .eliminated(let from): actor = from
+        default: return
+        }
+        guard actor != selfTag, var m = match else { return }  // skip our own echo
+        let hosting = role == .hosting
+        matchLog.info("recv actor=\(actor, privacy: .public) host=\(hosting)")
+        switch message {
+        case .move: apply(m.remoteMoved(actor))
+        case .score(_, let score): apply(m.remoteScored(actor, score: score))
+        case .eliminated: apply(m.remoteEliminated(actor))
         default: return
         }
         match = m
-        // Star topology: guests connect only to the host, not to each other, so
-        // the host relays every guest's event to the OTHER guests.
+        // Star topology: guests connect only to the host, so the host relays
+        // each guest's event to the OTHERS (the actor tag survives the hop).
         if role == .hosting { relay(message, from: peer) }
     }
 
@@ -337,110 +361,5 @@ final class NearbyMatch: NSObject, ObservableObject {
         let others = session.connectedPeers.filter { $0 != sender }
         guard !others.isEmpty, let data = try? JSONEncoder().encode(message) else { return }
         try? session.send(data, toPeers: others, with: .reliable)
-    }
-}
-
-// MARK: - MCSession / discovery delegates (off-main → hop to main)
-
-extension NearbyMatch: MCSessionDelegate {
-    nonisolated func session(
-        _ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState
-    ) {
-        Task { @MainActor in
-            switch state {
-            case .connected:
-                // Exchange names; a guest that just connected asks to join.
-                self.send(.hello(name: self.myName), to: peerID)
-                if case .joining(let host) = self.role, host == peerID {
-                    self.send(.requestJoin, to: peerID)
-                }
-            case .notConnected:
-                self.peerLeft(peerID)
-            default:
-                break
-            }
-        }
-    }
-
-    nonisolated func session(
-        _ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID
-    ) {
-        Task { @MainActor in self.received(data, from: peerID) }
-    }
-
-    nonisolated func session(
-        _ session: MCSession, didReceive stream: InputStream, withName streamName: String,
-        fromPeer peerID: MCPeerID
-    ) {}
-    nonisolated func session(
-        _ session: MCSession, didStartReceivingResourceWithName resourceName: String,
-        fromPeer peerID: MCPeerID, with progress: Progress
-    ) {}
-    nonisolated func session(
-        _ session: MCSession, didFinishReceivingResourceWithName resourceName: String,
-        fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?
-    ) {}
-
-    private func peerLeft(_ peer: MCPeerID) {
-        joinRequests.removeAll { $0.peer == peer }
-        if let idx = acceptedPeers.firstIndex(of: peer) {
-            acceptedPeers.remove(at: idx)
-            lobbyNames = [myName] + acceptedPeers.map { peerNames[$0] ?? "?" }
-        }
-        if var m = match, let tag = peerTags[peer], stage == .dueling {
-            apply(m.disconnected(tag))
-            match = m
-        }
-    }
-}
-
-extension NearbyMatch: MCNearbyServiceAdvertiserDelegate {
-    nonisolated func advertiser(
-        _ advertiser: MCNearbyServiceAdvertiser,
-        didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?,
-        invitationHandler: @escaping (Bool, MCSession?) -> Void
-    ) {
-        Task { @MainActor in
-            // Record the guest's tag from the invite context; accept the
-            // transport connection (the in-app requestJoin gates the roster).
-            if let tag = context.flatMap({ String(bytes: $0, encoding: .utf8) }) {
-                self.peerTags[peerID] = tag
-            }
-            invitationHandler(self.role == .hosting, self.role == .hosting ? self.session : nil)
-        }
-    }
-}
-
-extension NearbyMatch: MCNearbyServiceBrowserDelegate {
-    nonisolated func browser(
-        _ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID,
-        withDiscoveryInfo info: [String: String]?
-    ) {
-        Task { @MainActor in
-            guard let info, info["k"] != self.selfTag, let game = Self.parse(peerID, info)
-            else { return }
-            self.peerTags[peerID] = info["k"]
-            self.peerNames[peerID] = game.hostName
-            if !self.games.contains(where: { $0.peer == peerID }) { self.games.append(game) }
-        }
-    }
-
-    nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        Task { @MainActor in self.games.removeAll { $0.peer == peerID } }
-    }
-
-    /// Parse an advertised game out of discoveryInfo; nil if malformed.
-    private static func parse(_ peer: MCPeerID, _ info: [String: String]) -> AdvertisedGame? {
-        guard let variant = info["v"], let modeKey = info["m"] else { return nil }
-        let mode: DuelMode
-        switch modeKey {
-        case "L": mode = .lockStep
-        case "R":
-            guard let tier = info["t"].flatMap(Int.init) else { return nil }
-            mode = .race(tier: tier)
-        default: return nil
-        }
-        return AdvertisedGame(
-            peer: peer, hostName: info["n"] ?? peer.displayName, mode: mode, variantKey: variant)
     }
 }
