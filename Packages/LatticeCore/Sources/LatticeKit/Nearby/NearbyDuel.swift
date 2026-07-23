@@ -46,6 +46,7 @@ final class NearbyDuel: NSObject, ObservableObject {
 
     private var connectedPeer: MCPeerID?
     private var opponentBests: BestScores?
+    private var didHandshakeDone = false
     private var isHost = false
     private var agreedSetup: DuelSetup?
     private var clockDeadline: Date?
@@ -117,6 +118,14 @@ final class NearbyDuel: NSObject, ObservableObject {
             }
         }
         handshakePhase = flow.phase
+        // The handshake can reach `.done` from EITHER a connection event or a
+        // message-receive (the final card can arrive after we're connected) —
+        // both funnel through here, so detect the edge in one place and start
+        // the duel exactly once.
+        if case .done(let peer) = flow.phase, !didHandshakeDone {
+            didHandshakeDone = true
+            handshakeDone(with: peer)
+        }
     }
 
     private func flowHelloSent(to peer: MCPeerID) {
@@ -301,8 +310,10 @@ extension NearbyDuel: MCSessionDelegate {
         Task { @MainActor in
             switch state {
             case .connected:
+                // perform() detects the .done edge and starts the duel — the
+                // handshake often only completes later, when the peer's hello
+                // arrives, not at the moment we connect.
                 self.perform(self.flow.connected(to: peerID))
-                if case .done = self.flow.phase { self.handshakeDone(with: peerID) }
             case .notConnected:
                 if case .dueling = self.stage {
                     if var d = self.duel {

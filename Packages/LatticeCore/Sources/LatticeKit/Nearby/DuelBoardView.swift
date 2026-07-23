@@ -36,6 +36,7 @@ struct DuelBoardView: View {
     }
 
     private func draw(in context: GraphicsContext, _ layout: Layout) {
+        drawPinpoints(in: context, layout)
         for dot in game.dots {
             let center = layout.position(of: dot)
             let r = layout.dotRadius
@@ -59,6 +60,30 @@ struct DuelBoardView: View {
                     ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)
                 ),
                 with: .style(.tint))
+        }
+    }
+
+    // The playable empty positions, so you can see where a move can go —
+    // placeable points a clear pinpoint, the rest of the lattice near-nothing
+    // (same coding as the main board).
+    private func drawPinpoints(in context: GraphicsContext, _ layout: Layout) {
+        let dots = Set(game.dots)
+        let placeable = Set(movesByDot.keys)
+        for x in (layout.bounds.minX - 1)...(layout.bounds.maxX + 1) {
+            for y in (layout.bounds.minY - 1)...(layout.bounds.maxY + 1) {
+                let p = Point(x, y)
+                if dots.contains(p) || p == tentative { continue }
+                let (radius, opacity) =
+                    placeable.contains(p)
+                    ? (layout.openPointRadius, 0.45) : (layout.pinpointRadius, 0.08)
+                let center = layout.position(of: p)
+                context.fill(
+                    Path(
+                        ellipseIn: CGRect(
+                            x: center.x - radius, y: center.y - radius,
+                            width: radius * 2, height: radius * 2)),
+                    with: .style(.primary.opacity(opacity)))
+            }
         }
     }
 
