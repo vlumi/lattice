@@ -438,7 +438,9 @@ public struct RootView: View {
             dailySession.onSyncedChange = { [weak sync] in sync?.localDidChange() }
         }
         // A cloud pull changed local bests/daily — refresh the live sessions.
-        .onChange(of: sync.revision) { _ in
+        // onChangeCompat bridges the iOS-16 floor without the macOS-14
+        // deprecation (copied from Donpa; see Support/OnChangeCompat).
+        .onChangeCompat(of: sync.revision) { _ in
             freeSession.reloadSyncedState()
             dailySession.reloadSyncedState()
         }
