@@ -128,13 +128,12 @@ final class NearbyDuel: NSObject, ObservableObject {
     /// Both sides consented + exchanged hello. The host resolves the agreed
     /// setup and offers tier choices; the guest waits for `setup`.
     private func handshakeDone(with peer: MCPeerID) {
-        guard let theirBests = opponentBests else { return }
+        guard opponentBests != nil else { return }
         // Deterministic host: lower tag hosts (same rule as the crossed-invite
         // tie-break, so both agree without negotiation).
         isHost = selfTag < (peerTags[peer] ?? "")
         if isHost {
-            let variants = DuelTier.eligibleVariants(mine: myBests, theirs: theirBests)
-            stage = .choosingTier(variants: variants)
+            stage = .choosingTier(variants: DuelTier.eligibleVariants)
         } else {
             stage = .awaitingAccept
         }
