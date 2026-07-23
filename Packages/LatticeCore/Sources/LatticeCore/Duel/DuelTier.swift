@@ -27,6 +27,15 @@ public enum DuelTier {
         let cap = min(mine.best(forKey: variantKey) ?? 0, theirs.best(forKey: variantKey) ?? 0)
         return ladder.filter { $0 == floor || $0 <= cap }
     }
+
+    /// The tiers a HOST can offer for a variant when configuring a game to
+    /// advertise — the floor (always) plus rungs the host has reached. In the
+    /// host-advertises model the host picks before guests join, so the offer is
+    /// gated on the host's own best alone; guests choose whether to join.
+    public static func offerableTiers(variantKey: String, best: BestScores) -> [Int] {
+        let cap = best.best(forKey: variantKey) ?? 0
+        return ladder.filter { $0 == floor || $0 <= cap }
+    }
 }
 
 /// The canonical variant display order, shared by the duel tier gate and the

@@ -40,6 +40,18 @@ final class DuelTierTests: XCTestCase {
             DuelTier.offerableTiers(variantKey: "5T", mine: weak, theirs: strong),
             [10])
     }
+
+    func testHostOfferableTiersGateOnHostBestAlone() {
+        // Host-advertises: the host offers the floor plus rungs it has reached,
+        // gated on its own best (guests join after).
+        XCTAssertEqual(
+            DuelTier.offerableTiers(variantKey: "5T", best: bests(["5T": 45])),
+            [10, 20, 30])
+        // A fresh host still offers the floor.
+        XCTAssertEqual(
+            DuelTier.offerableTiers(variantKey: "5T", best: BestScores()),
+            [10])
+    }
 }
 
 final class DuelProtocolTests: XCTestCase {
