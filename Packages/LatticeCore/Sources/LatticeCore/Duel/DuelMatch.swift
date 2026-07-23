@@ -28,7 +28,7 @@ public struct DuelMatch {
         public internal(set) var score: Int = 0
         public internal(set) var status: Status = .active
         /// Committed this lock-step round (reset each round). Unused in race.
-        var movedThisRound = false
+        public internal(set) var movedThisRound = false
         /// Reactive clock running for this player (lock-step only).
         public internal(set) var clockRunning = false
     }
@@ -78,7 +78,12 @@ public struct DuelMatch {
 
     /// The local player committed a move in the duel UI.
     public mutating func localMove(_ move: Move) -> [Action] {
-        guard !isOver, isActive(local), game.play(move) else { return [] }
+        guard !isOver, isActive(local) else { return [] }
+        // Lock-step barrier: once you've committed this round you must wait for
+        // everyone else — you cannot race ahead to the next move. (Committing
+        // fast is still a weapon: it starts the others' clocks.)
+        if case .lockStep = mode, players[local]?.movedThisRound == true { return [] }
+        guard game.play(move) else { return [] }
         players[local]?.score = game.score
         var actions: [Action] = [.sendMove(move)]
         switch mode {
@@ -148,6 +153,13 @@ public struct DuelMatch {
     /// Players still in the match, in roster order.
     public var activePlayers: [PlayerID] {
         order.filter { players[$0]?.status == .active }
+    }
+
+    /// Lock-step: the local player has committed and is waiting at the barrier
+    /// for the others — the board should be locked until the round resolves.
+    public var localWaitingForRound: Bool {
+        guard case .lockStep = mode else { return false }
+        return players[local]?.movedThisRound == true
     }
 
     // MARK: Lock-step mechanics

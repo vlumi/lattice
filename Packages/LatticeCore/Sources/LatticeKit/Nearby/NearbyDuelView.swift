@@ -47,12 +47,15 @@ struct NearbyDuelView: View {
         .onDisappear { duel.stop() }
     }
 
-    // Leaving mid-match forfeits (the others score it as a drop) — so it reads
-    // "Resign" while playing, a plain "Close" otherwise.
+    // While playing, "Resign" declares you out (others are told; in a 2-player
+    // match that ends it) and lands on the standings. Otherwise a plain "Close".
     @ViewBuilder private var dismissButton: some View {
         if duel.stage == .dueling {
             Button(role: .destructive) {
-                dismiss()
+                duel.resign()
+                // In a 2-player match resign ends it (→ standings). With more
+                // players the match continues without us, so we leave.
+                if duel.stage == .dueling { dismiss() }
             } label: {
                 Text("Resign", bundle: .module).frame(maxWidth: .infinity)
             }
@@ -188,7 +191,20 @@ struct NearbyDuelView: View {
         VStack(spacing: 12) {
             standingsBar
             if let m = duel.match {
+                let waiting = m.localWaitingForRound
                 DuelBoardView(game: m.game) { move in duel.commitMove(move) }
+                    // Lock-step barrier: once you've moved you wait for the
+                    // others — the board is locked and dimmed until the round
+                    // resolves.
+                    .disabled(waiting)
+                    .opacity(waiting ? 0.4 : 1)
+                    .overlay {
+                        if waiting {
+                            Text("Waiting for the others…", bundle: .module)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
             }
         }
     }
@@ -215,13 +231,24 @@ struct NearbyDuelView: View {
     @ViewBuilder
     private func scoreLabel(_ m: DuelMatch, tag: String, state: DuelMatch.PlayerState) -> some View
     {
-        if case .race(let tier) = m.mode {
+        switch m.mode {
+        case .race(let tier):
+            // Progress toward the target — the whole point of race.
             Text("\(state.score) / \(tier)", bundle: .module)
-        } else if let remaining = duel.clocks[tag] {
-            Text("\(remaining, specifier: "%.1f")s", bundle: .module)
-                .foregroundStyle(remaining < 3 ? .red : .primary)
-        } else {
-            Text(verbatim: "\(state.score)")
+        case .lockStep:
+            if state.status == .eliminated {
+                Text("out", bundle: .module)
+            } else if let remaining = duel.clocks[tag] {
+                // On the clock — someone moved first, this player must keep up.
+                Text("\(remaining, specifier: "%.1f")s", bundle: .module)
+                    .foregroundStyle(remaining < 3 ? .red : .primary)
+            } else if state.movedThisRound {
+                // Committed this round, waiting at the barrier.
+                Image(systemName: "checkmark")
+            } else {
+                // Thinking, no clock yet (nobody has moved this round).
+                Image(systemName: "ellipsis")
+            }
         }
     }
 

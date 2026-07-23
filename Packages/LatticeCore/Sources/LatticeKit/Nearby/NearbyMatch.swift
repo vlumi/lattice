@@ -210,6 +210,14 @@ final class NearbyMatch: NSObject, ObservableObject {
         match = m
     }
 
+    /// The local player resigned — they're out (others are told via
+    /// `eliminated`; in a 2-player match that ends it).
+    func resign() {
+        guard var m = match, stage == .dueling else { return }
+        apply(m.noLegalMoves(selfTag))
+        match = m
+    }
+
     private func apply(_ actions: [DuelMatch.Action]) {
         for action in actions {
             switch action {

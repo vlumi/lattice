@@ -47,6 +47,21 @@ final class DuelMatchTests: XCTestCase {
         XCTAssertFalse(m.isOver)
     }
 
+    func testLockStepBarrierBlocksSecondMoveBeforeRoundResolves() {
+        var m = match(.lockStep, players: ["A", "B"])
+        _ = m.localMove(firstLegalMove(m.game))  // A commits round 1
+        XCTAssertTrue(m.localWaitingForRound)
+        let scoreAfterFirst = m.game.score
+        // A tries to race ahead before B has answered — rejected, no-op.
+        let blocked = m.localMove(firstLegalMove(m.game))
+        XCTAssertTrue(blocked.isEmpty)
+        XCTAssertEqual(m.game.score, scoreAfterFirst)  // board didn't advance
+        // Once B answers, the round resolves and A can move again.
+        _ = m.remoteMoved("B")
+        XCTAssertFalse(m.localWaitingForRound)
+        XCTAssertFalse(m.localMove(firstLegalMove(m.game)).isEmpty)
+    }
+
     func testLockStepClockExpiryEliminatesAndOpponentWins() {
         var m = match(.lockStep, players: ["A", "B"])
         _ = m.localMove(firstLegalMove(m.game))  // A first → B on the clock
