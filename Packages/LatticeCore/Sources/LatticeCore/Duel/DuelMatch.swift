@@ -28,7 +28,7 @@ public struct DuelMatch {
         public internal(set) var score: Int = 0
         public internal(set) var status: Status = .active
         /// Committed this lock-step round (reset each round). Unused in race.
-        var movedThisRound = false
+        public internal(set) var movedThisRound = false
         /// Reactive clock running for this player (lock-step only).
         public internal(set) var clockRunning = false
     }
@@ -78,7 +78,12 @@ public struct DuelMatch {
 
     /// The local player committed a move in the duel UI.
     public mutating func localMove(_ move: Move) -> [Action] {
-        guard !isOver, isActive(local), game.play(move) else { return [] }
+        guard !isOver, isActive(local) else { return [] }
+        // Lock-step barrier: once you've committed this round you must wait for
+        // everyone else — you cannot race ahead to the next move. (Committing
+        // fast is still a weapon: it starts the others' clocks.)
+        if case .lockStep = mode, players[local]?.movedThisRound == true { return [] }
+        guard game.play(move) else { return [] }
         players[local]?.score = game.score
         var actions: [Action] = [.sendMove(move)]
         switch mode {
@@ -148,6 +153,22 @@ public struct DuelMatch {
     /// Players still in the match, in roster order.
     public var activePlayers: [PlayerID] {
         order.filter { players[$0]?.status == .active }
+    }
+
+    /// Lock-step: the local player has committed and is waiting at the barrier
+    /// for the others — the board should be locked until the round resolves.
+    public var localWaitingForRound: Bool {
+        guard case .lockStep = mode else { return false }
+        return players[local]?.movedThisRound == true
+    }
+
+    /// The local player is stuck — still in the match, it's their turn (not
+    /// waiting at the lock-step barrier), and the board has no legal move. The
+    /// transport calls `noLegalMoves(local)` when this becomes true so a
+    /// dead-end eliminates immediately instead of waiting out the clock.
+    public var localHasNoMove: Bool {
+        guard !isOver, isActive(local), !localWaitingForRound else { return false }
+        return game.legalMoves().isEmpty
     }
 
     // MARK: Lock-step mechanics
@@ -230,25 +251,17 @@ public struct DuelMatch {
         return dropOut(local)
     }
 
-    /// End the match once no player is still `.active`. Standings: tier-reachers
-    /// first, by placement number; then everyone who's out, best final score
-    /// first (a genuine tiebreak — they never reached the tier).
+    /// End the match once no player is still `.active`. Final standings are by
+    /// final score, highest first — equal scores are equal positions (the
+    /// result view assigns tied ranks). `order` breaks ties stably so the list
+    /// is deterministic, but same-score players display the same position.
     private mutating func finishIfSettled() -> [Action] {
         guard !isOver, activePlayers.isEmpty else { return [] }
         isOver = true
-        let placed =
-            order
-            .compactMap { id -> (PlayerID, Int)? in
-                if case .placed(let rank) = players[id]?.status { return (id, rank) }
-                return nil
-            }
-            .sorted { $0.1 < $1.1 }
-            .map(\.0)
-        let out =
-            order
-            .filter { players[$0]?.status == .eliminated }
-            .sorted { (players[$0]?.score ?? 0) > (players[$1]?.score ?? 0) }
-        return [.finish(standings: placed + out)]
+        let standings = order.sorted {
+            (players[$0]?.score ?? 0) > (players[$1]?.score ?? 0)
+        }
+        return [.finish(standings: standings)]
     }
 
     private static func rules(for variantKey: String) -> Rules {
