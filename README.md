@@ -1,5 +1,8 @@
 # Lattice Five
 
+[![CI](https://github.com/vlumi/lattice/actions/workflows/ci.yml/badge.svg)](https://github.com/vlumi/lattice/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/vlumi/lattice/branch/main/graph/badge.svg)](https://codecov.io/gh/vlumi/lattice)
+
 A procedural, turn-based puzzle game for Apple platforms — a digital
 **Morpion Solitaire** (a.k.a. *Join Five*).
 
