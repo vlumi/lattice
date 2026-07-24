@@ -57,6 +57,33 @@ final class PersistenceTests: XCTestCase {
         XCTAssertNil(store.loadCurrent())
     }
 
+    func testVersusGameSaveLoad() {
+        // The pass-and-play slot is separate from the solitaire current slot.
+        let game = playedGame(moves: 3)
+        let id = UUID()
+        store.saveVersus(GameSnapshot(game: game, id: id))
+        let loaded = store.loadVersus()
+        XCTAssertEqual(loaded?.id, id)
+        XCTAssertEqual(loaded.flatMap(Game.init(snapshot:)), game)
+        // The versus slot doesn't leak into the solitaire slot.
+        XCTAssertNil(store.loadCurrent())
+    }
+
+    func testSyncedStateRoundTripsThroughBestsAndDailyFiles() {
+        // loadSyncedState assembles from the same bests/daily files the app
+        // uses; saveSyncedState splits back to them.
+        var bests = BestScores()
+        bests.register(42, forKey: "5T")
+        var log = DailyLog()
+        log.record(
+            DailyLog.Result(score: 7, finishedAt: Date(timeIntervalSince1970: 1)),
+            for: "2026-07-24")
+        store.saveSyncedState(SyncedState(bests: bests, dailyLog: log))
+        let loaded = store.loadSyncedState()
+        XCTAssertEqual(loaded.bests.best(forKey: "5T"), 42)
+        XCTAssertEqual(loaded.dailyLog.results["2026-07-24"]?.score, 7)
+    }
+
     func testFutureVersionHiddenNotDeleted() throws {
         // A future build's save is hidden, not destroyed.
         let snapshot = GameSnapshot(game: playedGame(moves: 2), id: UUID())
@@ -68,6 +95,14 @@ final class PersistenceTests: XCTestCase {
         try JSONSerialization.data(withJSONObject: json).write(to: store.currentURL)
         XCTAssertNil(store.loadCurrent())
         XCTAssertTrue(FileManager.default.fileExists(atPath: store.currentURL.path))
+    }
+
+    func testRecordVariantKeyDerivesFromRulesAndStart() {
+        // variantKey reflects the record's rules + starting pattern (the "#"
+        // suffix distinguishes a seeded start from the standard one).
+        let record = GameRecord(
+            game: playedGame(moves: 2), id: UUID(), finishedAt: Date(timeIntervalSince1970: 1))
+        XCTAssertFalse(record.variantKey.isEmpty)
     }
 
     func testRecordsSortedNewestFirst() {

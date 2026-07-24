@@ -36,6 +36,17 @@ final class DuelMatchTests: XCTestCase {
         XCTAssertTrue(m.players["B"]?.clockRunning ?? false)
     }
 
+    func testLocalHasNoMoveIsFalseWithMovesAndWhileWaiting() {
+        var m = match(.lockStep, players: ["A", "B"])
+        // Fresh board has legal moves and it's our turn → not stuck.
+        XCTAssertFalse(m.localHasNoMove)
+        // After committing we're at the barrier (waiting), so not "stuck" —
+        // the board is locked, not exhausted.
+        _ = m.localMove(firstLegalMove(m.game))
+        XCTAssertTrue(m.localWaitingForRound)
+        XCTAssertFalse(m.localHasNoMove)
+    }
+
     func testLockStepSecondCommitStopsOwnClockAndAdvancesRound() {
         var m = match(.lockStep, players: ["A", "B"])
         _ = m.localMove(firstLegalMove(m.game))  // A first → B armed

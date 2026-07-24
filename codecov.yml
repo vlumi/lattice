@@ -23,6 +23,17 @@ comment:
 # The whole LatticeKit target is the view layer (the CI coverage export
 # already excludes it; this keeps Codecov's own view consistent). Tests
 # themselves aren't coverage subjects.
+#
+# CloudStore.swift is the one exception in LatticeCore: its only real
+# executable code is `UbiquitousCloudStore`, a thin wrapper over
+# `NSUbiquitousKeyValueStore` that can't run without a signed-in iCloud
+# device. All the SYNC LOGIC — merge, self-heal, split-to-files — lives in
+# `SyncCoordinator` / `SyncedState` / `LatticeStore` and is driven through
+# the `CloudStore` protocol via `FakeCloudStore`, fully covered.
+#
+# Kept in sync with the CI export's -ignore-filename-regex in ci.yml — the
+# two must agree.
 ignore:
   - "Packages/LatticeCore/Sources/LatticeKit/**"
+  - "Packages/LatticeCore/Sources/LatticeCore/Sync/CloudStore.swift"
   - "Packages/LatticeCore/Tests/**"
