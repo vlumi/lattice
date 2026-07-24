@@ -39,6 +39,13 @@ TestFlight). Next up is v0.6.0.
       privacy questionnaire (nothing collected)
 - [ ] Submit to public App Store review, release (spends the 1.0.0 version)
 
+ASC tooling: Donpa's `asc-listing*` + `asc-screenshots*` Makefile targets
+(over `Scripts/asc/`: `run.sh`, `listing.py`, `screenshots.py`,
+`organize-shots.py`, `listing.json`, `shots/`) are the copy-wholesale
+source for this slice — bring them over when store prep starts, adapting
+only the per-app listing/shots data. Skip `asc-achievements*` unless
+Lattice ever adds Game Center (it has none, and none is planned).
+
 ## Backlog (unversioned)
 
 - [ ] Nearby duel follow-ups: rematch / back-to-lobby (Close currently
