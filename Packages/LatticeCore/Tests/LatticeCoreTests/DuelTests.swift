@@ -53,3 +53,34 @@ final class DuelTierTests: XCTestCase {
             [10])
     }
 }
+
+final class DuelMessageTests: XCTestCase {
+    /// The wire format must round-trip through JSON unchanged — the transport
+    /// relies on it, and it's the one part of the transport that's pure enough
+    /// to test headlessly.
+    private func roundTrip(_ message: DuelMessage) throws -> DuelMessage {
+        let data = try JSONEncoder().encode(message)
+        return try JSONDecoder().decode(DuelMessage.self, from: data)
+    }
+
+    func testAllCasesRoundTrip() throws {
+        let roster = [
+            DuelMessage.RosterEntry(tag: "abc", name: "Ann"),
+            DuelMessage.RosterEntry(tag: "def", name: "Bo"),
+        ]
+        let move = Move(
+            dot: Point(0, 0), line: Line(origin: Point(0, 0), axis: .horizontal, length: 5))
+        let cases: [DuelMessage] = [
+            .hello(name: "Ann"),
+            .requestJoin,
+            .start(seed: 42, mode: .lockStep, variantKey: "5T", roster: roster),
+            .start(seed: 7, mode: .race(tier: 20), variantKey: "5D", roster: roster),
+            .move(from: "abc", move),
+            .score(from: "def", 13),
+            .eliminated(from: "abc"),
+        ]
+        for message in cases {
+            XCTAssertEqual(try roundTrip(message), message)
+        }
+    }
+}

@@ -66,11 +66,13 @@ jobs:
         run: |
           PROF=$(find .build -name '*.profdata' | head -1)
           BIN=$(find .build -name 'LatticeCorePackageTests.xctest' -type d | head -1)/Contents/MacOS/LatticeCorePackageTests
-          # Exclude build artifacts, tests, and the SwiftUI view layer
-          # (LatticeKit needs UI automation to exercise) so the figure
-          # reflects the unit-tested logic.
+          # Exclude build artifacts, tests, the SwiftUI view layer
+          # (LatticeKit needs UI automation to exercise), and the iCloud KVS
+          # wrapper (CloudStore.swift — needs a signed-in device; its logic is
+          # tested via the CloudStore protocol + FakeCloudStore) so the figure
+          # reflects the unit-tested logic. Kept in sync with codecov.yml.
           xcrun llvm-cov export "$BIN" -instr-profile "$PROF" -format=lcov \
-            -ignore-filename-regex='(\.build|Tests)/|LatticeKit/' \
+            -ignore-filename-regex='(\.build|Tests)/|LatticeKit/|Sync/CloudStore\.swift' \
             > coverage.lcov
           # Rewrite absolute SF: paths to repo-relative so Codecov maps files
           # correctly. The job runs on macOS, so this is BSD sed.
