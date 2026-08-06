@@ -1,12 +1,6 @@
 import Foundation
 import LatticeCore
 import MultipeerConnectivity
-import OSLog
-
-/// Match diagnostics — `log stream --predicate 'subsystem == "fi.misaki.lattice"
-/// && category == "match"'`. Temporary while the redesigned transport is being
-/// verified on real devices.
-let matchLog = Logger(subsystem: "fi.misaki.lattice", category: "match")
 
 /// Live Nearby duel over MultipeerConnectivity — host-advertises model,
 /// 2–8 players, both `DuelMode`s. Runs a pure `DuelMatch` over the session,
@@ -69,14 +63,16 @@ final class NearbyMatch: NSObject, ObservableObject {
     // Lobby state. Setters are internal (not private) where the delegate
     // conformances in NearbyMatch+Delegates.swift mutate them.
     @Published private(set) var role: Role = .idle
-    @Published internal(set) var games: [AdvertisedGame] = []
-    @Published internal(set) var joinRequests: [JoinRequest] = []
+    // Non-private set: mutated by the delegate conformances in the +Delegates
+    // file (same module; a `final` class's internal members aren't public API).
+    @Published var games: [AdvertisedGame] = []
+    @Published var joinRequests: [JoinRequest] = []
     /// Accepted players in the host's lobby (display names), self first.
-    @Published internal(set) var lobbyNames: [String] = []
+    @Published var lobbyNames: [String] = []
 
     // Match state
     @Published private(set) var stage: Stage = .lobby
-    @Published internal(set) var match: DuelMatch?
+    @Published var match: DuelMatch?
     /// Seconds left on each running clock, by player tag (lock-step HUD).
     @Published private(set) var clocks: [String: TimeInterval] = [:]
 
@@ -217,9 +213,6 @@ final class NearbyMatch: NSObject, ObservableObject {
     func commitMove(_ move: Move) {
         guard var m = match else { return }
         let actions = m.localMove(move)
-        let wait = m.localWaitingForRound
-        matchLog.info(
-            "localMove \(self.selfTag, privacy: .public) n=\(actions.count) wait=\(wait)")
         apply(actions)
         match = m
         checkLocalDeadEnd()
@@ -238,7 +231,6 @@ final class NearbyMatch: NSObject, ObservableObject {
     /// after every event that can start a new local turn.
     func checkLocalDeadEnd() {
         guard var m = match, m.localHasNoMove else { return }
-        matchLog.info("localDeadEnd \(self.selfTag, privacy: .public)")
         apply(m.noLegalMoves(selfTag))
         match = m
     }
@@ -305,7 +297,6 @@ final class NearbyMatch: NSObject, ObservableObject {
             if left <= 0, tag == selfTag { localExpired = true }
         }
         if localExpired {
-            matchLog.info("localClockExpired \(self.selfTag, privacy: .public)")
             stopClock(selfTag)
             apply(m.clockExpired(selfTag))
             match = m
@@ -357,8 +348,6 @@ final class NearbyMatch: NSObject, ObservableObject {
         default: return
         }
         guard actor != selfTag, var m = match else { return }  // skip our own echo
-        let hosting = role == .hosting
-        matchLog.info("recv actor=\(actor, privacy: .public) host=\(hosting)")
         switch message {
         case .move: apply(m.remoteMoved(actor))
         case .score(_, let score): apply(m.remoteScored(actor, score: score))
