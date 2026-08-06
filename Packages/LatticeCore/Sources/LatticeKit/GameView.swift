@@ -7,6 +7,7 @@ public struct GameView: View {
     @ObservedObject private var session: GameSession
     @StateObject private var camera = BoardCamera()
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var feedback: Feedback
     @State private var exportDocument: PNGDocument?
     @State private var isExporting = false
     @State private var isEnteringCode = false
@@ -31,6 +32,12 @@ public struct GameView: View {
             }
         }
         .padding()
+        // The game-over feedback (sound + a neutral notification haptic) — the
+        // plain end-state was easy to miss. Fire once, on the transition to
+        // over (onChangeCompat bridges the iOS-16 floor).
+        .onChangeCompat(of: session.isOver) { isOver in
+            if isOver { feedback.gameOver() }
+        }
         .sheet(isPresented: $isShowingNearby) {
             NearbyDuelView(name: PlayerName.current(), bests: session.bests)
         }

@@ -20,6 +20,15 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Sound & haptics (subtle, opt-in): a picker-style haptic detent as you
+  scrub between candidate lines (so choosing between overlapping lines is
+  tactile), a firmer tap when a line is placed, and a clear game-over cue
+  (a soft settling tone + a neutral notification haptic) — the plain
+  game-over was easy to miss. Two Settings toggles at the top of the tab:
+  **Sound effects** (off by default) and **Haptics** (on by default,
+  iOS). Sound mixes under other audio and follows the ring/silent switch
+  (never interrupts music). Adapted from Donpa's sound/haptics slice.
+
 ### build 3 — 2026-07-23
 
 - Nearby duel (MultipeerConnectivity, same room, iOS ↔ macOS): host a

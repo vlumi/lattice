@@ -18,6 +18,7 @@ public struct RootView: View {
     @StateObject private var dailySession = GameSession(mode: .daily, store: store)
     @StateObject private var versusSession = GameSession(mode: .passAndPlay, store: store)
     @StateObject private var sync = SyncController(store: store, cloud: Self.makeCloud())
+    @StateObject private var feedback = Feedback()
     @State private var selection: Tab = .free
     @State private var historyPath = NavigationPath()
 
@@ -77,7 +78,7 @@ public struct RootView: View {
                     }
                 }
                 .tag(Tab.history)
-            SettingsView(sync: sync)
+            SettingsView(sync: sync, feedback: feedback)
                 .tabItem {
                     Label {
                         Text("Settings", bundle: .module)
@@ -87,6 +88,8 @@ public struct RootView: View {
                 }
                 .tag(Tab.settings)
         }
+        // Board feedback (sound + haptics) available to the board views.
+        .environmentObject(feedback)
         // Universal Links: a challenge link starts its board in Free.
         .onOpenURL { url in
             guard let seed = ChallengeLink.seed(from: url) else { return }

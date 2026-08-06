@@ -23,6 +23,7 @@ public struct BoardView: View {
     @ObservedObject private var session: GameSession
     @ObservedObject private var camera: BoardCamera
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var feedback: Feedback
 
     // In-flight gesture deltas; committed (and clamped) into the camera on
     // gesture end.
@@ -82,7 +83,14 @@ public struct BoardView: View {
                         }
                         switch dragMode {
                         case .scrub:
-                            hot = target(at: toWorld(value.location), layout)
+                            let next = target(at: toWorld(value.location), layout)
+                            // A picker-style detent each time the scrub cycles
+                            // to a DIFFERENT candidate line — makes choosing
+                            // between overlapping lines tactile.
+                            if next != hot, case .ghost = next {
+                                feedback.selectChanged()
+                            }
+                            hot = next
                         case .pan:
                             gesturePan = value.translation
                         case .undecided:
@@ -138,6 +146,7 @@ public struct BoardView: View {
         switch target {
         case .ghost(let move):
             session.commit(move)
+            feedback.committed()
         case .place(let p):
             session.place(p)
         case .cancelTentative:
@@ -319,6 +328,7 @@ extension BoardView {
             let chosen = closestCandidate(to: location, layout)
         {
             session.commit(chosen)
+            feedback.committed()
             return
         }
         guard let p = layout.point(near: location) else {

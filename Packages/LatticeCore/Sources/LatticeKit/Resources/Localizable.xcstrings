@@ -90,6 +90,9 @@
     "Games nearby" : {
 
     },
+    "Haptics" : {
+
+    },
     "History" : {
 
     },
@@ -209,10 +212,19 @@
     "Sign in to iCloud to sync across your devices." : {
 
     },
+    "Sound & Haptics" : {
+
+    },
+    "Sound effects" : {
+
+    },
     "Start" : {
 
     },
     "Streak: %lld (best %lld)" : {
+
+    },
+    "Subtle ticks while playing. Sound follows your ring/silent switch." : {
 
     },
     "Sync" : {
