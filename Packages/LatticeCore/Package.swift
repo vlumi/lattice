@@ -19,7 +19,10 @@ let package = Package(
         .target(
             name: "LatticeKit",
             dependencies: ["LatticeCore"],
-            resources: [.process("Resources/Localizable.xcstrings")]
+            resources: [
+                .process("Resources/Localizable.xcstrings"),
+                .process("Resources/Sounds"),
+            ]
         ),
         .testTarget(
             name: "LatticeCoreTests",

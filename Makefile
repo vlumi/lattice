@@ -48,6 +48,10 @@ build-ios: Lattice.xcodeproj  ## Build the iOS app (simulator, unsigned)
 icon:  ## Regenerate the app icon assets from IconArt (deterministic)
 	@Scripts/gen-icon.sh
 
+.PHONY: sounds
+sounds:  ## Regenerate the sound effects from make-sounds.swift (deterministic)
+	@Scripts/gen-sounds.sh
+
 .PHONY: test
 test:  ## Run the package logic tests (no Xcode project needed)
 	@swift test --package-path Packages/LatticeCore
