@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 4 — 2026-08-06
+
 - Sound & haptics (subtle, opt-in): a picker-style haptic detent as you
   scrub between candidate lines (so choosing between overlapping lines is
   tactile), a firmer tap when a line is placed, and a clear game-over cue
