@@ -186,10 +186,25 @@ extension BoardView {
     }
 
     private func draw(in context: GraphicsContext, _ layout: Layout) {
+        drawDeadGaps(in: context, layout)
         drawPinpoints(in: context, layout)
         drawPlayedLines(in: context, layout)
         drawDots(in: context, layout)
         drawInteractiveState(in: context, layout)
+    }
+
+    // Gaps this game has permanently sealed between two collinear lines (no
+    // line can ever span them) — a faint "closed off" marker under the real
+    // lines/dots.
+    private func drawDeadGaps(in context: GraphicsContext, _ layout: Layout) {
+        // A thin, faint, SOLID line — uniform for every gap regardless of length
+        // (dashes rendered raggedly across the varying span lengths). It sits
+        // under the real lines/dots, which legitimately cross these points.
+        for span in session.deadGaps {
+            strokeLine(
+                span, .color(.red.opacity(0.4)), width: layout.lineWidth * 0.35,
+                in: context, layout)
+        }
     }
 
     // Settled-vs-open grayscale coding: placeable points (a legal move
@@ -203,15 +218,13 @@ extension BoardView {
             for y in (layout.bounds.minY - 1)...(layout.bounds.maxY + 1) {
                 let p = Point(x, y)
                 if dots.contains(p) || p == session.tentative { continue }
-                if session.isPlaceable(p) {
-                    fillDot(
-                        p, radius: layout.openPointRadius, .style(.primary.opacity(0.45)),
-                        in: context, layout)
-                } else {
-                    fillDot(
-                        p, radius: layout.pinpointRadius, .style(.primary.opacity(0.08)),
-                        in: context, layout)
-                }
+                let radius = session.isPlaceable(p) ? layout.openPointRadius : layout.pinpointRadius
+                let shade = session.isPlaceable(p) ? 0.45 : 0.08
+                // A small background casing so an underlying dead-gap line stops
+                // short of the pinpoint (same margin idea as the filled dots'
+                // casing ring), then the pinpoint itself on top.
+                fillDot(p, radius: radius * 1.8, .style(.background), in: context, layout)
+                fillDot(p, radius: radius, .style(.primary.opacity(shade)), in: context, layout)
             }
         }
     }
