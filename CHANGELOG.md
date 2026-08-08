@@ -23,9 +23,11 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 - Board chrome: Undo and Fit moved out of the crowded title bar into
   subtle floating buttons over the board's bottom corner (Undo always,
   Fit when the view has moved) — the frequent actions now sit under the
-  thumb. The game-type menu reads clearly as a picker (grid icon +
-  variant + chevron) instead of a bare code, and the remaining header
-  buttons have more breathing room.
+  thumb. The fitted board reserves that corner so no dot is ever hidden
+  behind the buttons (there's no panning at the fit zoom). The game-type
+  menu reads clearly as a picker (grid icon + variant + chevron) instead
+  of a bare code, and the remaining header buttons have more breathing
+  room.
 
 ### build 4 — 2026-08-06
 

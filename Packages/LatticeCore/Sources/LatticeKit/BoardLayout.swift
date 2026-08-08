@@ -27,16 +27,24 @@ struct Layout {
     let originOffset: CGPoint
     let bounds: Bounds
 
-    init(fitting bounds: Bounds, in size: CGSize) {
+    /// `insets` reserve edges of `size` that the fitted board must not enter —
+    /// used to keep content clear of the floating board controls, since at the
+    /// fit zoom there's no panning to reveal what they'd cover. Defaults to none
+    /// (replay/share-card/duel render edge-to-edge).
+    init(fitting bounds: Bounds, in size: CGSize, insets: EdgeInsets = EdgeInsets()) {
+        let available = CGSize(
+            width: max(1, size.width - insets.leading - insets.trailing),
+            height: max(1, size.height - insets.top - insets.bottom))
         // One empty cell of margin on every side.
         let columns = CGFloat(bounds.maxX - bounds.minX + 3)
         let rows = CGFloat(bounds.maxY - bounds.minY + 3)
-        cell = min(size.width / columns, size.height / rows)
+        cell = min(available.width / columns, available.height / rows)
         let contentWidth = columns * cell
         let contentHeight = rows * cell
+        // Centre within the inset area, then shift by the leading/top inset.
         originOffset = CGPoint(
-            x: (size.width - contentWidth) / 2 + cell * 1.5,
-            y: (size.height - contentHeight) / 2 + cell * 1.5)
+            x: insets.leading + (available.width - contentWidth) / 2 + cell * 1.5,
+            y: insets.top + (available.height - contentHeight) / 2 + cell * 1.5)
         self.bounds = bounds
     }
 
