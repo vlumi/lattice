@@ -20,6 +20,11 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Dead-gap markers: the board faintly flags gaps you've permanently
+  closed off — where two of your lines sit 1–4 dots apart on the same
+  axis, so no line can ever span the space between them. Shown live as
+  you play and in the replay (which also flags the move that sealed each
+  one). A quiet "you burned potential here" review aid.
 - Board chrome: Undo and Fit moved out of the crowded title bar into
   subtle floating buttons over the board's bottom corner (Undo always,
   Fit when the view has moved) — the frequent actions now sit under the
