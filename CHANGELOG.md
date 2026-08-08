@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 5 — 2026-08-08
+
 - Dead-gap markers: the board faintly flags gaps you've permanently
   closed off — where two of your lines sit 1–4 dots apart on the same
   axis, so no line can ever span the space between them. Shown live as
