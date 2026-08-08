@@ -24,6 +24,10 @@ public struct GameView: View {
         VStack(spacing: 12) {
             header
             BoardView(session: session, camera: camera)
+                // Undo and Fit float over the board (bottom-trailing) rather
+                // than crowding the header — the frequent in-game actions sit
+                // under the thumb, near what they affect.
+                .overlay(alignment: .bottomTrailing) { boardControls }
             if session.pbCurve != nil {
                 ghost
             }
@@ -109,7 +113,7 @@ public struct GameView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 16) {
             Text("Score: \(session.game.score)", bundle: .module)
                 .font(.headline.monospacedDigit())
             if session.mode == .passAndPlay {
@@ -161,15 +165,6 @@ public struct GameView: View {
                 }
             }
             Spacer()
-            if !camera.isIdentity {
-                Button {
-                    camera.reset()
-                } label: {
-                    Image(systemName: "viewfinder")
-                }
-                .keyboardShortcut("0", modifiers: .command)
-                .accessibilityLabel(Text("Fit", bundle: .module))
-            }
             // Always present (hidden when there's nothing to cancel) so the
             // header's size stays constant — otherwise the button appearing
             // reflowed the row and nudged the board's fitted size (a wobble).
@@ -181,14 +176,6 @@ public struct GameView: View {
             .keyboardShortcut(.cancelAction)
             .disabled(session.tentative == nil)
             .opacity(session.tentative == nil ? 0 : 1)
-            Button {
-                session.undo()
-            } label: {
-                Image(systemName: "arrow.uturn.backward")
-            }
-            .keyboardShortcut("z", modifiers: .command)
-            .disabled(!session.undoAllowed)
-            .accessibilityLabel(Text("Undo", bundle: .module))
             if session.mode != .daily {
                 // Restart: the same board again (same seed, or the fixed
                 // classic pattern).
@@ -239,7 +226,18 @@ public struct GameView: View {
                     }
                     #endif
                 } label: {
-                    Text(verbatim: session.variantKey)
+                    // Icon (game type) + current variant + a menu chevron, so
+                    // it reads as a tappable game-type picker, not bare text.
+                    Label {
+                        HStack(spacing: 4) {
+                            Text(verbatim: session.variantKey)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                        }
+                    } icon: {
+                        Image(systemName: "square.grid.2x2")
+                    }
+                    .font(.subheadline)
                 }
                 .menuStyle(.button)
                 .fixedSize()
@@ -264,6 +262,43 @@ public struct GameView: View {
                 }
             }
         }
+    }
+
+    // Floating over the board (bottom-trailing): Undo always, Fit only when the
+    // camera has moved. Subtle circular buttons on a faint material so they read
+    // as controls without competing with the board.
+    private var boardControls: some View {
+        VStack(spacing: 10) {
+            if !camera.isIdentity {
+                floatingButton(systemName: "viewfinder", label: Text("Fit", bundle: .module)) {
+                    camera.reset()
+                }
+                .keyboardShortcut("0", modifiers: .command)
+            }
+            floatingButton(
+                systemName: "arrow.uturn.backward", label: Text("Undo", bundle: .module),
+                enabled: session.undoAllowed
+            ) {
+                session.undo()
+            }
+            .keyboardShortcut("z", modifiers: .command)
+            .disabled(!session.undoAllowed)
+        }
+        .padding(12)
+    }
+
+    private func floatingButton(
+        systemName: String, label: Text, enabled: Bool = true, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.title3)
+                .frame(width: 44, height: 44)
+                .background(.thinMaterial, in: Circle())
+                .opacity(enabled ? 1 : 0.4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private var gameOver: some View {
