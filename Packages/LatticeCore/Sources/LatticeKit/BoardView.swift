@@ -40,7 +40,12 @@ public struct BoardView: View {
     public var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-            let layout = Layout(fitting: Bounds(of: session.game.dots), in: size)
+            // Keep the fitted board clear of the floating controls in the
+            // bottom-trailing corner (at the fit zoom there's no panning to
+            // reveal a covered dot) — see Layout.controlsClearInset.
+            let bounds = Bounds(of: session.game.dots)
+            let insets = Layout.controlsClearInset(bounds: bounds, in: size)
+            let layout = Layout(fitting: bounds, in: size, insets: insets)
             let zoom = BoardCamera.clampZoom(camera.zoom * gestureZoom)
             let pan = BoardCamera.clampPan(
                 CGSize(

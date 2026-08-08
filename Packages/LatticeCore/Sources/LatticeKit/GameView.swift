@@ -24,6 +24,12 @@ public struct GameView: View {
         VStack(spacing: 12) {
             header
             BoardView(session: session, camera: camera)
+                // Undo and Fit float over the board (bottom-trailing) rather
+                // than crowding the header — the frequent in-game actions sit
+                // under the thumb, near what they affect.
+                .overlay(alignment: .bottomTrailing) {
+                    BoardControls(session: session, camera: camera)
+                }
             if session.pbCurve != nil {
                 ghost
             }
@@ -109,7 +115,7 @@ public struct GameView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 16) {
             Text("Score: \(session.game.score)", bundle: .module)
                 .font(.headline.monospacedDigit())
             if session.mode == .passAndPlay {
@@ -161,15 +167,6 @@ public struct GameView: View {
                 }
             }
             Spacer()
-            if !camera.isIdentity {
-                Button {
-                    camera.reset()
-                } label: {
-                    Image(systemName: "viewfinder")
-                }
-                .keyboardShortcut("0", modifiers: .command)
-                .accessibilityLabel(Text("Fit", bundle: .module))
-            }
             // Always present (hidden when there's nothing to cancel) so the
             // header's size stays constant — otherwise the button appearing
             // reflowed the row and nudged the board's fitted size (a wobble).
@@ -181,14 +178,6 @@ public struct GameView: View {
             .keyboardShortcut(.cancelAction)
             .disabled(session.tentative == nil)
             .opacity(session.tentative == nil ? 0 : 1)
-            Button {
-                session.undo()
-            } label: {
-                Image(systemName: "arrow.uturn.backward")
-            }
-            .keyboardShortcut("z", modifiers: .command)
-            .disabled(!session.undoAllowed)
-            .accessibilityLabel(Text("Undo", bundle: .module))
             if session.mode != .daily {
                 // Restart: the same board again (same seed, or the fixed
                 // classic pattern).
@@ -239,7 +228,18 @@ public struct GameView: View {
                     }
                     #endif
                 } label: {
-                    Text(verbatim: session.variantKey)
+                    // Icon (game type) + current variant + a menu chevron, so
+                    // it reads as a tappable game-type picker, not bare text.
+                    Label {
+                        HStack(spacing: 4) {
+                            Text(verbatim: session.variantKey)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2)
+                        }
+                    } icon: {
+                        Image(systemName: "square.grid.2x2")
+                    }
+                    .font(.subheadline)
                 }
                 .menuStyle(.button)
                 .fixedSize()
