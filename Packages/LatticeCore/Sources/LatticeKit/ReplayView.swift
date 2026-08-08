@@ -11,15 +11,29 @@ final class ReplayModel: ObservableObject {
     let record: GameRecord
     /// Legal-move count before each move + the end — the openness curve.
     let curve: [Int]
+    /// PROTOTYPE: dead gaps each move sealed between two collinear lines.
+    let losses: [Foreclosure.Loss]
     @Published private(set) var game: Game
     @Published private(set) var step: Int
     @Published private(set) var isPlaying = false
 
     private var timer: Timer?
 
+    /// Foreclosed lines up to and including the current step (they accumulate as
+    /// you scrub forward).
+    var foreclosedSoFar: [Line] {
+        losses.filter { $0.moveIndex < step }.map(\.span)
+    }
+
+    /// Lines foreclosed by the CURRENT step's move — the "mistake made here".
+    var foreclosedThisStep: [Foreclosure.Loss] {
+        losses.filter { $0.moveIndex == step - 1 }
+    }
+
     init(record: GameRecord) {
         self.record = record
         curve = record.legalMoveCurve()
+        losses = Foreclosure.losses(in: record)
         var replayed = Game(rules: record.rules, start: record.start)
         for move in record.moves where replayed.play(move) {}
         game = replayed
@@ -89,7 +103,13 @@ public struct ReplayView: View {
 
     public var body: some View {
         VStack(spacing: 12) {
-            ReplayBoardView(game: model.game)
+            ReplayBoardView(game: model.game, foreclosed: model.foreclosedSoFar)
+            // Flag the move that permanently closed off a line as a mistake.
+            if !model.foreclosedThisStep.isEmpty {
+                Text("This move closed off a line for good", bundle: .module)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.red)
+            }
             analysis
             controls
         }
@@ -209,10 +229,25 @@ public struct ReplayView: View {
 /// no pinpoints or input; auto-fits its content each step.
 struct ReplayBoardView: View {
     let game: Game
+    /// Lines this position permanently foreclosed (prototype: shown as faint
+    /// dashed ghosts, the "you closed this off" mistake marker).
+    var foreclosed: [Line] = []
 
     var body: some View {
         Canvas { context, size in
             let layout = Layout(fitting: Bounds(of: game.dots), in: size)
+            // Foreclosed lines first, so real lines/dots draw on top of them.
+            for line in foreclosed {
+                guard let first = line.points.first, let last = line.points.last else { continue }
+                var path = Path()
+                path.move(to: layout.position(of: first))
+                path.addLine(to: layout.position(of: last))
+                context.stroke(
+                    path, with: .color(.red.opacity(0.5)),
+                    style: StrokeStyle(
+                        lineWidth: layout.lineWidth * 0.8, lineCap: .round,
+                        dash: [layout.lineWidth * 1.5, layout.lineWidth * 1.5]))
+            }
             let lastLine = game.moves.last?.line
             for move in game.moves {
                 guard let first = move.line.points.first, let last = move.line.points.last

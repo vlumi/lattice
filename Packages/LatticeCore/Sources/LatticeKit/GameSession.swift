@@ -151,6 +151,10 @@ public final class GameSession: ObservableObject {
 
     public var isOver: Bool { movesByDot.isEmpty && freeLines.isEmpty }
 
+    /// Gaps this game has permanently sealed between two collinear lines — a
+    /// dead span no line can ever fill (see `Foreclosure`). Drawn by BoardView.
+    public var deadGaps: [Line] { Foreclosure.losses(in: game).map(\.span) }
+
     /// The scoring pool of the current game ("5T", "5T#", …).
     public var variantKey: String { game.rules.variantKey(forStart: game.start) }
 
