@@ -37,17 +37,48 @@ public struct BoardView: View {
         self.camera = camera
     }
 
+    /// The bottom-trailing square the floating controls occupy (button + pad).
+    private static let controlsCorner = CGSize(width: 68, height: 68)
+
+    /// Keep the fitted board clear of the floating controls (bottom-trailing)
+    /// without shrinking it: reserve the axis that has SLACK. A width-bound
+    /// board (Mac window) has vertical margin → reserve the bottom; a
+    /// height-bound board (portrait phone) has horizontal margin → reserve the
+    /// trailing edge. Reserving up to the button's own extent still fits within
+    /// that margin, so the cell size is unchanged. Only kicks in when the
+    /// content actually reaches the corner in both axes.
+    static func cornerInset(bounds: Bounds, in size: CGSize) -> EdgeInsets {
+        let plain = Layout(fitting: bounds, in: size)
+        let right = plain.position(of: Point(bounds.maxX, bounds.minY)).x + plain.cell
+        let bottom = plain.position(of: Point(bounds.minX, bounds.minY)).y + plain.cell
+        let cornerLeft = size.width - controlsCorner.width
+        let cornerTop = size.height - controlsCorner.height
+        guard right > cornerLeft, bottom > cornerTop else { return EdgeInsets() }
+        // Slack per axis = empty space the content doesn't use (both sides).
+        let horizontalSlack = size.width - plain.contentWidth
+        let verticalSlack = size.height - plain.contentHeight
+        if horizontalSlack >= verticalSlack {
+            // Room to the sides — shift left off the corner (no shrink).
+            return EdgeInsets(
+                top: 0, leading: 0, bottom: 0,
+                trailing: min(controlsCorner.width, horizontalSlack))
+        }
+        // Room above/below — shift up off the corner (no shrink).
+        return EdgeInsets(
+            top: 0, leading: 0, bottom: min(controlsCorner.height, verticalSlack), trailing: 0)
+    }
+
     public var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
-            // Reserve the trailing strip for the floating board controls so the
-            // fitted board never draws under them: at the fit zoom there's no
-            // panning to reveal covered dots (and only Undo shows there — Fit
-            // appears once the camera has moved, when panning is possible). A
-            // narrow trailing-only inset keeps the shift subtle.
-            let layout = Layout(
-                fitting: Bounds(of: session.game.dots), in: size,
-                insets: EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 64))
+            // Keep the fitted board clear of the floating controls in the
+            // bottom-trailing corner (at the fit zoom there's no panning to
+            // reveal a covered dot). But only inset by the ACTUAL overlap: a
+            // height-bound board already has wide side margins, so the corner
+            // sits in dead space and nothing shrinks — see BoardView.cornerInset.
+            let bounds = Bounds(of: session.game.dots)
+            let insets = Self.cornerInset(bounds: bounds, in: size)
+            let layout = Layout(fitting: bounds, in: size, insets: insets)
             let zoom = BoardCamera.clampZoom(camera.zoom * gestureZoom)
             let pan = BoardCamera.clampPan(
                 CGSize(

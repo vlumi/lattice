@@ -48,6 +48,11 @@ struct Layout {
         self.bounds = bounds
     }
 
+    /// The fitted content's on-screen extent (dots + the 1.5-cell edge margin),
+    /// used to measure how much slack a fit leaves on each axis.
+    var contentWidth: CGFloat { CGFloat(bounds.maxX - bounds.minX + 3) * cell }
+    var contentHeight: CGFloat { CGFloat(bounds.maxY - bounds.minY + 3) * cell }
+
     var dotRadius: CGFloat { cell * 0.18 }
     var casingRadius: CGFloat { cell * 0.28 }
     var pinpointRadius: CGFloat { cell * 0.05 }
