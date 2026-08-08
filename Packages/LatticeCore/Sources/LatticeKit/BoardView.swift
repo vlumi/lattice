@@ -40,13 +40,18 @@ public struct BoardView: View {
     /// The bottom-trailing square the floating controls occupy (button + pad).
     private static let controlsCorner = CGSize(width: 68, height: 68)
 
-    /// Keep the fitted board clear of the floating controls (bottom-trailing)
-    /// without shrinking it: reserve the axis that has SLACK. A width-bound
-    /// board (Mac window) has vertical margin → reserve the bottom; a
-    /// height-bound board (portrait phone) has horizontal margin → reserve the
-    /// trailing edge. Reserving up to the button's own extent still fits within
-    /// that margin, so the cell size is unchanged. Only kicks in when the
-    /// content actually reaches the corner in both axes.
+    /// Keep the fitted board clear of the floating controls (bottom-trailing) at
+    /// the fit zoom, where there's no panning to reveal a covered dot.
+    ///
+    /// Preference order:
+    /// 1. If an axis has enough slack to swallow the whole control corner,
+    ///    reserve it fully — the board just shifts within its margin, no shrink.
+    ///    Pick the axis with more slack (bottom for a wide Mac window, trailing
+    ///    for a tall phone).
+    /// 2. If NEITHER axis has room (a near-square window), clearing the corner
+    ///    genuinely requires shrinking — reserve the trailing strip and accept a
+    ///    slightly smaller board. Covered dots are worse than a small shrink.
+    /// No-op when the content already clears the corner.
     static func cornerInset(bounds: Bounds, in size: CGSize) -> EdgeInsets {
         let plain = Layout(fitting: bounds, in: size)
         let right = plain.position(of: Point(bounds.maxX, bounds.minY)).x + plain.cell
@@ -54,18 +59,25 @@ public struct BoardView: View {
         let cornerLeft = size.width - controlsCorner.width
         let cornerTop = size.height - controlsCorner.height
         guard right > cornerLeft, bottom > cornerTop else { return EdgeInsets() }
-        // Slack per axis = empty space the content doesn't use (both sides).
         let horizontalSlack = size.width - plain.contentWidth
         let verticalSlack = size.height - plain.contentHeight
-        if horizontalSlack >= verticalSlack {
-            // Room to the sides — shift left off the corner (no shrink).
-            return EdgeInsets(
-                top: 0, leading: 0, bottom: 0,
-                trailing: min(controlsCorner.width, horizontalSlack))
+        let fitsVertically = verticalSlack >= controlsCorner.height
+        let fitsHorizontally = horizontalSlack >= controlsCorner.width
+        // No shrink: reserve the roomier axis when it can swallow the corner.
+        if fitsVertically, verticalSlack >= horizontalSlack {
+            return EdgeInsets(top: 0, leading: 0, bottom: controlsCorner.height, trailing: 0)
         }
-        // Room above/below — shift up off the corner (no shrink).
+        if fitsHorizontally {
+            return EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: controlsCorner.width)
+        }
+        if fitsVertically {
+            return EdgeInsets(top: 0, leading: 0, bottom: controlsCorner.height, trailing: 0)
+        }
+        // Neither fits — must shrink to clear. Reserve the full corner on BOTH
+        // axes so the re-fitted content is pushed out of the corner square
+        // regardless of which axis ends up binding.
         return EdgeInsets(
-            top: 0, leading: 0, bottom: min(controlsCorner.height, verticalSlack), trailing: 0)
+            top: 0, leading: 0, bottom: controlsCorner.height, trailing: controlsCorner.width)
     }
 
     public var body: some View {
