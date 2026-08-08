@@ -27,7 +27,9 @@ public struct GameView: View {
                 // Undo and Fit float over the board (bottom-trailing) rather
                 // than crowding the header — the frequent in-game actions sit
                 // under the thumb, near what they affect.
-                .overlay(alignment: .bottomTrailing) { boardControls }
+                .overlay(alignment: .bottomTrailing) {
+                    BoardControls(session: session, camera: camera)
+                }
             if session.pbCurve != nil {
                 ghost
             }
@@ -262,43 +264,6 @@ public struct GameView: View {
                 }
             }
         }
-    }
-
-    // Floating over the board (bottom-trailing): Undo always, Fit only when the
-    // camera has moved. Subtle circular buttons on a faint material so they read
-    // as controls without competing with the board.
-    private var boardControls: some View {
-        VStack(spacing: 10) {
-            if !camera.isIdentity {
-                floatingButton(systemName: "viewfinder", label: Text("Fit", bundle: .module)) {
-                    camera.reset()
-                }
-                .keyboardShortcut("0", modifiers: .command)
-            }
-            floatingButton(
-                systemName: "arrow.uturn.backward", label: Text("Undo", bundle: .module),
-                enabled: session.undoAllowed
-            ) {
-                session.undo()
-            }
-            .keyboardShortcut("z", modifiers: .command)
-            .disabled(!session.undoAllowed)
-        }
-        .padding(12)
-    }
-
-    private func floatingButton(
-        systemName: String, label: Text, enabled: Bool = true, action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.title3)
-                .frame(width: 44, height: 44)
-                .background(.thinMaterial, in: Circle())
-                .opacity(enabled ? 1 : 0.4)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 
     private var gameOver: some View {

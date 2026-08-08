@@ -37,59 +37,14 @@ public struct BoardView: View {
         self.camera = camera
     }
 
-    /// The bottom-trailing square the floating controls occupy (button + pad).
-    private static let controlsCorner = CGSize(width: 68, height: 68)
-
-    /// Keep the fitted board clear of the floating controls (bottom-trailing) at
-    /// the fit zoom, where there's no panning to reveal a covered dot.
-    ///
-    /// Preference order:
-    /// 1. If an axis has enough slack to swallow the whole control corner,
-    ///    reserve it fully — the board just shifts within its margin, no shrink.
-    ///    Pick the axis with more slack (bottom for a wide Mac window, trailing
-    ///    for a tall phone).
-    /// 2. If NEITHER axis has room (a near-square window), clearing the corner
-    ///    genuinely requires shrinking — reserve the trailing strip and accept a
-    ///    slightly smaller board. Covered dots are worse than a small shrink.
-    /// No-op when the content already clears the corner.
-    static func cornerInset(bounds: Bounds, in size: CGSize) -> EdgeInsets {
-        let plain = Layout(fitting: bounds, in: size)
-        let right = plain.position(of: Point(bounds.maxX, bounds.minY)).x + plain.cell
-        let bottom = plain.position(of: Point(bounds.minX, bounds.minY)).y + plain.cell
-        let cornerLeft = size.width - controlsCorner.width
-        let cornerTop = size.height - controlsCorner.height
-        guard right > cornerLeft, bottom > cornerTop else { return EdgeInsets() }
-        let horizontalSlack = size.width - plain.contentWidth
-        let verticalSlack = size.height - plain.contentHeight
-        let fitsVertically = verticalSlack >= controlsCorner.height
-        let fitsHorizontally = horizontalSlack >= controlsCorner.width
-        // No shrink: reserve the roomier axis when it can swallow the corner.
-        if fitsVertically, verticalSlack >= horizontalSlack {
-            return EdgeInsets(top: 0, leading: 0, bottom: controlsCorner.height, trailing: 0)
-        }
-        if fitsHorizontally {
-            return EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: controlsCorner.width)
-        }
-        if fitsVertically {
-            return EdgeInsets(top: 0, leading: 0, bottom: controlsCorner.height, trailing: 0)
-        }
-        // Neither fits — must shrink to clear. Reserve the full corner on BOTH
-        // axes so the re-fitted content is pushed out of the corner square
-        // regardless of which axis ends up binding.
-        return EdgeInsets(
-            top: 0, leading: 0, bottom: controlsCorner.height, trailing: controlsCorner.width)
-    }
-
     public var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
             // Keep the fitted board clear of the floating controls in the
             // bottom-trailing corner (at the fit zoom there's no panning to
-            // reveal a covered dot). But only inset by the ACTUAL overlap: a
-            // height-bound board already has wide side margins, so the corner
-            // sits in dead space and nothing shrinks — see BoardView.cornerInset.
+            // reveal a covered dot) — see Layout.controlsClearInset.
             let bounds = Bounds(of: session.game.dots)
-            let insets = Self.cornerInset(bounds: bounds, in: size)
+            let insets = Layout.controlsClearInset(bounds: bounds, in: size)
             let layout = Layout(fitting: bounds, in: size, insets: insets)
             let zoom = BoardCamera.clampZoom(camera.zoom * gestureZoom)
             let pan = BoardCamera.clampPan(

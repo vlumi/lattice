@@ -33,7 +33,7 @@ final class BoardLayoutTests: XCTestCase {
     func testCornerInsetIsZeroWhenBoardClearsTheCorner() {
         // A small board in a tall frame: the corner is dead space, no inset.
         let tall = CGSize(width: 400, height: 900)
-        let insets = BoardView.cornerInset(bounds: bounds, in: tall)
+        let insets = Layout.controlsClearInset(bounds: bounds, in: tall)
         XCTAssertEqual(insets.trailing, 0)
         XCTAssertEqual(insets.bottom, 0)
     }
@@ -47,7 +47,7 @@ final class BoardLayoutTests: XCTestCase {
     ) {
         let big = Bounds(of: [Point(0, 0), Point(24, 24)])
         let plain = Layout(fitting: big, in: frame)
-        let insets = BoardView.cornerInset(bounds: big, in: frame)
+        let insets = Layout.controlsClearInset(bounds: big, in: frame)
         let layout = Layout(fitting: big, in: frame, insets: insets)
         if !shrinkAllowed {
             XCTAssertEqual(

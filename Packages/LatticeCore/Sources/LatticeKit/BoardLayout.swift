@@ -79,4 +79,42 @@ struct Layout {
         }
         return candidate
     }
+
+    /// The bottom-trailing square the floating board controls occupy (button +
+    /// padding), which the fit must keep clear.
+    static let controlsCorner = CGSize(width: 68, height: 68)
+
+    /// An inset that keeps the fitted board clear of the floating controls
+    /// (bottom-trailing) at the fit zoom, where there's no panning to reveal a
+    /// covered dot. Preference:
+    /// 1. If an axis has enough slack to swallow the whole corner, reserve it
+    ///    fully — the board just shifts within its margin, no shrink. Pick the
+    ///    roomier axis (bottom for a wide Mac window, trailing for a tall phone).
+    /// 2. If NEITHER axis has room (a near-square window), reserve the full
+    ///    corner on both axes and accept a small shrink — a covered dot is worse.
+    /// No-op when the content already clears the corner.
+    static func controlsClearInset(bounds: Bounds, in size: CGSize) -> EdgeInsets {
+        let plain = Layout(fitting: bounds, in: size)
+        let right = plain.position(of: Point(bounds.maxX, bounds.minY)).x + plain.cell
+        let bottom = plain.position(of: Point(bounds.minX, bounds.minY)).y + plain.cell
+        let cornerLeft = size.width - controlsCorner.width
+        let cornerTop = size.height - controlsCorner.height
+        guard right > cornerLeft, bottom > cornerTop else { return EdgeInsets() }
+        let horizontalSlack = size.width - plain.contentWidth
+        let verticalSlack = size.height - plain.contentHeight
+        let fitsVertically = verticalSlack >= controlsCorner.height
+        let fitsHorizontally = horizontalSlack >= controlsCorner.width
+        if fitsVertically, verticalSlack >= horizontalSlack {
+            return EdgeInsets(top: 0, leading: 0, bottom: controlsCorner.height, trailing: 0)
+        }
+        if fitsHorizontally {
+            return EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: controlsCorner.width)
+        }
+        if fitsVertically {
+            return EdgeInsets(top: 0, leading: 0, bottom: controlsCorner.height, trailing: 0)
+        }
+        // Neither fits — reserve the full corner on both axes (small shrink).
+        return EdgeInsets(
+            top: 0, leading: 0, bottom: controlsCorner.height, trailing: controlsCorner.width)
+    }
 }
