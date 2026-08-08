@@ -47,4 +47,31 @@ final class ForeclosureTests: XCTestCase {
         let losses = Foreclosure.losses(in: record(start: dots, moves: [hMove(0), hMove(10)]))
         XCTAssertTrue(losses.isEmpty)
     }
+
+    func testSealingLineDrawnBeforeAnExistingLine() {
+        // Reverse order: draw the RIGHT line first, then the LEFT — so the
+        // sealing (second) line has the other line AHEAD of it on the axis.
+        // Same one-dot gap at col 5, same dead span; exercises the other
+        // end-scan direction.
+        let dots: Set<Point> = [
+            0, 1, 2, 3, 6, 7, 8, 9,
+        ].reduce(into: Set<Point>()) { $0.insert(Point($1, 0)) }
+        let losses = Foreclosure.losses(in: record(start: dots, moves: [hMove(6), hMove(0)]))
+        XCTAssertEqual(losses.count, 1)
+        XCTAssertEqual(losses.first?.moveIndex, 1)
+        XCTAssertEqual(losses.first?.span, Line(origin: Point(4, 0), axis: .horizontal, length: 3))
+    }
+
+    func testLiveGameOverloadMatchesRecord() {
+        // The Game-based overload (used by the live board) sees the same losses.
+        let dots: Set<Point> = [
+            0, 1, 2, 3, 6, 7, 8, 9,
+        ].reduce(into: Set<Point>()) { $0.insert(Point($1, 0)) }
+        var game = Game(rules: .fiveT, start: dots)
+        _ = game.play(hMove(0))
+        _ = game.play(hMove(6))
+        let losses = Foreclosure.losses(in: game)
+        XCTAssertEqual(losses.count, 1)
+        XCTAssertEqual(losses.first?.span, Line(origin: Point(4, 0), axis: .horizontal, length: 3))
+    }
 }
