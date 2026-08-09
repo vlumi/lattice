@@ -9,5 +9,8 @@ struct LatticeApp: App {
         WindowGroup {
             RootView(model: model)
         }
+        .commands {
+            LatticeCommands(model: model)
+        }
     }
 }

@@ -20,14 +20,23 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
-- Keyboard reach & clarity: the challenge/QR share popover now closes
-  with Esc (and a Done button) — on iPhone it presented as a sheet with
-  no keyboard way out. Game-over Share (⇧⌘S) and Save Image (⌘S), the
-  Nearby button (⌘D, Versus), and the challenge code (⇧⌘C) gained
-  shortcuts. Restart is now disabled on an unplayed board (nothing to
-  restart), so a mis-tap toward Undo can't do anything there; and if you
-  do restart mid-game, Undo brings the game back.
-
+- Keyboard: the whole app is now operable without a mouse, and every
+  ⌘-shortcut lives in the menu bar (so it's discoverable). Menu commands —
+  New Game (⌘N), Restart (⌘R), Undo (⌘Z), Fit (⌘0), Settings (⌘,), the
+  tabs (⌘1–⌘4, in View), Nearby (⌘D), Share Challenge (⇧⌘C), Save Image
+  (⌘S) — with each disabled when it doesn't apply. In-view surfaces are
+  arrow-key navigable on macOS: the New Game modal, Settings, the History
+  list (↑/↓ rows, ←/→ filter, Return opens), and the replay viewer (Space
+  play/pause, ←/→ a move, PgUp/PgDn ±10, Home/End, Esc/Backspace back).
+  (Built on Donpa's model: menu `Commands` + an AppKit key catcher, which
+  receives keys reliably where hidden SwiftUI shortcut buttons didn't.)
+- Restart is disabled on an unplayed board (nothing to restart), so a
+  mis-tap toward Undo can't do anything there; a mid-game restart is
+  recoverable — Undo brings the game back. The challenge/QR popover closes
+  with Esc or a Done button (on iPhone it was a keyboard trap).
+- Header fit: on a narrow screen (iPhone SE) the seeded-game challenge
+  chip drops its code text and shows just the QR icon, so the top bar no
+  longer wraps; the code is still there in the share popover.
 - macOS Settings is now a modal sheet opened with ⌘, (Lattice Five ▸
   Settings…) instead of a tab — the platform's expected place. Done or
   Esc closes it; it's tied to the game window so it can't be left

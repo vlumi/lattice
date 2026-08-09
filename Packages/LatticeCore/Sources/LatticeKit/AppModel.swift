@@ -34,6 +34,23 @@ public final class AppModel: ObservableObject {
     /// command). iOS has Settings as a tab instead, so this is unused there.
     @Published public var isShowingSettings = false
 
+    // Menu-command intents, routed to the active GameView (which observes and
+    // acts). Counters, not Bools, so a repeated press fires each time. This is
+    // how the app menu (LatticeCommands) drives the same actions as the chrome.
+    @Published public var newGameRequested = 0
+    @Published public var restartRequested = 0
+    @Published public var undoRequested = 0
+    @Published public var fitRequested = 0
+    @Published public var nearbyRequested = 0
+    @Published public var shareChallengeRequested = 0  // opens the code/QR popover
+    @Published public var saveImageRequested = 0  // game-over PNG export
+
+    // Availability for the menu (published so it enables/disables live).
+    /// The active game is a seeded challenge (has a code to share).
+    @Published public var canShareChallenge = false
+    /// The active game is over (Save Image applies).
+    @Published public var isGameOver = false
+
     public init(store: LatticeStore = .appSupport()) {
         self.store = store
         freeSession = GameSession(mode: .free, store: store)

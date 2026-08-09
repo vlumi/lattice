@@ -18,7 +18,6 @@ struct BoardControls: View {
                 ) {
                     camera.reset()
                 }
-                .keyboardShortcut("0", modifiers: .command)
             }
             button(
                 systemName: "arrow.uturn.backward", label: Text("Undo", bundle: .module),
@@ -26,7 +25,6 @@ struct BoardControls: View {
             ) {
                 session.undo()
             }
-            .keyboardShortcut("z", modifiers: .command)
             .disabled(!session.undoAllowed)
         }
         .padding(12)

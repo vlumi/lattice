@@ -13,6 +13,8 @@ public struct HistoryView: View {
     @State private var records: [GameRecord] = []
     /// nil = All.
     @State private var selectedVariant: String?
+    /// Keyboard row cursor into `filtered`; Return opens it.
+    @State private var cursor = 0
 
     public init(store: LatticeStore, path: Binding<NavigationPath>) {
         self.store = store
@@ -79,7 +81,7 @@ public struct HistoryView: View {
             }
             chart
                 .frame(height: 220)
-            List(filtered) { record in
+            List(Array(filtered.enumerated()), id: \.element.id) { index, record in
                 NavigationLink(value: record) {
                     HStack {
                         Label {
@@ -101,9 +103,41 @@ public struct HistoryView: View {
                             .font(.headline.monospacedDigit())
                     }
                 }
+                .listRowBackground(index == cursor ? Color.accentColor.opacity(0.15) : nil)
             }
             .listStyle(.plain)
         }
+        #if os(macOS)
+        // Up/Down move the row cursor (Return opens it), Left/Right cycle the
+        // filter — only on the list, not when a replay is pushed.
+        .background(Group { if path.isEmpty { KeyCatcher(onKey: handle) } })
+        #endif
+    }
+
+    #if os(macOS)
+    private func handle(_ key: KeyCatcher.Key) {
+        switch key {
+        case .up: moveCursor(-1)
+        case .down: moveCursor(1)
+        case .left: cycleFilter(-1)
+        case .right: cycleFilter(1)
+        case .enter, .space:
+            if filtered.indices.contains(cursor) { path.append(filtered[cursor]) }
+        default: break
+        }
+    }
+    #endif
+
+    private func moveCursor(_ step: Int) {
+        guard !filtered.isEmpty else { return }
+        cursor = min(max(cursor + step, 0), filtered.count - 1)
+    }
+
+    private func cycleFilter(_ step: Int) {
+        let options: [String?] = [nil] + presentVariants
+        let current = options.firstIndex(of: selectedVariant) ?? 0
+        selectedVariant = options[(current + step + options.count) % options.count]
+        cursor = 0
     }
 
     private struct BestSample: Identifiable {

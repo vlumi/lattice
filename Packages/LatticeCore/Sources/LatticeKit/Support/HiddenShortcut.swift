@@ -14,3 +14,17 @@ struct HiddenShortcut: View {
             .accessibilityHidden(true)
     }
 }
+
+extension View {
+    /// A subtle ring marking the keyboard-nav "cursor" row (New Game modal,
+    /// Settings).
+    func rowCursor(_ active: Bool) -> some View {
+        padding(4)
+            .overlay {
+                if active {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(.secondary.opacity(0.5), lineWidth: 1.5)
+                }
+            }
+    }
+}
