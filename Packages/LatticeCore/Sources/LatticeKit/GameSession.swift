@@ -61,6 +61,19 @@ public final class GameSession: ObservableObject {
         let seed: UInt64?
     }
 
+    /// The game that was replaced by the last New Game / restart, kept only
+    /// briefly so an undo can bring it back — an accidental restart mid-game is
+    /// recoverable. Lives on the fresh board until the first move commits to it
+    /// (then it's gone — this is a safety net, not an archive of past games).
+    /// Free/versus only (the daily has its own one-undo rule).
+    private struct RestorePoint {
+        let game: Game
+        let id: UUID
+        let seed: UInt64?
+        let openness: [Int]
+    }
+    private var restorePoint: RestorePoint?
+
     public init(mode: Mode = .free, rules: Rules = .fiveT, store: LatticeStore = .appSupport()) {
         self.mode = mode
         self.store = store
@@ -187,7 +200,12 @@ public final class GameSession: ObservableObject {
     }
 
     public var undoAllowed: Bool {
-        guard !game.moves.isEmpty, !dailyDone else { return false }
+        guard !dailyDone else { return false }
+        // A restore point (undo a New Game / restart) is undoable even on the
+        // fresh board's empty move list.
+        if game.moves.isEmpty {
+            return restorePoint != nil && (mode == .free || mode == .passAndPlay)
+        }
         return mode == .free || undoArmed
     }
 
@@ -221,6 +239,10 @@ public final class GameSession: ObservableObject {
 
     public func commit(_ move: Move) {
         guard !dailyDone, game.play(move) else { return }
+        // The first move on a fresh board commits to it — the just-replaced
+        // game is no longer recoverable (the restore point is a brief
+        // accidental-restart safety net, not an archive of past games).
+        restorePoint = nil
         tentative = nil
         candidateIndex = 0
         undoArmed = true
@@ -231,7 +253,25 @@ public final class GameSession: ObservableObject {
     }
 
     public func undo() {
-        guard undoAllowed, game.undo() != nil else { return }
+        guard undoAllowed else { return }
+        // On the fresh board (no moves), undo means "undo the New Game/restart":
+        // bring the replaced game back.
+        if game.moves.isEmpty {
+            guard let restore = restorePoint else { return }
+            game = restore.game
+            seed = restore.seed
+            gameID = restore.id
+            restorePoint = nil
+            tentative = nil
+            candidateIndex = 0
+            undoArmed = false
+            refresh()
+            opennessHistory = restore.openness
+            pbCurve = mode == .passAndPlay ? nil : Self.bestCurve(in: store, key: variantKey)
+            persist()
+            return
+        }
+        guard game.undo() != nil else { return }
         tentative = nil
         candidateIndex = 0
         undoArmed = false
@@ -300,6 +340,13 @@ public final class GameSession: ObservableObject {
     }
 
     private func start(_ newGame: Game, seed: UInt64?) {
+        // Snapshot the outgoing game so an undo can recover it — but only if it
+        // was actually in progress (a fresh, unplayed board isn't worth
+        // "restoring"). Free/versus only; the daily can't restart.
+        restorePoint =
+            (mode != .daily && !game.moves.isEmpty)
+            ? RestorePoint(game: game, id: gameID, seed: self.seed, openness: opennessHistory)
+            : nil
         game = newGame
         self.seed = seed
         gameID = UUID()

@@ -10,11 +10,10 @@ public struct GameView: View {
     @EnvironmentObject private var feedback: Feedback
     @State private var exportDocument: PNGDocument?
     @State private var isExporting = false
-    @State private var isEnteringCode = false
-    @State private var codeInput = ""
     @State private var isShowingChallenge = false
     @State private var isScanning = false
     @State private var isShowingNearby = false
+    @State private var isShowingNewGame = false
     /// App-wide "show keyboard shortcuts" state, owned by RootView (drives the
     /// board cheatsheet + control badges here, tab badges there).
     @Binding private var showShortcuts: Bool
@@ -27,19 +26,26 @@ public struct GameView: View {
     public var body: some View {
         VStack(spacing: 12) {
             header
-            BoardView(session: session, camera: camera)
-                // Undo and Fit float over the board (bottom-trailing) rather
-                // than crowding the header — the frequent in-game actions sit
-                // under the thumb, near what they affect.
-                .overlay(alignment: .bottomTrailing) {
-                    BoardControls(session: session, camera: camera, showShortcuts: showShortcuts)
+            BoardView(
+                session: session, camera: camera,
+                keyboardEnabled: !isShowingNewGame && !showShortcuts
+            )
+            // Undo and Fit float over the board (bottom-trailing) rather
+            // than crowding the header — the frequent in-game actions sit
+            // under the thumb, near what they affect.
+            .overlay(alignment: .bottomTrailing) {
+                BoardControls(session: session, camera: camera, showShortcuts: showShortcuts)
+            }
+            // "?" reveals the keyboard cheatsheet for board play.
+            .overlay {
+                if showShortcuts {
+                    KeyboardCheatsheet { showShortcuts = false }
                 }
-                // "?" reveals the keyboard cheatsheet for board play.
-                .overlay {
-                    if showShortcuts {
-                        KeyboardCheatsheet { showShortcuts = false }
-                    }
-                }
+            }
+            // New Game modal (variant / random / code) — ⌘N or the header.
+            .overlay {
+                if isShowingNewGame { newGameModal }
+            }
             if session.pbCurve != nil {
                 ghost
             }
@@ -197,83 +203,61 @@ public struct GameView: View {
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                 }
-                .keyboardShortcut("n", modifiers: .command)
-                .accessibilityLabel(Text("New Game", bundle: .module))
+                .keyboardShortcut("r", modifiers: .command)
+                .accessibilityLabel(Text("Restart", bundle: .module))
             }
             if session.mode == .free {
-                // Switching variant starts a new game of it.
-                Menu {
-                    ForEach(Rules.selectable, id: \.self) { rules in
-                        Button {
-                            session.newGame(rules: rules)
-                            camera.reset()
-                        } label: {
-                            if rules.storageKey == session.variantKey {
-                                Label(rules.storageKey, systemImage: "checkmark")
-                            } else {
-                                Text(verbatim: rules.storageKey)
-                            }
-                        }
-                    }
-                    Divider()
-                    Button {
-                        session.newChallenge(seed: SeedCode.randomSeed())
-                        camera.reset()
-                    } label: {
-                        Text("Random Start (5T#)", bundle: .module)
-                    }
-                    Button {
-                        codeInput = ""
-                        isEnteringCode = true
-                    } label: {
-                        Text("Enter Code…", bundle: .module)
-                    }
-                    #if os(iOS)
-                    if CodeScannerView.isSupported {
-                        Button {
-                            isScanning = true
-                        } label: {
-                            Text("Scan Code…", bundle: .module)
-                        }
-                    }
-                    #endif
+                // Opens the New Game modal (variant / random / code) — replaces
+                // the old dropdown, which was keyboard-hostile.
+                Button {
+                    isShowingNewGame = true
                 } label: {
-                    // Icon (game type) + current variant + a menu chevron, so
-                    // it reads as a tappable game-type picker, not bare text.
                     Label {
-                        HStack(spacing: 4) {
-                            Text(verbatim: session.variantKey)
-                            Image(systemName: "chevron.down")
-                                .font(.caption2)
-                        }
+                        Text(verbatim: session.variantKey)
                     } icon: {
                         Image(systemName: "square.grid.2x2")
                     }
                     .font(.subheadline)
                 }
-                .menuStyle(.button)
+                .buttonStyle(.bordered)
                 .fixedSize()
-                .alert(
-                    Text("Enter Code", bundle: .module), isPresented: $isEnteringCode
-                ) {
-                    TextField(text: $codeInput) {
-                        Text("Code", bundle: .module)
-                    }
-                    Button {
-                        if let seed = SeedCode.decode(codeInput) {
-                            session.newChallenge(seed: seed)
-                            camera.reset()
-                        }
-                    } label: {
-                        Text("Play", bundle: .module)
-                    }
-                    Button(role: .cancel) {
-                    } label: {
-                        Text("Cancel", bundle: .module)
-                    }
-                }
+                .keyboardShortcut("n", modifiers: .command)
+                .accessibilityLabel(Text("New Game", bundle: .module))
+                .accessibilityValue(Text(verbatim: session.variantKey))
             }
         }
+    }
+
+    private var newGameModal: some View {
+        NewGameModal(
+            session: session,
+            dismiss: { isShowingNewGame = false },
+            onVariant: { rules in
+                session.newGame(rules: rules)
+                camera.reset()
+            },
+            onRandom: {
+                session.newChallenge(seed: SeedCode.randomSeed())
+                camera.reset()
+            },
+            onCode: { seed in
+                session.newChallenge(seed: seed)
+                camera.reset()
+            },
+            onScan: scanAction)
+    }
+
+    /// The iOS scanner action, if the device supports it (nil otherwise / macOS).
+    private var scanAction: (() -> Void)? {
+        #if os(iOS)
+        guard CodeScannerView.isSupported else { return nil }
+        return {
+            isShowingNewGame = false
+            isScanning = true
+        }
+        #else
+        return nil
+        #endif
     }
 
     private var gameOver: some View {

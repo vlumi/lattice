@@ -20,6 +20,19 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- New Game modal (Free): the game-type dropdown becomes a modal — a
+  variant row (5T / 5T+ / 5D / 4T / 4D), Random Start, and an inline
+  code field with From Code / Scan, then a single Start. ⌘N opens it;
+  the current variant is picked by default. Fully keyboard-driven:
+  Up/Down move between rows, ←/→ pick a variant, Return/Space starts
+  (or, on the code row, drops into the field to type), Esc closes (or
+  steps out of the field while typing). Restart-this-board is now its
+  own header button on **⌘R**.
+- Restart is undoable: an accidental restart / New Game mid-game can be
+  taken back with Undo, bringing the replaced game (and its openness
+  history) back — until the first move commits to the fresh board, at
+  which point the old game is gone. Free and Versus; the daily is
+  unaffected.
 - Keyboard play (accessibility): play a whole game without a mouse.
   Arrow keys or WASD roam a board cursor (clamped so every legal point
   is reachable); Enter/Space places a dot, then ←/→/Tab cycle the
