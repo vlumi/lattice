@@ -3,7 +3,8 @@ import SwiftUI
 
 /// The app root: the game tabs (and, on iOS, Settings) over one shared
 /// `AppModel` — sessions keep their state alive across tab switches. On macOS
-/// Settings is a separate window (the `Settings` scene), not a tab.
+/// Settings is a modal sheet (not a tab), and the tabs are also reachable from
+/// the native View menu (which drives `model.selection` directly).
 public struct RootView: View {
     @ObservedObject private var model: AppModel
     @State private var historyPath = NavigationPath()
@@ -16,7 +17,7 @@ public struct RootView: View {
     }
 
     public var body: some View {
-        TabView(selection: selectionResettingHistory) {
+        TabView(selection: $model.selection) {
             GameView(session: model.freeSession, showShortcuts: $showShortcuts)
                 .tabItem { tabLabel("Free", "circle.grid.3x3") }
                 .tag(AppModel.Tab.free)
@@ -37,10 +38,19 @@ public struct RootView: View {
                 .tag(AppModel.Tab.settings)
             #endif
         }
-        .background(tabShortcuts(selectionResettingHistory))
         .background(ShortcutToggle(showShortcuts: $showShortcuts))
         // Board feedback (sound + haptics) available to the board views.
         .environmentObject(model.feedback)
+        // Arriving at History (a tab tap, ⌘4, or the View menu — any route that
+        // changes selection) always lands on the list, not a parked replay.
+        .onChangeCompat(of: model.selection) { newValue in
+            if newValue == .history { historyPath = NavigationPath() }
+        }
+        // iOS: hidden ⌘1–⌘5 tab shortcuts. macOS gets them natively from the
+        // View menu (see the app's commands), so they're not duplicated here.
+        #if !os(macOS)
+        .background(tabShortcuts())
+        #endif
         // macOS: Settings is a modal sheet on the game window (⌘, from the app
         // menu, via the app's command). A sheet can't be orphaned or outlive
         // the game, unlike a separate Settings window. iOS uses the tab above.
@@ -62,17 +72,6 @@ public struct RootView: View {
         }
     }
 
-    // Arriving at the History tab (or re-tapping it, where the platform reports
-    // that) always lands on the list, not a parked replay.
-    private var selectionResettingHistory: Binding<AppModel.Tab> {
-        Binding(
-            get: { model.selection },
-            set: { newValue in
-                if newValue == .history { historyPath = NavigationPath() }
-                model.selection = newValue
-            })
-    }
-
     // A plain tab item. (Tab shortcuts are shown in the "?" cheatsheet — native
     // tab items can't carry a floating badge.)
     private func tabLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
@@ -83,21 +82,17 @@ public struct RootView: View {
         }
     }
 
-    // Keyboard tab switching via hidden buttons (the iOS-16-safe pattern; the
-    // binding resets History to its list like a tap does). On macOS, Settings
-    // is a window with its own native ⌘, — the tabs are ⌘1–⌘4. On iOS Settings
-    // is the ⌘5 tab.
-    private func tabShortcuts(_ selection: Binding<AppModel.Tab>) -> some View {
-        var tabs: [(KeyEquivalent, AppModel.Tab)] = [
-            ("1", .free), ("2", .daily), ("3", .versus), ("4", .history),
+    #if !os(macOS)
+    // iOS keyboard tab switching via hidden buttons (the iOS-16-safe pattern;
+    // ⌘1–⌘5, Settings being the 5th tab). macOS uses the native View menu.
+    private func tabShortcuts() -> some View {
+        let tabs: [(KeyEquivalent, AppModel.Tab)] = [
+            ("1", .free), ("2", .daily), ("3", .versus), ("4", .history), ("5", .settings),
         ]
-        #if !os(macOS)
-        tabs.append(("5", .settings))
-        #endif
         return Group {
             ForEach(Array(tabs.enumerated()), id: \.offset) { _, entry in
                 Button {
-                    selection.wrappedValue = entry.1
+                    model.selection = entry.1
                 } label: {
                     Color.clear.frame(width: 1, height: 1)
                 }
@@ -107,4 +102,5 @@ public struct RootView: View {
         .opacity(0)
         .accessibilityHidden(true)
     }
+    #endif
 }

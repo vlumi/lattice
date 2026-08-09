@@ -3,14 +3,13 @@ import LatticeCore
 import SwiftUI
 
 /// App-wide state owned once by the platform `App` and shared by every scene —
-/// the three game sessions, the sync controller, and board feedback. Having a
-/// single owner lets the macOS Settings scene (a sibling window of the main
-/// one) reach the same `sync`/`feedback` the game window uses, and gives the
-/// selected tab a home the app's menu commands can drive.
+/// the three game sessions, the sync controller, and board feedback. A single
+/// owner lets the macOS Settings sheet reach the same `sync`/`feedback` the
+/// game uses, and gives `selection` a home the app's View-menu commands drive.
 @MainActor
 public final class AppModel: ObservableObject {
-    /// Main-window tabs. Settings is a tab on iOS; on macOS it's a separate
-    /// Settings window, so it's absent from this set there.
+    /// Main-window tabs. Settings is a tab on iOS; on macOS it's a modal sheet,
+    /// so it's absent from this set there.
     public enum Tab: Hashable {
         case free
         case daily
