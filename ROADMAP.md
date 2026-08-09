@@ -7,26 +7,22 @@ history](README.md#version-history), full detail in
 indicative, not contractual, and everything before 1.0 is beta (internal
 TestFlight; see [RELEASING.md](RELEASING.md)).
 
-**v0.5.0 has shipped** (two-player, iCloud sync, Nearby duel, first
-TestFlight). Next up is v0.6.0.
+**v0.5.0 is in flight** on internal TestFlight. The work below lands as
+further 0.5.0 builds before the version bump.
 
 ---
 
-## v0.6.0 — Puzzle mode & polish
+## v0.5.0 — remaining
 
-- [ ] Solver-generated puzzles ("find N more moves", "find the only move")
-      from recorded/simulated games
 - [ ] Interactive tutorial (teach the segment rule and no-free-lines by
       doing)
 - [ ] Accessibility pass: VoiceOver on the board, Dynamic Type in chrome,
       keyboard-only play on Mac/iPad
 - [ ] Performance/battery sanity pass on the render loop
-- [ ] Revisit the replay slider: the analysis chart scrubs too — drop the
-      slider near release if it feels redundant (deferred 2026-07-21)
-- [ ] Sacrificed-line markers (placements that enabled two lines) — deferred
-      from the v0.3 analysis slice
 - [ ] Score ladder: local milestones against the known reference points
-      (records/bounds table in AGENTS.md) — deferred from v0.2
+      (records/bounds table in AGENTS.md)
+- [ ] Solver-generated puzzles ("find N more moves", "find the only move")
+      from recorded/simulated games
 
 ## Open decisions
 
