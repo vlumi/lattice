@@ -20,6 +20,13 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- macOS Settings is now a modal sheet opened with ⌘, (Lattice Five ▸
+  Settings…) instead of a tab — the platform's expected place. Done or
+  Esc closes it; it's tied to the game window so it can't be left
+  orphaned. The Mac tab bar is now Free / Daily / Versus / History
+  (⌘1–⌘4). iOS keeps Settings as a tab. (Shared app state moved into one
+  `AppModel` owned by the app, so both the game and the Settings sheet
+  read the same sync/feedback.)
 - New Game modal (Free): the game-type dropdown becomes a modal — a
   variant row (5T / 5T+ / 5D / 4T / 4D), Random Start, and an inline
   code field with From Code / Scan, then a single Start. ⌘N opens it;

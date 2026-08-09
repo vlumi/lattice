@@ -18,6 +18,10 @@ further 0.5.0 builds before the version bump.
       doing)
 - [ ] Accessibility pass: VoiceOver on the board, Dynamic Type in chrome,
       keyboard-only play on Mac/iPad
+- [ ] Keyboard-control gaps: much chrome is still mouse-only. Settings
+      toggles/field aren't keyboard-operable; audit every screen (History
+      list/replay transport, Nearby lobby, game-over actions) for
+      keyboard reachability — the New Game modal's arrow-nav is the pattern.
 - [ ] Performance/battery sanity pass on the render loop
 - [ ] Score ladder: local milestones against the known reference points
       (records/bounds table in AGENTS.md)

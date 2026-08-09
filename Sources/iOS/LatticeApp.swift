@@ -3,9 +3,11 @@ import SwiftUI
 
 @main
 struct LatticeApp: App {
+    @StateObject private var model = AppModel()
+
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(model: model)
         }
     }
 }
