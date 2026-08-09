@@ -28,16 +28,7 @@ public struct SettingsScene: View {
             Divider()
             SettingsView(sync: model.sync, feedback: model.feedback)
         }
-        // A compact, fixed width like a standard settings pane; height follows
-        // the form's content.
-        .frame(width: 460)
-        // Esc closes the sheet too (⌘. and the Done button also do). Hidden
-        // button — the iOS-16-safe shortcut pattern used across the app.
-        .background(
-            Button(action: done) { Color.clear.frame(width: 1, height: 1) }
-                .keyboardShortcut(.escape, modifiers: [])
-                .opacity(0)
-                .accessibilityHidden(true)
-        )
+        .frame(width: 460)  // compact, like a standard settings pane
+        .background(HiddenShortcut(key: .escape, action: done))
     }
 }

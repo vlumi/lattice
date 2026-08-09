@@ -28,7 +28,7 @@ public struct GameView: View {
             header
             BoardView(
                 session: session, camera: camera,
-                keyboardEnabled: !isShowingNewGame && !showShortcuts
+                keyboardEnabled: !isShowingNewGame && !showShortcuts && !isShowingChallenge
             )
             // Undo and Fit float over the board (bottom-trailing) rather
             // than crowding the header — the frequent in-game actions sit
@@ -36,13 +36,12 @@ public struct GameView: View {
             .overlay(alignment: .bottomTrailing) {
                 BoardControls(session: session, camera: camera, showShortcuts: showShortcuts)
             }
-            // "?" reveals the keyboard cheatsheet for board play.
+            // At most one overlay at a time.
             .overlay {
-                if showShortcuts {
+                if showShortcuts && !isShowingNewGame {
                     KeyboardCheatsheet { showShortcuts = false }
                 }
             }
-            // New Game modal (variant / random / code) — ⌘N or the header.
             .overlay {
                 if isShowingNewGame { newGameModal }
             }
@@ -54,6 +53,14 @@ public struct GameView: View {
             }
         }
         .padding()
+        // Overlay dismissals live here at window level: hidden shortcut buttons
+        // inside an .overlay/.popover don't reliably receive keys.
+        .background(overlayDismissKeys)
+        // RootView's app-wide "?" can't see the modal; keep the cheatsheet off
+        // while it's up so the two don't coexist.
+        .onChangeCompat(of: showShortcuts) { on in
+            if on && isShowingNewGame { showShortcuts = false }
+        }
         // The game-over feedback (sound + a neutral notification haptic) — the
         // plain end-state was easy to miss. Fire once, on the transition to
         // over (onChangeCompat bridges the iOS-16 floor).
@@ -150,6 +157,7 @@ public struct GameView: View {
                 } label: {
                     Image(systemName: "person.line.dotted.person.fill")
                 }
+                .keyboardShortcut("d", modifiers: .command)
                 .accessibilityLabel(Text("Nearby", bundle: .module))
             } else if session.mode == .daily, session.dailyStreak > 0 {
                 Text(
@@ -174,12 +182,17 @@ public struct GameView: View {
                     }
                     .font(.subheadline.monospaced())
                 }
+                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .accessibilityLabel(Text("Share challenge", bundle: .module))
                 // Popover on Mac/iPad; adapts to a sheet on iPhone (the
                 // compact-popover modifier needs iOS 16.4; floor is 16.0).
                 .popover(isPresented: $isShowingChallenge) {
-                    ChallengeShareView(code: code, url: ChallengeLink.url(for: seed))
-                        .padding()
-                        .presentationDetents([.medium])
+                    ChallengeShareView(
+                        code: code, url: ChallengeLink.url(for: seed),
+                        dismiss: { isShowingChallenge = false }
+                    )
+                    .padding()
+                    .presentationDetents([.medium])
                 }
             }
             Spacer()
@@ -191,12 +204,14 @@ public struct GameView: View {
             } label: {
                 Text("Cancel", bundle: .module)
             }
-            .keyboardShortcut(.cancelAction)
+            // Claim Esc only when there's a move to cancel — a disabled button
+            // still swallows its shortcut on macOS, which ate overlays' Esc.
+            .keyboardShortcut(session.tentative == nil ? nil : .cancelAction)
             .disabled(session.tentative == nil)
             .opacity(session.tentative == nil ? 0 : 1)
             if session.mode != .daily {
-                // Restart: the same board again (same seed, or the fixed
-                // classic pattern).
+                // Restart the same board. Disabled on an unplayed board: nothing
+                // to restart, and it blocks a mis-tap toward Undo.
                 Button {
                     session.newGame()
                     camera.reset()
@@ -204,12 +219,12 @@ public struct GameView: View {
                     Image(systemName: "arrow.counterclockwise")
                 }
                 .keyboardShortcut("r", modifiers: .command)
+                .disabled(session.game.moves.isEmpty)
                 .accessibilityLabel(Text("Restart", bundle: .module))
             }
             if session.mode == .free {
-                // Opens the New Game modal (variant / random / code) — replaces
-                // the old dropdown, which was keyboard-hostile.
                 Button {
+                    showShortcuts = false
                     isShowingNewGame = true
                 } label: {
                     Label {
@@ -225,6 +240,15 @@ public struct GameView: View {
                 .accessibilityLabel(Text("New Game", bundle: .module))
                 .accessibilityValue(Text(verbatim: session.variantKey))
             }
+        }
+    }
+
+    @ViewBuilder private var overlayDismissKeys: some View {
+        if isShowingChallenge {
+            HiddenShortcut(key: .escape) { isShowingChallenge = false }
+        }
+        if isShowingNewGame {
+            HiddenShortcut(key: .escape) { isShowingNewGame = false }
         }
     }
 
@@ -281,7 +305,9 @@ public struct GameView: View {
                     item: image,
                     preview: SharePreview(
                         Text("Lattice Five — \(session.game.score)", bundle: .module),
-                        image: image))
+                        image: image)
+                )
+                .keyboardShortcut("s", modifiers: [.command, .shift])
             }
             Button {
                 exportDocument = ShareCard.pngData(game: session.game, subtitle: cardSubtitle)
@@ -290,6 +316,7 @@ public struct GameView: View {
             } label: {
                 Text("Save Image", bundle: .module)
             }
+            .keyboardShortcut("s", modifiers: .command)
             .fileExporter(
                 isPresented: $isExporting, document: exportDocument,
                 contentType: .png, defaultFilename: exportFilename
@@ -297,22 +324,6 @@ public struct GameView: View {
                 exportDocument = nil
             }
         }
-    }
-
-    private var cardSubtitle: String {
-        session.dailyKey.map { key in
-            String(localized: "Daily \(key) — score \(session.game.score)", bundle: .module)
-        }
-            ?? String(localized: "Score \(session.game.score)", bundle: .module)
-    }
-
-    private var exportFilename: String {
-        session.dailyKey.map { "lattice-daily-\($0)-\(session.game.score)" }
-            ?? "lattice-\(session.game.score)"
-    }
-
-    private var shareImage: Image? {
-        ShareCard.render(game: session.game, subtitle: cardSubtitle)
     }
 
     private func playerChip(_ player: Int, label: Text) -> some View {
@@ -326,11 +337,31 @@ public struct GameView: View {
     }
 }
 
+// Share-card / export text for the game-over row.
+extension GameView {
+    fileprivate var cardSubtitle: String {
+        session.dailyKey.map { key in
+            String(localized: "Daily \(key) — score \(session.game.score)", bundle: .module)
+        }
+            ?? String(localized: "Score \(session.game.score)", bundle: .module)
+    }
+
+    fileprivate var exportFilename: String {
+        session.dailyKey.map { "lattice-daily-\($0)-\(session.game.score)" }
+            ?? "lattice-\(session.game.score)"
+    }
+
+    fileprivate var shareImage: Image? {
+        ShareCard.render(game: session.game, subtitle: cardSubtitle)
+    }
+}
+
 /// The challenge hand-off: scan the QR (it's the universal link), share the
 /// link, or read the code aloud — three transports for the same seed.
 private struct ChallengeShareView: View {
     let code: String
     let url: URL
+    let dismiss: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
@@ -351,6 +382,11 @@ private struct ChallengeShareView: View {
                 } icon: {
                     Image(systemName: "square.and.arrow.up")
                 }
+            }
+            // Esc lives on the parent (see challengePopoverKeys); this is the
+            // click affordance.
+            Button(action: dismiss) {
+                Text("Done", bundle: .module)
             }
         }
     }

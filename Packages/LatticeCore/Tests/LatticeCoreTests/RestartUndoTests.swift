@@ -61,6 +61,59 @@ final class RestartUndoTests: XCTestCase {
         XCTAssertFalse(s.undoAllowed, "the pre-restart game is no longer recoverable")
     }
 
+    func testUndoRestoresPlayedGameAfterNewRandomChallenge() {
+        // The exact user flow: play a game, then start a new Random Start
+        // challenge (New Game modal → Random), then undo — the played game
+        // should come back.
+        let s = session()
+        s.place(firstPlaceable(s))
+        s.commitHighlighted()
+        let playedMoves = s.game.moves
+        XCTAssertEqual(playedMoves.count, 1)
+
+        s.newChallenge(seed: SeedCode.randomSeed())
+        XCTAssertTrue(s.game.moves.isEmpty, "fresh challenge board")
+        XCTAssertTrue(s.undoAllowed, "undo should recover the played game")
+
+        s.undo()
+        XCTAssertEqual(s.game.moves, playedMoves, "the played game comes back")
+    }
+
+    func testUndoRestoresFinishedGameAfterNewChallenge() {
+        // The reported flow used a *finished* game (game over), then New Game.
+        // Play to completion, then start a new challenge, then undo.
+        let s = session()
+        var guardCount = 0
+        while !s.isOver && guardCount < 2000 {
+            guardCount += 1
+            let xs = s.game.dots.map(\.x)
+            let ys = s.game.dots.map(\.y)
+            let points = (xs.min()! - 1...xs.max()! + 1).flatMap { x in
+                (ys.min()! - 1...ys.max()! + 1).map { Point(x, $0) }
+            }
+            var moved = false
+            for p in points where s.isPlaceable(p) {
+                s.place(p)
+                if !s.candidates.isEmpty {
+                    s.commitHighlighted()
+                    moved = true
+                    break
+                }
+                s.cancel()
+            }
+            if !moved { break }
+        }
+        XCTAssertTrue(s.isOver, "should have played to game over")
+        let finishedMoves = s.game.moves
+        XCTAssertFalse(finishedMoves.isEmpty)
+
+        s.newChallenge(seed: SeedCode.randomSeed())
+        XCTAssertTrue(s.undoAllowed, "undo should recover the finished game")
+        s.undo()
+        XCTAssertEqual(s.game.moves, finishedMoves, "the finished game comes back")
+        XCTAssertTrue(s.isOver, "restored game is still the finished one")
+    }
+
     func testUndoRestoresSeededChallengeAfterVariantSwitch() {
         let s = session()
         s.newChallenge(seed: 12345)
