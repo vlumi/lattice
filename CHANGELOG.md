@@ -20,6 +20,14 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Keyboard reach & clarity: the challenge/QR share popover now closes
+  with Esc (and a Done button) — on iPhone it presented as a sheet with
+  no keyboard way out. Game-over Share (⇧⌘S) and Save Image (⌘S), the
+  Nearby button (⌘D, Versus), and the challenge code (⇧⌘C) gained
+  shortcuts. Restart is now disabled on an unplayed board (nothing to
+  restart), so a mis-tap toward Undo can't do anything there; and if you
+  do restart mid-game, Undo brings the game back.
+
 - macOS Settings is now a modal sheet opened with ⌘, (Lattice Five ▸
   Settings…) instead of a tab — the platform's expected place. Done or
   Esc closes it; it's tied to the game window so it can't be left

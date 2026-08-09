@@ -1,13 +1,10 @@
 import LatticeCore
 import SwiftUI
 
-/// New Game chooser as a modal overlay (replaces the header dropdown): pick a
-/// variant, a random start, or a code, then Start. Every row is a selector;
-/// Start is the only thing that launches. Keyboard: Up/Down move between rows,
-/// Left/Right pick a variant within the variant row, Return/Space starts;
-/// arrows are driven by hidden shortcut buttons (the iOS-16-safe pattern the
-/// board uses). Same overlay idiom as the keyboard cheatsheet (dim backdrop,
-/// card, close via ✕ / tap-off / Esc). Restart is a separate header button.
+/// New Game chooser: pick a variant, a random start, or a code, then Start.
+/// Every row is a selector; only Start launches. Keyboard: Up/Down move rows,
+/// Left/Right pick a variant, Return/Space start. (Esc-to-close is bound by the
+/// presenting GameView — keys don't reach a hidden button inside an overlay.)
 struct NewGameModal: View {
     @ObservedObject var session: GameSession
     let dismiss: () -> Void
@@ -39,21 +36,21 @@ struct NewGameModal: View {
         }
         .background(arrowKeys)
         .onAppear {
-            // Default to the current variant (row + chip).
-            row = .variant
-            variantIndex = variantKeys.firstIndex(of: session.variantKey) ?? 0
+            // Preselect what's playing: a seeded game → Random, else its variant.
+            if session.seed != nil {
+                row = .random
+            } else {
+                row = .variant
+                variantIndex = variantKeys.firstIndex(of: session.variantKey) ?? 0
+            }
         }
     }
 
-    // Hidden shortcut buttons: Up/Down change row, Left/Right pick a variant,
-    // Return/Space start, Esc closes. Suppressed while the code field is being
-    // typed in, so it keeps the arrows/Return for text editing.
+    // Suppressed while typing a code, so the field keeps the arrows/Return.
     private var arrowKeys: some View {
         Group {
             if codeFocused {
-                // Editing a code: Esc steps out of the field back to arrow-nav
-                // (Return still starts, via the field's onSubmit).
-                key(.escape) {
+                key(.escape) {  // step out of the field, back to row nav
                     codeFocused = false
                     row = .code
                 }
@@ -62,13 +59,9 @@ struct NewGameModal: View {
                 key(.downArrow) { move(1) }
                 key(.leftArrow) { stepVariant(-1) }
                 key(.rightArrow) { stepVariant(1) }
-                // On the code row, Return/Space drops into the field to type;
-                // elsewhere it starts. (Empty code row → focus to type.)
                 key(.return) { activate() }
                 key(.space) { activate() }
-                key(.escape) { dismiss() }
-                // Consume Tab so native focus can't drop into the code field
-                // (which strands the keyboard user there); Tab just steps rows.
+                // Consume Tab so native focus can't strand the user in the field.
                 key(.tab) { move(1) }
             }
         }
@@ -167,6 +160,9 @@ struct NewGameModal: View {
     private var startRow: some View {
         HStack {
             Spacer()
+            Button(action: dismiss) {
+                Text("Cancel", bundle: .module)
+            }
             Button(action: start) {
                 Text("Start", bundle: .module)
             }
