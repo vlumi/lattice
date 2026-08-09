@@ -18,15 +18,24 @@ public struct RootView: View {
 
     public var body: some View {
         TabView(selection: $model.selection) {
-            GameView(session: model.freeSession, showShortcuts: $showShortcuts)
-                .tabItem { tabLabel("Free", "circle.grid.3x3") }
-                .tag(AppModel.Tab.free)
-            GameView(session: model.dailySession, showShortcuts: $showShortcuts)
-                .tabItem { tabLabel("Daily", "calendar") }
-                .tag(AppModel.Tab.daily)
-            GameView(session: model.versusSession, showShortcuts: $showShortcuts)
-                .tabItem { tabLabel("Versus", "person.2") }
-                .tag(AppModel.Tab.versus)
+            GameView(
+                session: model.freeSession, model: model, tab: .free,
+                showShortcuts: $showShortcuts
+            )
+            .tabItem { tabLabel("Free", "circle.grid.3x3") }
+            .tag(AppModel.Tab.free)
+            GameView(
+                session: model.dailySession, model: model, tab: .daily,
+                showShortcuts: $showShortcuts
+            )
+            .tabItem { tabLabel("Daily", "calendar") }
+            .tag(AppModel.Tab.daily)
+            GameView(
+                session: model.versusSession, model: model, tab: .versus,
+                showShortcuts: $showShortcuts
+            )
+            .tabItem { tabLabel("Versus", "person.2") }
+            .tag(AppModel.Tab.versus)
             HistoryView(store: model.store, path: $historyPath)
                 .tabItem { tabLabel("History", "clock.arrow.circlepath") }
                 .tag(AppModel.Tab.history)
@@ -46,11 +55,6 @@ public struct RootView: View {
         .onChangeCompat(of: model.selection) { newValue in
             if newValue == .history { historyPath = NavigationPath() }
         }
-        // iOS: hidden ⌘1–⌘5 tab shortcuts. macOS gets them natively from the
-        // View menu (see the app's commands), so they're not duplicated here.
-        #if !os(macOS)
-        .background(tabShortcuts())
-        #endif
         // macOS: Settings is a modal sheet on the game window (⌘, from the app
         // menu, via the app's command). A sheet can't be orphaned or outlive
         // the game, unlike a separate Settings window. iOS uses the tab above.
@@ -82,25 +86,4 @@ public struct RootView: View {
         }
     }
 
-    #if !os(macOS)
-    // iOS keyboard tab switching via hidden buttons (the iOS-16-safe pattern;
-    // ⌘1–⌘5, Settings being the 5th tab). macOS uses the native View menu.
-    private func tabShortcuts() -> some View {
-        let tabs: [(KeyEquivalent, AppModel.Tab)] = [
-            ("1", .free), ("2", .daily), ("3", .versus), ("4", .history), ("5", .settings),
-        ]
-        return Group {
-            ForEach(Array(tabs.enumerated()), id: \.offset) { _, entry in
-                Button {
-                    model.selection = entry.1
-                } label: {
-                    Color.clear.frame(width: 1, height: 1)
-                }
-                .keyboardShortcut(entry.0, modifiers: .command)
-            }
-        }
-        .opacity(0)
-        .accessibilityHidden(true)
-    }
-    #endif
 }

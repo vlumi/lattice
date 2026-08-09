@@ -26,9 +26,8 @@ public struct SettingsScene: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             Divider()
-            SettingsView(sync: model.sync, feedback: model.feedback)
+            SettingsView(sync: model.sync, feedback: model.feedback, onClose: done)
         }
         .frame(width: 460)  // compact, like a standard settings pane
-        .background(HiddenShortcut(key: .escape, action: done))
     }
 }

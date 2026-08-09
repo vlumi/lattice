@@ -90,10 +90,16 @@
     "Fit" : {
 
     },
+    "Fit Board" : {
+
+    },
     "Free" : {
 
     },
     "From Code" : {
+
+    },
+    "Game" : {
 
     },
     "Games nearby" : {
@@ -145,10 +151,16 @@
     "Nearby" : {
 
     },
+    "Nearby Duel…" : {
+
+    },
     "Nearby players" : {
 
     },
     "New Game" : {
+
+    },
+    "New Game…" : {
 
     },
     "No finished games yet" : {
@@ -192,10 +204,16 @@
     "Resign" : {
 
     },
+    "Restart" : {
+
+    },
     "Result" : {
 
     },
     "Save Image" : {
+
+    },
+    "Save Image…" : {
 
     },
     "Scan Code" : {
@@ -224,10 +242,16 @@
     "Settings" : {
 
     },
+    "Settings…" : {
+
+    },
     "Share Challenge" : {
 
     },
     "Share challenge" : {
+
+    },
+    "Share Challenge…" : {
 
     },
     "Sign in to iCloud to sync across your devices." : {
@@ -264,6 +288,9 @@
 
     },
     "Undo" : {
+
+    },
+    "Undo Move" : {
 
     },
     "Variant" : {

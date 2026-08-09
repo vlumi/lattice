@@ -34,7 +34,9 @@ struct NewGameModal: View {
                 .onTapGesture { dismiss() }
             card
         }
-        .background(arrowKeys)
+        #if os(macOS)
+        .background(KeyCatcher(onKey: handle, yieldsToTextFields: true))
+        #endif
         .onAppear {
             // Preselect what's playing: a seeded game → Random, else its variant.
             if session.seed != nil {
@@ -46,33 +48,28 @@ struct NewGameModal: View {
         }
     }
 
-    // Suppressed while typing a code, so the field keeps the arrows/Return.
-    private var arrowKeys: some View {
-        Group {
-            if codeFocused {
-                key(.escape) {  // step out of the field, back to row nav
-                    codeFocused = false
-                    row = .code
-                }
-            } else {
-                key(.upArrow) { move(-1) }
-                key(.downArrow) { move(1) }
-                key(.leftArrow) { stepVariant(-1) }
-                key(.rightArrow) { stepVariant(1) }
-                key(.return) { activate() }
-                key(.space) { activate() }
-                // Consume Tab so native focus can't strand the user in the field.
-                key(.tab) { move(1) }
+    #if os(macOS)
+    private func handle(_ key: KeyCatcher.Key) {
+        // While typing a code, only Esc acts (steps back to row nav).
+        if codeFocused {
+            if key == .escape {
+                codeFocused = false
+                row = .code
             }
+            return
         }
-        .opacity(0)
-        .accessibilityHidden(true)
+        switch key {
+        case .up: move(-1)
+        case .down, .tab: move(1)
+        case .backTab: move(-1)
+        case .left: stepVariant(-1)
+        case .right: stepVariant(1)
+        case .enter, .space: activate()
+        case .escape: dismiss()
+        default: break
+        }
     }
-
-    private func key(_ shortcut: KeyEquivalent, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) { Color.clear.frame(width: 1, height: 1) }
-            .keyboardShortcut(shortcut, modifiers: [])
-    }
+    #endif
 
     private var card: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -234,18 +231,5 @@ struct NewGameModal: View {
         Button(action: select, label: label)
             .buttonStyle(.bordered)
             .tint(selected ? .accentColor : nil)
-    }
-}
-
-extension View {
-    /// A subtle ring marking the keyboard "cursor" row in the New Game modal.
-    fileprivate func rowCursor(_ active: Bool) -> some View {
-        padding(4)
-            .overlay {
-                if active {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(.secondary.opacity(0.5), lineWidth: 1.5)
-                }
-            }
     }
 }

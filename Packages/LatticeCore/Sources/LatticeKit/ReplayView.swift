@@ -96,6 +96,7 @@ final class ReplayModel: ObservableObject {
 
 public struct ReplayView: View {
     @StateObject private var model: ReplayModel
+    @Environment(\.dismiss) private var dismiss
 
     public init(record: GameRecord) {
         _model = StateObject(wrappedValue: ReplayModel(record: record))
@@ -115,8 +116,29 @@ public struct ReplayView: View {
         }
         .padding()
         .navigationTitle(
-            Text("Replay — \(model.record.score)", bundle: .module))
+            Text("Replay — \(model.record.score)", bundle: .module)
+        )
+        #if os(macOS)
+        .background(KeyCatcher(onKey: handle))
+        #endif
     }
+
+    #if os(macOS)
+    // Space play/pause · ←/→ ±1 · PgUp/PgDn ±10 · Home/End · Esc/Backspace back.
+    private func handle(_ key: KeyCatcher.Key) {
+        switch key {
+        case .space: model.togglePlay()
+        case .left: model.seek(to: model.step - 1)
+        case .right: model.seek(to: model.step + 1)
+        case .pageUp: model.seek(to: model.step - 10)
+        case .pageDown: model.seek(to: model.step + 10)
+        case .home: model.seek(to: 0)
+        case .end: model.seek(to: model.totalSteps)
+        case .escape, .delete: dismiss()
+        case .up, .down, .enter, .tab, .backTab, .character: break
+        }
+    }
+    #endif
 
     // The openness curve, synced to the scrubber: where it peaks is where
     // the game held the most potential; the slide to zero is where the
@@ -184,20 +206,17 @@ public struct ReplayView: View {
             } label: {
                 Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
             }
-            .keyboardShortcut(.space, modifiers: [])
             .disabled(model.totalSteps == 0)
             Button {
                 model.seek(to: 0)
             } label: {
                 Image(systemName: "backward.end")
             }
-            .keyboardShortcut(.downArrow, modifiers: [])
             Button {
                 model.seek(to: model.step - 1)
             } label: {
                 Image(systemName: "backward.frame")
             }
-            .keyboardShortcut(.leftArrow, modifiers: [])
             .disabled(model.step == 0)
             Slider(
                 value: Binding(
@@ -210,14 +229,12 @@ public struct ReplayView: View {
             } label: {
                 Image(systemName: "forward.frame")
             }
-            .keyboardShortcut(.rightArrow, modifiers: [])
             .disabled(model.step == model.totalSteps)
             Button {
                 model.seek(to: model.totalSteps)
             } label: {
                 Image(systemName: "forward.end")
             }
-            .keyboardShortcut(.upArrow, modifiers: [])
             Text("\(model.step)/\(model.totalSteps)")
                 .font(.callout.monospacedDigit())
                 .foregroundStyle(.secondary)
