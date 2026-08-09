@@ -15,9 +15,13 @@ public struct GameView: View {
     @State private var isShowingChallenge = false
     @State private var isScanning = false
     @State private var isShowingNearby = false
+    /// App-wide "show keyboard shortcuts" state, owned by RootView (drives the
+    /// board cheatsheet + control badges here, tab badges there).
+    @Binding private var showShortcuts: Bool
 
-    public init(session: GameSession) {
+    public init(session: GameSession, showShortcuts: Binding<Bool> = .constant(false)) {
         self.session = session
+        _showShortcuts = showShortcuts
     }
 
     public var body: some View {
@@ -28,7 +32,13 @@ public struct GameView: View {
                 // than crowding the header — the frequent in-game actions sit
                 // under the thumb, near what they affect.
                 .overlay(alignment: .bottomTrailing) {
-                    BoardControls(session: session, camera: camera)
+                    BoardControls(session: session, camera: camera, showShortcuts: showShortcuts)
+                }
+                // "?" reveals the keyboard cheatsheet for board play.
+                .overlay {
+                    if showShortcuts {
+                        KeyboardCheatsheet { showShortcuts = false }
+                    }
                 }
             if session.pbCurve != nil {
                 ghost

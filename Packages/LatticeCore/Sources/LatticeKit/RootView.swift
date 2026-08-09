@@ -21,6 +21,9 @@ public struct RootView: View {
     @StateObject private var feedback = Feedback()
     @State private var selection: Tab = .free
     @State private var historyPath = NavigationPath()
+    /// "?" reveals keyboard shortcuts app-wide (the board cheatsheet + the
+    /// floating-control badges in GameView).
+    @State private var showShortcuts = false
 
     public init() {}
 
@@ -42,52 +45,26 @@ public struct RootView: View {
                 selection = newValue
             })
         TabView(selection: selectionResettingHistory) {
-            GameView(session: freeSession)
-                .tabItem {
-                    Label {
-                        Text("Free", bundle: .module)
-                    } icon: {
-                        Image(systemName: "circle.grid.3x3")
-                    }
-                }
+            GameView(session: freeSession, showShortcuts: $showShortcuts)
+                .tabItem { tabLabel("Free", "circle.grid.3x3") }
                 .tag(Tab.free)
-            GameView(session: dailySession)
-                .tabItem {
-                    Label {
-                        Text("Daily", bundle: .module)
-                    } icon: {
-                        Image(systemName: "calendar")
-                    }
-                }
+            GameView(session: dailySession, showShortcuts: $showShortcuts)
+                .tabItem { tabLabel("Daily", "calendar") }
                 .tag(Tab.daily)
-            GameView(session: versusSession)
-                .tabItem {
-                    Label {
-                        Text("Versus", bundle: .module)
-                    } icon: {
-                        Image(systemName: "person.2")
-                    }
-                }
+            GameView(session: versusSession, showShortcuts: $showShortcuts)
+                .tabItem { tabLabel("Versus", "person.2") }
                 .tag(Tab.versus)
             HistoryView(store: Self.store, path: $historyPath)
-                .tabItem {
-                    Label {
-                        Text("History", bundle: .module)
-                    } icon: {
-                        Image(systemName: "clock.arrow.circlepath")
-                    }
-                }
+                .tabItem { tabLabel("History", "clock.arrow.circlepath") }
                 .tag(Tab.history)
             SettingsView(sync: sync, feedback: feedback)
-                .tabItem {
-                    Label {
-                        Text("Settings", bundle: .module)
-                    } icon: {
-                        Image(systemName: "gearshape")
-                    }
-                }
+                .tabItem { tabLabel("Settings", "gearshape") }
                 .tag(Tab.settings)
         }
+        .background(tabShortcuts(selectionResettingHistory))
+        .background(
+            ShortcutToggle(showShortcuts: $showShortcuts)
+        )
         // Board feedback (sound + haptics) available to the board views.
         .environmentObject(feedback)
         // Universal Links: a challenge link starts its board in Free.
@@ -108,5 +85,42 @@ public struct RootView: View {
             freeSession.reloadSyncedState()
             dailySession.reloadSyncedState()
         }
+    }
+
+    // A plain tab item. (Tab shortcuts are shown in the "?" cheatsheet — native
+    // tab items can't carry a floating badge.)
+    private func tabLabel(_ title: LocalizedStringKey, _ icon: String) -> some View {
+        Label {
+            Text(title, bundle: .module)
+        } icon: {
+            Image(systemName: icon)
+        }
+    }
+
+    // Keyboard tab switching: ⌘1–⌘5 select the tabs; ⌘, also opens Settings
+    // (the macOS Preferences convention). Hidden buttons — the iOS-16-safe
+    // pattern; the binding resets History to its list like a tap does.
+    private func tabShortcuts(_ selection: Binding<Tab>) -> some View {
+        let tabs: [(KeyEquivalent, Tab)] = [
+            ("1", .free), ("2", .daily), ("3", .versus), ("4", .history), ("5", .settings),
+        ]
+        return Group {
+            ForEach(Array(tabs.enumerated()), id: \.offset) { _, entry in
+                Button {
+                    selection.wrappedValue = entry.1
+                } label: {
+                    Color.clear.frame(width: 1, height: 1)
+                }
+                .keyboardShortcut(entry.0, modifiers: .command)
+            }
+            Button {
+                selection.wrappedValue = .settings
+            } label: {
+                Color.clear.frame(width: 1, height: 1)
+            }
+            .keyboardShortcut(",", modifiers: .command)
+        }
+        .opacity(0)
+        .accessibilityHidden(true)
     }
 }
