@@ -130,6 +130,7 @@ public struct BoardView: View {
                     })
         }
         .clipped()
+        .background(BoardKeyboard(session: session))
     }
 
     // MARK: Targets
@@ -274,7 +275,7 @@ extension BoardView {
             var path = Path()
             path.move(to: ghost.a)
             path.addLine(to: ghost.b)
-            let isHot = hot == .ghost(ghost.move)
+            let isHot = highlightedMove == ghost.move
             context.stroke(
                 path, with: accent(isHot ? 0.9 : 0.5),
                 style: StrokeStyle(
@@ -299,6 +300,28 @@ extension BoardView {
         case .ghost, nil:
             break
         }
+        drawKeyboardFocus(in: context, layout)
+    }
+
+    /// The candidate to draw as hot: the mouse's scrub target, or — falling
+    /// back — the keyboard-selected candidate. Routing the keyboard choice
+    /// through the SAME ghost geometry means collinear candidates stay fanned
+    /// apart (no stacked "duplicate" look).
+    private var highlightedMove: Move? {
+        if case .ghost(let move) = hot { return move }
+        guard hot == nil, session.tentative != nil,
+            session.candidates.indices.contains(session.candidateIndex)
+        else { return nil }
+        return session.candidates[session.candidateIndex]
+    }
+
+    // Keyboard play, stage one: a focus ring on the roaming cursor (the
+    // stage-two candidate highlight rides the shared ghost geometry above).
+    private func drawKeyboardFocus(in context: GraphicsContext, _ layout: Layout) {
+        guard hot == nil, session.tentative == nil, let cursor = session.keyboardCursor else {
+            return
+        }
+        strokeRing(around: cursor, in: context, layout)
     }
 
     private func strokeRing(around p: Point, in context: GraphicsContext, _ layout: Layout) {

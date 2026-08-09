@@ -20,6 +20,14 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Keyboard play (accessibility): play a whole game without a mouse.
+  Arrow keys or WASD roam a board cursor (clamped so every legal point
+  is reachable); Enter/Space places a dot, then ←/→/Tab cycle the
+  possible lines and Enter/Space commits; Backspace undoes, Esc cancels.
+  ⌘1–⌘5 switch tabs (⌘, opens Settings). Press **?** for a keyboard
+  cheatsheet over the board (Esc, ?, ✕, or a tap-off closes it); the
+  floating Undo/Fit buttons show their shortcut badges while it's open.
+
 ### build 5 — 2026-08-08
 
 - Dead-gap markers: the board faintly flags gaps you've permanently
