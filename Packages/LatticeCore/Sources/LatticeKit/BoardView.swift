@@ -24,6 +24,7 @@ public struct BoardView: View {
     @ObservedObject private var camera: BoardCamera
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var feedback: Feedback
+    private let keyboardEnabled: Bool  // off while an overlay owns the keys
 
     // In-flight gesture deltas; committed (and clamped) into the camera on
     // gesture end.
@@ -32,9 +33,10 @@ public struct BoardView: View {
     @State private var dragMode: DragMode = .undecided
     @State private var hot: HotTarget?
 
-    public init(session: GameSession, camera: BoardCamera) {
+    public init(session: GameSession, camera: BoardCamera, keyboardEnabled: Bool = true) {
         self.session = session
         self.camera = camera
+        self.keyboardEnabled = keyboardEnabled
     }
 
     public var body: some View {
@@ -130,7 +132,7 @@ public struct BoardView: View {
                     })
         }
         .clipped()
-        .background(BoardKeyboard(session: session))
+        .background(BoardKeyboard(session: session, enabled: keyboardEnabled))
     }
 
     // MARK: Targets

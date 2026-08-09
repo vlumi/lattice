@@ -6,8 +6,15 @@ import SwiftUI
 /// Backspace undoes; Escape cancels. Sits behind the board as a background.
 struct BoardKeyboard: View {
     @ObservedObject var session: GameSession
+    /// Off while an overlay (cheatsheet / New Game modal) is up, so its Esc and
+    /// other keys don't compete with the board's.
+    var enabled = true
 
     var body: some View {
+        if enabled { keys }
+    }
+
+    private var keys: some View {
         Group {
             // Model y grows upward, screen y downward — Up increases model y.
             // WASD mirror the arrows (same cursor moves / candidate cycle).
