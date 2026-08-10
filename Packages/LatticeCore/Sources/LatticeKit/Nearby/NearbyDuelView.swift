@@ -66,9 +66,11 @@ struct NearbyDuelView: View {
         .onDisappear { duel.stop() }
     }
 
-    private func resignOrClose() {
+    // Resign concedes but stays in the screen: a 2-player match ends → the
+    // result (with Rematch), and in a bigger match you watch the rest from the
+    // standings. Leaving is a separate, explicit Close.
+    private func resign() {
         duel.resign()
-        if duel.stage == .dueling { dismiss() }
     }
 
     // MARK: Guest lobby — host button + games to join
@@ -225,7 +227,7 @@ struct NearbyDuelView: View {
         let waiting = m.localWaitingForRound
         return DuelBoardView(
             game: m.game, waiting: waiting,
-            onCommit: { duel.commitMove($0) }, onExit: resignOrClose
+            onCommit: { duel.commitMove($0) }, onExit: resign
         )
         // Lock-step barrier: once you've moved you wait for the others — the
         // board is locked and dimmed until the round resolves.

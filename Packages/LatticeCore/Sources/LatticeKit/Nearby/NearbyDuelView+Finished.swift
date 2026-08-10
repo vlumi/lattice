@@ -94,9 +94,10 @@ extension NearbyDuelView {
     @ViewBuilder var dismissButton: some View {
         switch duel.stage {
         case .dueling:
+            // Resign concedes but stays: the match ends to the result (2-player)
+            // or you watch the rest from the standings. Close leaves separately.
             Button(role: .destructive) {
                 duel.resign()
-                if duel.stage == .dueling { dismiss() }
             } label: {
                 Text("Resign", bundle: .module).frame(maxWidth: .infinity)
             }
