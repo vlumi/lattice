@@ -50,12 +50,8 @@ struct NewGameModal: View {
 
     #if os(macOS)
     private func handle(_ key: KeyCatcher.Key) {
-        // While typing a code, only Esc acts (steps back to row nav).
         if codeFocused {
-            if key == .escape {
-                codeFocused = false
-                row = .code
-            }
+            leaveCodeField(key)
             return
         }
         switch key {
@@ -66,6 +62,16 @@ struct NewGameModal: View {
         case .right: stepVariant(1)
         case .enter, .space: activate()
         case .escape: dismiss()
+        default: break
+        }
+    }
+
+    // KeyCatcher hands focus back and forwards Enter/Esc/Tab from the code field.
+    // Enter starts; Esc/Tab step back to row nav (never close the modal).
+    private func leaveCodeField(_ key: KeyCatcher.Key) {
+        switch key {
+        case .enter: codeFocused = false; start()
+        case .escape, .tab, .backTab: codeFocused = false; row = .code
         default: break
         }
     }
@@ -140,7 +146,7 @@ struct NewGameModal: View {
             .frame(width: 120)
             .focused($codeFocused)
             .onChangeCompat(of: code) { _ in row = .code }
-            .onSubmit(start)
+            .onSubmit(start)  // iOS Return; on macOS KeyCatcher owns the field keys
             if let onScan {
                 Button(action: onScan) {
                     Label {
