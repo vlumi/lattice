@@ -44,6 +44,14 @@ extension NearbyMatch: MCSessionDelegate {
     ) {}
 
     private func peerLeft(_ peer: MCPeerID) {
+        // Guest whose host vanished mid-flow: the host is the sole relay +
+        // timekeeper, so no result is coming and the session is dead — land on a
+        // clean "host left" state instead of a stranded dueling/waiting screen.
+        // (A finished match keeps its result; the host leaving after is moot.)
+        if role == .joining(peer), stage == .dueling || stage == .waitingForHost {
+            hostDisconnected()
+            return
+        }
         joinRequests.removeAll { $0.peer == peer }
         if let idx = acceptedPeers.firstIndex(of: peer) {
             acceptedPeers.remove(at: idx)

@@ -31,4 +31,98 @@ extension NearbyDuelView {
         default: return Text("\(rank)th", bundle: .module)
         }
     }
+
+    // MARK: Result screen
+
+    func result(_ standings: [NearbyMatch.Standing]) -> some View {
+        // Standings arrive pre-ranked (the host authors race times). Competition
+        // ranking: rows with the same ranking key share a position (1, 2, 2, 4).
+        var ranks: [Int] = []
+        for (i, s) in standings.enumerated() {
+            if i > 0, rankKey(s) == rankKey(standings[i - 1]) {
+                ranks.append(ranks[i - 1])
+            } else {
+                ranks.append(i + 1)
+            }
+        }
+        return VStack(spacing: 12) {
+            Text("Result", bundle: .module).font(.largeTitle.weight(.bold))
+            ForEach(Array(standings.enumerated()), id: \.offset) { index, standing in
+                HStack {
+                    Text(verbatim: "\(ranks[index]).")
+                    Text(verbatim: standing.name)
+                    Spacer()
+                    resultValue(standing).monospacedDigit().foregroundStyle(.secondary)
+                }
+                .font(ranks[index] == 1 ? .title3.weight(.bold) : .body)
+            }
+        }
+    }
+
+    /// The tie key: a finisher's reach-time, else (nil) their move count negated
+    /// so more moves ranks higher — matching the host's sort.
+    private func rankKey(_ s: NearbyMatch.Standing) -> Double {
+        s.reachTime ?? Double(-s.score)
+    }
+
+    // Finishers show their time to the target; non-finishers show move count.
+    @ViewBuilder private func resultValue(_ s: NearbyMatch.Standing) -> some View {
+        if let time = s.reachTime {
+            Text(verbatim: timeString(time))
+        } else {
+            Text("\(s.score) moves", bundle: .module)
+        }
+    }
+
+    private func timeString(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+
+    func endMessage(_ label: Text, systemImage: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: systemImage).font(.largeTitle).foregroundStyle(.secondary)
+            label.font(.headline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: Bottom action bar
+
+    // Playing: Resign. Finished (host): Rematch / Back to lobby / Close — play
+    // again with the same players, keeping the connection. Otherwise: Close.
+    @ViewBuilder var dismissButton: some View {
+        switch duel.stage {
+        case .dueling:
+            Button(role: .destructive) {
+                duel.resign()
+                if duel.stage == .dueling { dismiss() }
+            } label: {
+                Text("Resign", bundle: .module).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+        case .finished where duel.role == .hosting:
+            VStack(spacing: 8) {
+                Button(action: duel.rematch) {
+                    Text("Rematch", bundle: .module).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                Button(action: duel.backToLobby) {
+                    Text("Back to Lobby", bundle: .module).frame(maxWidth: .infinity)
+                }
+                closeButton
+            }
+        default:
+            closeButton
+        }
+    }
+
+    private var closeButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Text("Close", bundle: .module).frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+    }
 }

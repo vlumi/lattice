@@ -20,6 +20,11 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Nearby rematch: the result screen now offers **Rematch** (play again,
+  same players, new board) and **Back to Lobby** (reconfigure / let new
+  players join) — the connection is kept, no re-discovery. Close still
+  leaves. If the **host disconnects** mid-match, guests now land on a
+  clean "host left" screen instead of a stranded board.
 - Nearby race scoring: everyone races to the target, ranked by **time to
   reach it** (fastest wins) rather than final move count — the host is the
   sole timekeeper, so the standings share one clock and every device shows

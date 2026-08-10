@@ -29,6 +29,8 @@ public enum DuelMessage: Codable, Equatable, Sendable {
     /// Host → all: the final standings, already ranked (the host is the sole
     /// timekeeper for race reach-times, so it authors the result everyone shows).
     case results([ResultRow])
+    /// Host → all: return to the lobby (after a match) to await another `start`.
+    case backToLobby
 
     /// One roster slot: the peer's stable tag and display name.
     public struct RosterEntry: Codable, Equatable, Sendable {

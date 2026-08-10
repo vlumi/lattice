@@ -76,6 +76,7 @@ final class NearbyMatch: NSObject, ObservableObject {
         case waitingForHost  // guest: requested, waiting for start
         case dueling
         case finished(standings: [Standing])  // by score, highest first
+        case hostLeft  // guest: the host disconnected — no result to await
     }
 
     // Lobby state. Setters are internal (not private) where the delegate
@@ -92,7 +93,8 @@ final class NearbyMatch: NSObject, ObservableObject {
     @Published private(set) var stage: Stage = .lobby
     @Published var match: DuelMatch?
     /// Seconds left on each running clock, by player tag (lock-step HUD).
-    @Published private(set) var clocks: [String: TimeInterval] = [:]
+    /// Non-private set: written by the clock helpers in NearbyMatch+Clocks.swift.
+    @Published var clocks: [String: TimeInterval] = [:]
 
     static let service = "lattice-duel"
 
@@ -118,9 +120,10 @@ final class NearbyMatch: NSObject, ObservableObject {
     private var hostMode: DuelMode?
     private var hostVariant: String?
 
-    // Clock timers, one per running player (lock-step).
-    private var clockDeadlines: [String: Date] = [:]
-    private var clockTimer: Timer?
+    // Clock timers, one per running player (lock-step). Non-private: the clock
+    // helpers live in NearbyMatch+Clocks.swift.
+    var clockDeadlines: [String: Date] = [:]
+    var clockTimer: Timer?
 
     // Race timekeeping (host only, the sole authority): when the match started,
     // and each player's elapsed time to first reach the target.
@@ -220,6 +223,31 @@ final class NearbyMatch: NSObject, ObservableObject {
         beginMatch(seed: seed, mode: mode, variantKey: variant, roster: roster)
     }
 
+    /// Host, after a match: play again with the same roster and config — a fresh
+    /// `start` (new seed) to everyone still connected. Same primitive as the
+    /// first Start.
+    func rematch() {
+        startMatch()
+    }
+
+    /// Host, after a match: return everyone to the lobby (keep the session and
+    /// roster) to await another Start — lets late joiners in and the host tweak
+    /// who's playing. Guests wait for the host.
+    func backToLobby() {
+        guard role == .hosting else { return }
+        match = nil
+        stage = .lobby
+        broadcast(.backToLobby)
+        advertiser?.startAdvertisingPeer()  // re-open discovery for new joiners
+    }
+
+    /// Guest: the host disconnected mid-flow (called from the session delegate).
+    func hostDisconnected() {
+        stopClocks()
+        match = nil
+        stage = .hostLeft
+    }
+
     // MARK: Match
 
     private func beginMatch(
@@ -287,55 +315,6 @@ final class NearbyMatch: NSObject, ObservableObject {
         stage = .finished(standings: rows)
     }
 
-    private func stopClocks() {
-        clockTimer?.invalidate()
-        clockTimer = nil
-        clockDeadlines = [:]
-        clocks = [:]
-    }
-
-    // MARK: Per-player reactive clocks (transport-owned; match stays pure)
-
-    private func startClock(_ tag: String, _ seconds: TimeInterval) {
-        clockDeadlines[tag] = Date().addingTimeInterval(seconds)
-        clocks[tag] = seconds
-        ensureClockTimer()
-    }
-
-    private func stopClock(_ tag: String) {
-        clockDeadlines[tag] = nil
-        clocks[tag] = nil
-        if clockDeadlines.isEmpty {
-            clockTimer?.invalidate()
-            clockTimer = nil
-        }
-    }
-
-    private func ensureClockTimer() {
-        guard clockTimer == nil else { return }
-        clockTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tickClocks() }
-        }
-    }
-
-    private func tickClocks() {
-        guard var m = match else { return }
-        var localExpired = false
-        for (tag, deadline) in clockDeadlines {
-            let left = deadline.timeIntervalSinceNow
-            clocks[tag] = max(0, left)
-            // Each device only DECIDES its own clock's expiry (and reports it via
-            // `eliminated`); remote clocks tick for the HUD but their expiry is
-            // owned by that player — no cross-device timer divergence.
-            if left <= 0, tag == selfTag { localExpired = true }
-        }
-        if localExpired {
-            stopClock(selfTag)
-            apply(m.clockExpired(selfTag))
-            match = m
-        }
-    }
-
     // MARK: Send / receive
 
     private func broadcast(_ message: DuelMessage) {
@@ -366,6 +345,11 @@ final class NearbyMatch: NSObject, ObservableObject {
             // The host is the timekeeper; show exactly what it ranked.
             stopClocks()
             stage = .finished(standings: rows.map(Standing.init))
+        case .backToLobby:
+            // Host reset for another game — wait for the next start.
+            stopClocks()
+            match = nil
+            stage = .waitingForHost
         }
     }
 
