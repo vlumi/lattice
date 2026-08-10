@@ -5,8 +5,9 @@ import SwiftUI
 /// standings. Thin over `NearbyMatch`; the board reuses `DuelBoardView`.
 /// Verified on devices (the transport can't run headlessly).
 struct NearbyDuelView: View {
-    @StateObject private var duel: NearbyMatch
-    @Environment(\.dismiss) private var dismiss
+    // Non-private: the +Finished extension (result screen, action bar) reads them.
+    @StateObject var duel: NearbyMatch
+    @Environment(\.dismiss) var dismiss
 
     // Host config flow.
     @State private var configuringHost = false
@@ -45,6 +46,10 @@ struct NearbyDuelView: View {
                     matchView
                 case .finished(let standings):
                     result(standings)
+                case .hostLeft:
+                    endMessage(
+                        Text("The host left the game", bundle: .module),
+                        systemImage: "wifi.slash")
                 }
             }
             .frame(maxHeight: .infinity)
@@ -61,32 +66,11 @@ struct NearbyDuelView: View {
         .onDisappear { duel.stop() }
     }
 
-    private func resignOrClose() {
+    // Resign concedes but stays in the screen: a 2-player match ends → the
+    // result (with Rematch), and in a bigger match you watch the rest from the
+    // standings. Leaving is a separate, explicit Close.
+    private func resign() {
         duel.resign()
-        if duel.stage == .dueling { dismiss() }
-    }
-
-    // While playing, "Resign" declares you out (others are told; in a 2-player
-    // match that ends it) and lands on the standings. Otherwise a plain "Close".
-    @ViewBuilder private var dismissButton: some View {
-        if duel.stage == .dueling {
-            Button(role: .destructive) {
-                duel.resign()
-                // In a 2-player match resign ends it (→ standings). With more
-                // players the match continues without us, so we leave.
-                if duel.stage == .dueling { dismiss() }
-            } label: {
-                Text("Resign", bundle: .module).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-        } else {
-            Button {
-                dismiss()
-            } label: {
-                Text("Close", bundle: .module).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-        }
     }
 
     // MARK: Guest lobby — host button + games to join
@@ -243,7 +227,7 @@ struct NearbyDuelView: View {
         let waiting = m.localWaitingForRound
         return DuelBoardView(
             game: m.game, waiting: waiting,
-            onCommit: { duel.commitMove($0) }, onExit: resignOrClose
+            onCommit: { duel.commitMove($0) }, onExit: resign
         )
         // Lock-step barrier: once you've moved you wait for the others — the
         // board is locked and dimmed until the round resolves.
@@ -301,53 +285,6 @@ struct NearbyDuelView: View {
         }
     }
 
-    // MARK: Result
-
-    private func result(_ standings: [NearbyMatch.Standing]) -> some View {
-        // Standings arrive pre-ranked (the host authors race times). Competition
-        // ranking: rows with the same ranking key share a position (1, 2, 2, 4).
-        var ranks: [Int] = []
-        for (i, s) in standings.enumerated() {
-            if i > 0, rankKey(s) == rankKey(standings[i - 1]) {
-                ranks.append(ranks[i - 1])
-            } else {
-                ranks.append(i + 1)
-            }
-        }
-        return VStack(spacing: 12) {
-            Text("Result", bundle: .module).font(.largeTitle.weight(.bold))
-            ForEach(Array(standings.enumerated()), id: \.offset) { index, standing in
-                HStack {
-                    Text(verbatim: "\(ranks[index]).")
-                    Text(verbatim: standing.name)
-                    Spacer()
-                    resultValue(standing).monospacedDigit().foregroundStyle(.secondary)
-                }
-                .font(ranks[index] == 1 ? .title3.weight(.bold) : .body)
-            }
-        }
-    }
-
-    /// The tie key: a finisher's reach-time, else (nil) their move count negated
-    /// so more moves ranks higher — matching the host's sort.
-    private func rankKey(_ s: NearbyMatch.Standing) -> Double {
-        s.reachTime ?? Double(-s.score)
-    }
-
-    // Finishers show their time to the target; non-finishers show move count.
-    @ViewBuilder private func resultValue(_ s: NearbyMatch.Standing) -> some View {
-        if let time = s.reachTime {
-            Text(verbatim: timeString(time))
-        } else {
-            Text("\(s.score) moves", bundle: .module)
-        }
-    }
-
-    private func timeString(_ seconds: TimeInterval) -> String {
-        let total = Int(seconds.rounded())
-        return String(format: "%d:%02d", total / 60, total % 60)
-    }
-
     private func waiting(_ label: Text) -> some View {
         VStack(spacing: 12) {
             ProgressView()
@@ -365,7 +302,10 @@ extension NearbyDuelView {
         case .lobby where duel.role == .hosting: handleHostLobby(key)
         case .lobby where configuringHost: handleHostConfig(key)
         case .lobby: handleGuestLobby(key)
-        default: if key == .escape { dismiss() }  // waitingForHost / finished
+        case .finished where duel.role == .hosting:
+            if key == .enter || key == .space { duel.rematch() }  // primary action
+            if key == .escape { dismiss() }
+        default: if key == .escape { dismiss() }  // waitingForHost / hostLeft / guest
         }
     }
 
