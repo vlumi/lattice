@@ -78,6 +78,10 @@ final class DuelMessageTests: XCTestCase {
             .move(from: "abc", move),
             .score(from: "def", 13),
             .eliminated(from: "abc"),
+            .results([
+                .init(name: "Ann", score: 20, reachMillis: 14_200),  // reached
+                .init(name: "Bo", score: 9, reachMillis: nil),  // didn't reach
+            ]),
         ]
         for message in cases {
             XCTAssertEqual(try roundTrip(message), message)
