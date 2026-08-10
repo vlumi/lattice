@@ -127,21 +127,23 @@ tap empty board, or Esc (macOS) — nothing was committed.
 
 ### Two-player identity & records (decided)
 
-- **No player ID, no win/loss records.** A match is its own event — this is
-  already how `.passAndPlay` is built (no records, bests, or ghost) and
-  Nearby keeps it. W/L against opponents is a *relative* stat needing a
-  persistent opponent identity, which pulls toward accounts/rivalry/
-  leaderboards — all deliberately out of scope, and meaningless with no
-  server and no anti-cheat.
+- **Nearby is anonymous & disposable — no player ID, no records, no
+  history.** A match is its own event: no GameRecord, best, or ghost (same
+  as `.passAndPlay`). Stats would only be meaningful *per opponent*, which
+  needs a persistent opponent identity → accounts/rivalry/leaderboards —
+  all deliberately out of scope, and meaningless with no server and no
+  anti-cheat. Aggregate cross-opponent stats aren't worth having. So a duel
+  leaves nothing behind, by design (do NOT add duel GameRecords).
 - **One optional display name, Nearby-only.** Its sole job is a
   human-readable label in the Nearby browser so you can pick who to connect
-  to. Defaults to the system device name (zero-setup); editable in the
-  Settings surface (shared with sync/reset). NOT persisted to any record,
-  replay, best, or the sync blob; NOT an identity. MultipeerConnectivity's
-  peer identity is per-session and ephemeral — the name just labels it.
-  Validation: trimmed user name if non-empty, else device name, else
-  "Lattice player"; clamp to MC's 63-byte UTF-8 display-name limit,
-  never empty.
+  to. Defaults to the system device name (zero-setup); editable **on the
+  Nearby screen itself** (the guest lobby, before hosting/joining) — set it
+  where it's broadcast so the device-name default doesn't leak on the
+  network. Editing rebuilds the ephemeral MCPeerID so the new name is the
+  real peer identity. NOT persisted to any record, replay, best, or the
+  sync blob; NOT an identity. Validation: trimmed user name if non-empty,
+  else device name, else "Lattice player"; clamp to MC's 63-byte UTF-8
+  display-name limit, never empty.
 - **Nearby duel** is host-advertises (a host configures a game and
   advertises it; others browse and request; the host accepts and starts),
   up to 8 players, star topology (the host relays each guest's events to the

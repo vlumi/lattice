@@ -101,13 +101,15 @@ final class NearbyMatch: NSObject, ObservableObject {
     // Members marked non-private are reached by the delegate conformances in
     // NearbyMatch+Delegates.swift (same module; a `final` class's internal
     // members aren't part of LatticeKit's public API).
-    let myName: String
+    // Editable in the guest lobby (rebuilds the peer identity — see rename in
+    // NearbyMatch+Lobby.swift; hence these are non-private).
+    @Published var myName: String
     private let myBests: BestScores
-    private let myPeer: MCPeerID
+    var myPeer: MCPeerID
     let selfTag = UUID().uuidString.prefix(9).description
     var session: MCSession
     private var advertiser: MCNearbyServiceAdvertiser?
-    private let browser: MCNearbyServiceBrowser
+    var browser: MCNearbyServiceBrowser
 
     /// Discovery tag per connected/known peer (their advertised "k").
     var peerTags: [MCPeerID: String] = [:]
@@ -131,15 +133,21 @@ final class NearbyMatch: NSObject, ObservableObject {
     private var reachTimes: [String: TimeInterval] = [:]
 
     init(name: String, bests: BestScores) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        myName = trimmed.isEmpty ? "Lattice player" : String(trimmed.prefix(60))
+        let cleaned = Self.clean(name)
+        myName = cleaned
         myBests = bests
-        myPeer = MCPeerID(displayName: myName)
-        session = MCSession(peer: myPeer, securityIdentity: nil, encryptionPreference: .required)
-        browser = MCNearbyServiceBrowser(peer: myPeer, serviceType: Self.service)
+        let peer = MCPeerID(displayName: cleaned)
+        myPeer = peer
+        session = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
+        browser = MCNearbyServiceBrowser(peer: peer, serviceType: Self.service)
         super.init()
         session.delegate = self
         browser.delegate = self
+    }
+
+    static func clean(_ name: String) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Lattice player" : String(trimmed.prefix(60))
     }
 
     // MARK: Lobby lifecycle
@@ -162,8 +170,7 @@ final class NearbyMatch: NSObject, ObservableObject {
         return m.players[m.local]?.status == .active
     }
 
-    /// Host: are there still accepted players to (re)start a match with? If they
-    /// all left, Rematch/Back-to-Lobby can't proceed.
+    /// Host: still have accepted players to (re)start with? (Else Rematch no-ops.)
     var hasAcceptedPeers: Bool { !acceptedPeers.isEmpty }
 
     /// Offerable tiers for the host's config UI, gated on the host's own best.

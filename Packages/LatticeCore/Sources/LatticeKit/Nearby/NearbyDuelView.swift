@@ -19,6 +19,8 @@ struct NearbyDuelView: View {
     @State private var cursor = 0
     /// Keyboard focus row within host config (↑/↓ move, ←/→ change selection).
     @State private var configCursor: ConfigRow = .mode
+    /// The name field in the guest lobby (seeded from the stored PlayerName).
+    @State private var editedName = PlayerName.current()
 
     private enum ModeChoice: Hashable { case lockStep, race }
     /// Host-config rows ↑/↓ cycles (target only in race mode).
@@ -77,7 +79,19 @@ struct NearbyDuelView: View {
 
     private var guestLobby: some View {
         VStack(spacing: 16) {
+            // Your display name — defaults to the device name, so set it here
+            // before hosting/joining if you'd rather not broadcast that.
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Your name", bundle: .module)
+                    .font(.subheadline).foregroundStyle(.secondary)
+                TextField(text: $editedName) { Text("Your name", bundle: .module) }
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { duel.rename(editedName) }
+                    .onChangeCompat(of: editedName) { PlayerName.set($0) }
+            }
+
             Button {
+                duel.rename(editedName)  // apply a pending edit before hosting
                 configCursor = .mode
                 configuringHost = true
             } label: {

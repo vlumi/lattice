@@ -1,23 +1,22 @@
 import SwiftUI
 
-/// Settings: sound & haptics, the iCloud sync opt-in (off by default), and the
-/// Nearby display name. Reset-progress will join here later (roadmap).
+/// Settings: sound & haptics and the iCloud sync opt-in (off by default).
+/// Reset-progress will join here later (roadmap). The Nearby name lives on the
+/// Nearby screen (set it where you broadcast it).
 struct SettingsView: View {
     @ObservedObject var sync: SyncController
     let feedback: Feedback
     /// Closes the presenting sheet (macOS); no-op for the iOS tab.
     var onClose: () -> Void = {}
-    @State private var name: String = PlayerName.current()
 
     // Sound off by default (opt-in); haptics on by default. Keys match
     // Feedback's; the live players are updated on change.
     @AppStorage(Feedback.soundDefaultsKey) private var soundOn = false
     @AppStorage(Feedback.hapticsDefaultsKey) private var hapticsOn = true
 
-    // Keyboard row cursor: Up/Down move, Space/Return toggle or enter the field.
-    private enum Row: Int, CaseIterable { case sound, haptics, sync, name }
+    // Keyboard row cursor: Up/Down move, Space toggles the focused row.
+    private enum Row: Int, CaseIterable { case sound, haptics, sync }
     @State private var cursor: Row = .sound
-    @FocusState private var nameFocused: Bool
 
     private var syncFooter: Text {
         if sync.isAvailable {
@@ -63,38 +62,20 @@ struct SettingsView: View {
             } footer: {
                 syncFooter
             }
-            Section {
-                TextField(text: $name) {
-                    Text("Name", bundle: .module)
-                }
-                .focused($nameFocused)
-                .onChangeCompat(of: name) { PlayerName.set($0) }
-                .rowCursor(cursor == .name)
-            } header: {
-                Text("Nearby", bundle: .module)
-            } footer: {
-                Text("The name other players see when you duel nearby.", bundle: .module)
-            }
         }
         .formStyle(.grouped)
         #if os(macOS)
-        .background(KeyCatcher(onKey: handle, yieldsToTextFields: true))
+        .background(KeyCatcher(onKey: handle))
         #endif
     }
 
     #if os(macOS)
     private func handle(_ key: KeyCatcher.Key) {
-        // Editing the name: Enter/Esc commit and leave the field.
-        if nameFocused {
-            if key == .enter || key == .escape { nameFocused = false }
-            return
-        }
         switch key {
         case .up, .backTab: move(-1)
         case .down, .tab: move(1)
-        case .space: activate()  // Space toggles the focused row
-        case .enter: onClose()  // Return = Done
-        case .escape: onClose()
+        case .space: activate()  // toggle the focused row
+        case .enter, .escape: onClose()  // Done
         default: break
         }
     }
@@ -104,13 +85,11 @@ struct SettingsView: View {
         cursor = all[min(max(cursor.rawValue + step, 0), all.count - 1)]
     }
 
-    // Space on the focused row: flip a toggle, or enter the name field.
     private func activate() {
         switch cursor {
         case .sound: soundOn.toggle()
         case .haptics: hapticsOn.toggle()
         case .sync: if sync.isAvailable { sync.isOn.toggle() }
-        case .name: nameFocused = true
         }
     }
     #endif
