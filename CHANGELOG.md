@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 6 — 2026-08-10
+
 - Nearby name & privacy: your display name is now set on the Nearby screen
   itself (before you host or join), not in Settings — so the device-name
   default doesn't quietly broadcast on the network; changing it there
