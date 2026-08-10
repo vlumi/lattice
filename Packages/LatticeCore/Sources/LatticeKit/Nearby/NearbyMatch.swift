@@ -47,10 +47,28 @@ final class NearbyMatch: NSObject, ObservableObject {
         var id: MCPeerID { peer }
     }
 
-    /// A final-standings row: the player's name and their final move count.
+    /// A final-standings row. In race, finishers rank by `reachTime` (seconds
+    /// from match start to the target, host-timed); non-finishers have nil time
+    /// and rank below by `score` (moves). Lock-step uses `score` only.
     struct Standing: Equatable {
         let name: String
         let score: Int
+        var reachTime: TimeInterval?
+
+        /// Wire form (ms) for broadcasting; and back.
+        var wire: DuelMessage.ResultRow {
+            .init(name: name, score: score, reachMillis: reachTime.map { Int($0 * 1000) })
+        }
+        init(name: String, score: Int, reachTime: TimeInterval? = nil) {
+            self.name = name
+            self.score = score
+            self.reachTime = reachTime
+        }
+        init(_ row: DuelMessage.ResultRow) {
+            name = row.name
+            score = row.score
+            reachTime = row.reachMillis.map { TimeInterval($0) / 1000 }
+        }
     }
 
     enum Stage: Equatable {
@@ -103,6 +121,11 @@ final class NearbyMatch: NSObject, ObservableObject {
     // Clock timers, one per running player (lock-step).
     private var clockDeadlines: [String: Date] = [:]
     private var clockTimer: Timer?
+
+    // Race timekeeping (host only, the sole authority): when the match started,
+    // and each player's elapsed time to first reach the target.
+    private var matchStart: Date?
+    private var reachTimes: [String: TimeInterval] = [:]
 
     init(name: String, bests: BestScores) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -205,6 +228,8 @@ final class NearbyMatch: NSObject, ObservableObject {
         match = DuelMatch(
             mode: mode, seed: seed, variantKey: variantKey, local: selfTag,
             roster: roster.map { ($0.tag, $0.name) })
+        matchStart = Date()  // host is the race timekeeper; harmless on guests
+        reachTimes = [:]
         stage = .dueling
         checkLocalDeadEnd()  // a starting board with no move (unlikely) still ends us
     }
@@ -215,6 +240,7 @@ final class NearbyMatch: NSObject, ObservableObject {
         let actions = m.localMove(move)
         apply(actions)
         match = m
+        stampReaches()
         checkLocalDeadEnd()
     }
 
@@ -248,17 +274,22 @@ final class NearbyMatch: NSObject, ObservableObject {
         }
     }
 
+    /// The engine settled. The host is the timekeeper, so it authors the ranked
+    /// standings and broadcasts them; guests show whatever the host sends (they
+    /// wait for `.results` rather than ranking a copy without the reach-times).
     private func finish(_ standings: [String]) {
+        stopClocks()
+        guard role == .hosting else { return }  // guests await `.results`
+        let rows = rankedRows(order: standings)
+        broadcast(.results(rows.map(\.wire)))
+        stage = .finished(standings: rows)
+    }
+
+    private func stopClocks() {
         clockTimer?.invalidate()
         clockTimer = nil
         clockDeadlines = [:]
         clocks = [:]
-        let rows = standings.map { tag in
-            Standing(
-                name: match?.players[tag]?.name ?? tag,
-                score: match?.players[tag]?.score ?? 0)
-        }
-        stage = .finished(standings: rows)
     }
 
     // MARK: Per-player reactive clocks (transport-owned; match stays pure)
@@ -329,6 +360,10 @@ final class NearbyMatch: NSObject, ObservableObject {
             beginMatch(seed: seed, mode: mode, variantKey: variantKey, roster: roster)
         case .move, .score, .eliminated:
             receivedMatchEvent(message, from: peer)
+        case .results(let rows):
+            // The host is the timekeeper; show exactly what it ranked.
+            stopClocks()
+            stage = .finished(standings: rows.map(Standing.init))
         }
     }
 
@@ -355,6 +390,7 @@ final class NearbyMatch: NSObject, ObservableObject {
         default: return
         }
         match = m
+        stampReaches()
         // Star topology: guests connect only to the host, so the host relays
         // each guest's event to the OTHERS (the actor tag survives the hop).
         if role == .hosting { relay(message, from: peer) }
@@ -368,5 +404,42 @@ final class NearbyMatch: NSObject, ObservableObject {
         let others = session.connectedPeers.filter { $0 != sender }
         guard !others.isEmpty, let data = try? JSONEncoder().encode(message) else { return }
         try? session.send(data, toPeers: others, with: .reliable)
+    }
+}
+
+// MARK: Race timekeeping (host is the sole authority; same file → sees privates)
+extension NearbyMatch {
+    /// Host, race only: stamp the elapsed time the first moment a player's score
+    /// reaches the target. One clock (the host's), so times have no cross-device
+    /// skew. No-op on guests / lock-step.
+    fileprivate func stampReaches() {
+        guard role == .hosting, case .race(let tier) = match?.mode,
+            let start = matchStart, let players = match?.players
+        else { return }
+        let elapsed = Date().timeIntervalSince(start)
+        for (tag, state) in players where state.score >= tier && reachTimes[tag] == nil {
+            reachTimes[tag] = elapsed
+        }
+    }
+
+    /// Host: build the final rows. Race ranks finishers by reach-time (ascending)
+    /// then non-finishers by score (descending); lock-step keeps the engine's
+    /// settled order.
+    fileprivate func rankedRows(order standings: [String]) -> [Standing] {
+        let rows = standings.map { tag in
+            Standing(
+                name: match?.players[tag]?.name ?? tag,
+                score: match?.players[tag]?.score ?? 0,
+                reachTime: reachTimes[tag])
+        }
+        guard case .race = match?.mode else { return rows }
+        return rows.sorted { a, b in
+            switch (a.reachTime, b.reachTime) {
+            case (let ta?, let tb?): return ta < tb  // both reached — faster first
+            case (.some, .none): return true  // a reached, b didn't
+            case (.none, .some): return false
+            case (.none, .none): return a.score > b.score  // neither — more moves
+            }
+        }
     }
 }
