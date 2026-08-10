@@ -238,9 +238,11 @@ final class NearbyMatch: NSObject, ObservableObject {
     func commitMove(_ move: Move) {
         guard var m = match else { return }
         let actions = m.localMove(move)
-        apply(actions)
+        // Assign + stamp BEFORE applying: `apply` may run `.finish`, which reads
+        // reachTimes to author the standings, so the reach must be recorded first.
         match = m
         stampReaches()
+        apply(actions)
         checkLocalDeadEnd()
     }
 
@@ -383,14 +385,16 @@ final class NearbyMatch: NSObject, ObservableObject {
         default: return
         }
         guard actor != selfTag, var m = match else { return }  // skip our own echo
+        let actions: [DuelMatch.Action]
         switch message {
-        case .move: apply(m.remoteMoved(actor))
-        case .score(_, let score): apply(m.remoteScored(actor, score: score))
-        case .eliminated: apply(m.remoteEliminated(actor))
+        case .move: actions = m.remoteMoved(actor)
+        case .score(_, let score): actions = m.remoteScored(actor, score: score)
+        case .eliminated: actions = m.remoteEliminated(actor)
         default: return
         }
-        match = m
+        match = m  // assign + stamp before apply (see commitMove)
         stampReaches()
+        apply(actions)
         // Star topology: guests connect only to the host, so the host relays
         // each guest's event to the OTHERS (the actor tag survives the hop).
         if role == .hosting { relay(message, from: peer) }

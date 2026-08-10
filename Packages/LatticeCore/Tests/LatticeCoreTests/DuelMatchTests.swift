@@ -166,6 +166,10 @@ final class DuelMatchTests: XCTestCase {
         XCTAssertEqual(m.players["B"]?.status, .placed(2))
         XCTAssertTrue(m.isOver)
         XCTAssertEqual(actions.last, .finish(standings: ["A", "B"]))
+        // The reaching player's score is set BEFORE the finish is emitted — the
+        // transport assigns `match` + stamps the reach-time off this state, so it
+        // must be current (a stale read here showed the pre-reach score/no time).
+        XCTAssertEqual(m.players["B"]?.score, 1)
     }
 
     func testRaceScoreBelowTierDoesNotPlace() {
