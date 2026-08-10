@@ -20,6 +20,12 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Keyboard (Nearby): the duel is now playable without a mouse on macOS —
+  arrow-nav the lobby (host / pick a game, mode·variant·target as
+  segmented pickers, accept/decline requests, Start), and the match board
+  gets the same cursor play as the main board (roam, place, cycle lines,
+  commit; Esc cancels or resigns). Nearby needs two devices, so the live
+  match is verified to build/render only.
 - Keyboard: the whole app is now operable without a mouse, and every
   ⌘-shortcut lives in the menu bar (so it's discoverable). Menu commands —
   New Game (⌘N), Restart (⌘R), Undo (⌘Z), Fit (⌘0), Settings (⌘,), the

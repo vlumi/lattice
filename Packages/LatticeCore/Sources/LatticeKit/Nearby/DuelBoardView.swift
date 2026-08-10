@@ -7,9 +7,17 @@ import SwiftUI
 /// stay small and fast), auto-fit each move.
 struct DuelBoardView: View {
     let game: Game
+    /// Lock-step: input is barred while waiting for the round (the parent also
+    /// dims the board). Keyboard bypasses SwiftUI `.disabled`, so gate here too.
+    var waiting = false
     let onCommit: (Move) -> Void
+    /// Esc with no tentative dot: leave the match (resign). With a tentative dot,
+    /// Esc cancels the placement instead.
+    var onExit: () -> Void = {}
 
     @State private var tentative: Point?
+    @State private var keyboardCursor: Point?
+    @State private var candidateIndex = 0
 
     private var movesByDot: [Point: [Move]] {
         var result: [Point: [Move]] = [:]
@@ -29,11 +37,78 @@ struct DuelBoardView: View {
                     })
         }
         .aspectRatio(1, contentMode: .fit)
+        #if os(macOS)
+        .background(KeyCatcher(onKey: handle))
+        #endif
     }
 
     private var candidates: [Move] {
         tentative.flatMap { movesByDot[$0] } ?? []
     }
+
+    #if os(macOS)
+    // Keyboard play, mirroring the main board (BoardKeyboard): arrows roam a
+    // cursor / cycle candidates, Enter/Space place then commit, Esc cancels.
+    // No-op while the round barrier is up. Model y grows up, screen y down.
+    private func handle(_ key: KeyCatcher.Key) {
+        // Esc always available: cancel a pending placement, else leave the match.
+        if key == .escape {
+            if tentative != nil {
+                tentative = nil
+            } else {
+                onExit()
+            }
+            return
+        }
+        guard !waiting else { return }
+        switch key {
+        case .up: moveCursor(0, 1)
+        case .down: moveCursor(0, -1)
+        case .left: horizontal(-1)
+        case .right: horizontal(1)
+        case .tab: cycleCandidate(1)
+        case .enter, .space: activate()
+        default: break
+        }
+    }
+
+    private func moveCursor(_ dx: Int, _ dy: Int) {
+        let bounds = Bounds(of: game.dots)
+        let (minX, maxX) = (bounds.minX - 1, bounds.maxX + 1)
+        let (minY, maxY) = (bounds.minY - 1, bounds.maxY + 1)
+        let current = keyboardCursor ?? Point((minX + maxX) / 2, (minY + maxY) / 2)
+        keyboardCursor = Point(
+            min(max(current.x + dx, minX), maxX),
+            min(max(current.y + dy, minY), maxY))
+    }
+
+    // Left/right roam while placing, but cycle candidate lines once tentative.
+    private func horizontal(_ dir: Int) {
+        if tentative == nil {
+            moveCursor(dir, 0)
+        } else {
+            cycleCandidate(dir)
+        }
+    }
+
+    private func cycleCandidate(_ step: Int) {
+        let count = candidates.count
+        guard tentative != nil, count > 0 else { return }
+        candidateIndex = ((candidateIndex + step) % count + count) % count
+    }
+
+    private func activate() {
+        if tentative == nil {
+            guard let cursor = keyboardCursor, movesByDot[cursor] != nil else { return }
+            tentative = cursor
+            candidateIndex = 0
+        } else if candidates.indices.contains(candidateIndex) {
+            onCommit(candidates[candidateIndex])
+            tentative = nil
+            candidateIndex = 0
+        }
+    }
+    #endif
 
     private func draw(in context: GraphicsContext, _ layout: Layout) {
         drawPinpoints(in: context, layout)
@@ -49,8 +124,12 @@ struct DuelBoardView: View {
         for move in game.moves {
             stroke(move.line, .style(.primary.opacity(0.7)), layout, in: context)
         }
-        for candidate in candidates {
-            stroke(candidate.line, .style(.tint), layout, in: context, dashed: true)
+        for (index, candidate) in candidates.enumerated() {
+            // The keyboard-highlighted candidate reads solid; the rest dashed.
+            let selected = index == candidateIndex
+            let shading: GraphicsContext.Shading =
+                selected ? .style(.tint) : .style(.tint.opacity(0.5))
+            stroke(candidate.line, shading, layout, in: context, dashed: !selected)
         }
         if let tentative {
             let center = layout.position(of: tentative)
@@ -61,6 +140,18 @@ struct DuelBoardView: View {
                 ),
                 with: .style(.tint))
         }
+        drawCursor(in: context, layout)
+    }
+
+    // The keyboard cursor ring (only while roaming — once a dot is tentative the
+    // enlarged tentative dot stands in for it).
+    private func drawCursor(in context: GraphicsContext, _ layout: Layout) {
+        guard let cursor = keyboardCursor, tentative == nil else { return }
+        let center = layout.position(of: cursor)
+        let r = layout.dotRadius * 1.6
+        context.stroke(
+            Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
+            with: .style(.tint), lineWidth: layout.lineWidth * 0.6)
     }
 
     // The playable empty positions, so you can see where a move can go —
