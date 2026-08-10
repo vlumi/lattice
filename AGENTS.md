@@ -2,8 +2,10 @@
 
 A turn-based **Morpion Solitaire** (*Join Five*) puzzle game for Apple
 platforms. This file is the canonical guidance for both humans and AI coding
-agents. **The repo is at the planning stage — no code exists yet**; this
-document describes the intended shape so the first implementation follows it.
+agents: the decisions behind the app and the shape of the code that implements
+them. The app is **shipped and in TestFlight** (see CHANGELOG.md) — treat the
+decisions here as settled unless a change is deliberate, and keep this document
+in step with the code.
 
 Lattice Five is a **separate project** from its sibling
 [Donpa Squad](https://github.com/vlumi/donpa) (a Minesweeper game by the same
@@ -44,7 +46,7 @@ with no cross-repo references needed to act on it.
 Everything else — deterministic daily puzzle, best-score tracking, two-player
 turns — sits on top of this pure, headless-testable core.
 
-## Design decisions (planning)
+## Design decisions
 
 ### Visual identity
 
@@ -124,6 +126,10 @@ tap empty board, or Esc (macOS) — nothing was committed.
 - **Two-player (pass-and-play):** undo only before the opponent replies.
 - **Nearby duel:** no undo — moves are committed and broadcast at once
   (lock-step's whole point is that speed is a weapon).
+- **Undoing a *restart*:** starting a new game or restarting mid-game is
+  itself undoable (`GameSession.RestorePoint` keeps the replaced game and its
+  openness history) until the first move commits to the fresh board — a
+  safety net for a mis-tap, not an archive of past games. Free/Versus only.
 
 ### Two-player identity & records (decided)
 
@@ -142,17 +148,21 @@ tap empty board, or Esc (macOS) — nothing was committed.
   network. Editing rebuilds the ephemeral MCPeerID so the new name is the
   real peer identity. NOT persisted to any record, replay, best, or the
   sync blob; NOT an identity. Validation: trimmed user name if non-empty,
-  else device name, else "Lattice player"; clamp to MC's 63-byte UTF-8
-  display-name limit, never empty.
+  else device name, else "Lattice player"; clamped to 60 characters (well
+  inside MC's 63-byte display-name limit), never empty.
 - **Nearby duel** is host-advertises (a host configures a game and
   advertises it; others browse and request; the host accepts and starts),
   up to 8 players, star topology (the host relays each guest's events to the
   others). Two modes: **lock-step** (reactive 10s clock, no target, hard
   per-round barrier — a dead-end or a clock expiry eliminates, last standing
-  wins) and **race** (parallel to a target line count, first there wins,
-  others place after). Each device runs the clock only for itself and reports
-  its own expiry; standings rank by move count with ties equal. A duel
-  currently records **no** `GameRecord` (a backlog follow-up).
+  wins) and **race** (parallel to a target line count; everyone plays on, and
+  standings rank by **time to reach the target** — the host is the sole
+  timekeeper and broadcasts the ranked result, so no cross-device clock skew;
+  players who never reach it rank below, by move count). In lock-step each
+  device runs its own clock and reports its own expiry. After a match the host
+  can **Rematch** or go **back to the lobby**, keeping the connection; a guest
+  whose host disappears lands on a "host left" screen. A duel records **no**
+  `GameRecord` — by design (see above).
 - A richer social layer (share-a-score **challenge cards**, peer-to-peer,
   self-verified) is the honest form of "rivalry" if ever wanted —
   post-1.0, not a W/L ledger.
@@ -202,22 +212,21 @@ tap empty board, or Esc (macOS) — nothing was committed.
   `Ubiquitous*Store` *protocol + fake-for-tests* seam is still worth
   copying — just not its device model.
 
-### Mode roadmap
+### Modes (shipped) and what's left
 
-- **v1:** core engine + free solitaire + daily puzzle (deterministic seed,
-  streaks, share card) + personal-best tracking. **Record full game replays
-  from day one**, even before a viewer exists — the data can't be retrofitted.
-- **Later, roughly in order:** replay viewer + personal-best ghost; post-game
-  analysis (legal-move count per turn — shows where the position died);
-  seeded random symmetric starting patterns (the seed code *is* a shareable
-  challenge, no server); line-length-4 variants (shorter games, good for
-  learning and two-player); solver-generated puzzle mode ("find N more
-  moves"); **pass-and-play** last-to-move-wins on one device, and **Nearby
-  duel** — live same-room MultipeerConnectivity play (host-advertises, up to
-  8 players, lock-step or race to a target; see the two-player section).
-- **Score ladder:** grade scores against known reference points (human record
-  170, best machine result 178 on classic 5T) as **local milestones** — the
-  long single-player arc, no server needed.
+Shipped, in the order they landed: core engine + free solitaire; daily puzzle
+(deterministic per-date start, streaks, share card) + personal-best tracking
+with **full replays recorded from day one**; replay viewer + personal-best
+ghost + post-game openness analysis; rule variants and seeded random starts
+(the seed code *is* a shareable challenge, no server); **pass-and-play**
+last-to-move-wins; **Nearby duel** (see the two-player section); iCloud sync;
+dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
+
+Still open (see ROADMAP.md): interactive tutorial, VoiceOver + Dynamic Type,
+a performance/battery pass, solver-generated puzzle mode ("find N more
+moves"), and the **score ladder** — grading scores against known reference
+points (human record 170, best machine result 178 on classic 5T) as *local*
+milestones, the long single-player arc, no server needed.
 
 ### Variant landscape (established, per morpionsolitaire.com)
 
@@ -239,18 +248,67 @@ dies at ≤ 12 moves — neither is worth shipping.
   Bruneau 1976), proven max ≤ 485. 5D record 82, proven max ≤ 84 — nearly
   closed.
 
-## Architecture (intended)
+## Architecture
 
-Mirror Donpa's split, scaled down:
+Donpa's split, scaled down. One package, `Packages/LatticeCore/`, with two
+library products, plus two thin app targets over a generated `.xcodeproj`
+(`Sources/iOS/`, `Sources/macOS/` — there is no `Sources/Shared/`; shared code
+lives in the package):
 
-- **A pure logic core** (Swift package, e.g. `LatticeCore`) — the board model,
-  move validation, the segment-reuse bookkeeping, end detection, scoring.
-  **No SwiftUI, no SpriteKit, no I/O** — unit-tested headlessly. This is where
-  the real work and nearly all the tests live.
-- **A UI layer** (SwiftUI + procedural drawing) — the board rendered with
-  Canvas or SpriteKit `SKShapeNode`s (dots + line segments; **no image
-  assets**), input handling, the two-player and Nearby flows.
-- **Two thin app targets** (iOS, macOS) over a generated `.xcodeproj`.
+- **`LatticeCore`** — the pure logic core: board model, move validation, the
+  segment-reuse bookkeeping, end detection, scoring, persistence, and the
+  headless duel engine (`Duel/DuelMatch`, `DuelMessage`). **No SwiftUI, no
+  I/O beyond the store** — unit-tested headlessly. Nearly all tests live here,
+  and codecov gates this target only.
+- **`LatticeKit`** — the SwiftUI layer: procedural `Canvas` drawing (dots and
+  line segments; **no image assets**), input, the screens, and the Nearby
+  transport (`NearbyMatch`, which owns MultipeerConnectivity so the engine
+  stays pure). Coverage-ignored: keep logic worth testing in `LatticeCore`.
+
+### App-wide state and the screens
+
+- **`AppModel`** (LatticeKit) is the single owner of app-wide state, created by
+  each platform's `App` and injected into `RootView`: the three `GameSession`s
+  (free / daily / versus), `SyncController`, `Feedback`, the selected tab, and
+  the **menu-command intents** (counters like `newGameRequested` that the
+  active `GameView` observes and acts on).
+- **Tabs:** Free / Daily / Versus / History, plus Settings **as a fifth tab on
+  iOS only**. On macOS, Settings is a **modal sheet** on the game window (⌘,;
+  it can't be orphaned like a separate window could), and the native **View**
+  menu switches tabs.
+- **New Game** (Free) is a modal (`NewGameModal`): variant / random start /
+  challenge code, then Start. An accidental New Game or restart is **undoable**
+  — `GameSession.RestorePoint` keeps the replaced game until the first move
+  commits to the fresh board.
+
+### Keyboard model (two mechanisms; see also "Reusable seams")
+
+Copied from Donpa after hidden `.keyboardShortcut` buttons proved unreliable —
+they silently don't receive keys inside an `.overlay`/`.popover`/`.sheet` or
+beside a `Form`, and a *disabled* one still swallows its key.
+
+- **⌘-shortcuts → App-level menu `Commands`** (`LatticeCommands`), so every
+  shortcut is discoverable in the menu bar (and on iPadOS's hold-⌘ HUD).
+  Commands set `AppModel` intents; views react. Each item disables when it
+  doesn't apply.
+- **Arrows / Esc / Space / Tab / plain keys → `Support/KeyCatcher.swift`**, an
+  AppKit `NSViewRepresentable` (macOS) that takes first responder and forwards
+  keys by keyCode. **One catcher per window** — two fight over the responder.
+  `yieldsToTextFields` lets a focused field keep typing keys; Tab/Enter/Esc
+  still leave the field (the catcher re-claims focus on the next runloop tick,
+  because the field editor's teardown steals it back).
+- **Board play** stays on `BoardKeyboard.swift` (hidden shortcut buttons) — it
+  works on both platforms, where `KeyCatcher` is macOS-only.
+
+### Nearby file layout
+
+`NearbyMatch` (the transport) is split by concern: `NearbyMatch.swift` +
+`+Clocks` (the reactive lock-step timers) + `+Lobby` (rename/peer identity) +
+`+Delegates` (MultipeerConnectivity conformances). The UI is
+`NearbyDuelView.swift` + `+Finished` (result screen and action bar) and
+`DuelBoardView.swift`. In **race** mode the **host is the sole timekeeper**: it
+stamps each player's time to reach the target, ranks the standings, and
+broadcasts them (`DuelMessage.results`), so every device shows the same result.
 
 ### Plumbing stays in sync with Donpa (Donpa leads)
 
@@ -321,9 +379,9 @@ depend on Donpa):
   per-platform records; that was a corrected mistake on Donpa). **License:**
   MIT. No monetization.
 - **Scaffolding gotchas** (lessons learned on Donpa, repeated here so this
-  doc stands alone; project shape: `Packages/<Name>Core` +
-  `Sources/{iOS,macOS,Shared}` + one target per platform, both depending on
-  the core package product):
+  doc stands alone; project shape: `Packages/LatticeCore` (products
+  `LatticeCore` + `LatticeKit`) + `Sources/{iOS,macOS}` — one target per
+  platform, both depending on `LatticeKit`):
   - Universal Purchase = **both targets share the one bundle id**.
   - A universal iPhone+iPad app must declare **all four orientations** or
     App Store validation rejects the build (iPad multitasking).
