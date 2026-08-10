@@ -20,6 +20,11 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Nearby name & privacy: your display name is now set on the Nearby screen
+  itself (before you host or join), not in Settings — so the device-name
+  default doesn't quietly broadcast on the network; changing it there
+  updates the real peer identity. A duel stays anonymous and leaves no
+  history by design (no stable opponent identity → no meaningful records).
 - Nearby rematch: the result screen now offers **Rematch** (play again,
   same players, new board) and **Back to Lobby** (reconfigure / let new
   players join) — the connection is kept, no re-discovery. Close still

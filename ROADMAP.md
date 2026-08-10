@@ -48,8 +48,6 @@ Lattice ever adds Game Center (it has none, and none is planned).
 
 ## Backlog (unversioned)
 
-- [ ] Nearby duel follow-up: record each player's own duel game as a
-      GameRecord (a duel currently leaves no history).
 - [ ] Reset progress: per-pool and full reset behind destructive
       confirmations — arrives with a Settings surface (shared with the sync
       toggle above)
