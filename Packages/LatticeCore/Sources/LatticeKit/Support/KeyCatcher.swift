@@ -53,8 +53,8 @@ struct KeyCatcher: NSViewRepresentable {
             if let fieldMonitor { NSEvent.removeMonitor(fieldMonitor) }
         }
 
-        /// While a field editor types, Tab still navigates and Esc ends the
-        /// edit (rather than falling through to the sheet's cancel); everything
+        /// While a field editor types, Tab/Enter/Esc end the edit and are
+        /// forwarded to the app (so it can move focus off the field); everything
         /// else types. A local monitor, since the catcher isn't first responder
         /// while the field editor is.
         private func installFieldMonitor() {
@@ -67,17 +67,23 @@ struct KeyCatcher: NSViewRepresentable {
             guard let window, event.window === window,
                 window.firstResponder is NSTextView
             else { return event }
+            // Tab / Enter / Esc all LEAVE the field (hand first responder back to
+            // the catcher) and forward the key, so the app returns to key-nav.
+            // Consumed here so Esc can't bubble up and dismiss the sheet.
+            let leaveKey: Key
             switch event.keyCode {
-            case 48:  // Tab / ⇧Tab
-                window.makeFirstResponder(self)
-                onKey?(event.modifierFlags.contains(.shift) ? .backTab : .tab)
-                return nil
-            case 53:  // Esc
-                window.makeFirstResponder(self)
-                return nil
-            default:
-                return event
+            case 48: leaveKey = event.modifierFlags.contains(.shift) ? .backTab : .tab
+            case 36, 76: leaveKey = .enter
+            case 53: leaveKey = .escape
+            default: return event  // types into the field
             }
+            window.makeFirstResponder(self)
+            onKey?(leaveKey)
+            // The field editor's teardown can steal first responder back right
+            // after this — re-claim once it settles, so key-nav resumes without
+            // needing a Tab press.
+            claimFocus()
+            return nil
         }
 
         /// Re-take first responder, deferred so it wins after the board/panel.

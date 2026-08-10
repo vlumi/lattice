@@ -21,6 +21,7 @@ struct NearbyDuelView: View {
     @State private var configCursor: ConfigRow = .mode
     /// The name field in the guest lobby (seeded from the stored PlayerName).
     @State private var editedName = PlayerName.current()
+    @FocusState private var nameFocused: Bool
 
     private enum ModeChoice: Hashable { case lockStep, race }
     /// Host-config rows ↑/↓ cycles (target only in race mode).
@@ -61,7 +62,13 @@ struct NearbyDuelView: View {
         #if os(macOS)
         // One KeyCatcher per window: the lobby stages use this one; during a
         // match DuelBoardView hosts its own (and handles Esc→resign there).
-        .background(Group { if duel.stage != .dueling { KeyCatcher(onKey: handle) } })
+        .background(
+            Group {
+                if duel.stage != .dueling {
+                    KeyCatcher(onKey: handle, yieldsToTextFields: true)
+                }
+            }
+        )
         .onChangeCompat(of: duel.stage) { _ in cursor = 0 }
         #endif
         .onAppear { duel.start() }
@@ -75,20 +82,37 @@ struct NearbyDuelView: View {
         duel.resign()
     }
 
+    /// Commit the name edit and leave the field (Return / Esc).
+    private func commitName() {
+        duel.rename(editedName)
+        nameFocused = false
+    }
+
     // MARK: Guest lobby — host button + games to join
 
     private var guestLobby: some View {
         VStack(spacing: 16) {
             // Your display name — defaults to the device name, so set it here
-            // before hosting/joining if you'd rather not broadcast that.
+            // before hosting/joining if you'd rather not broadcast that. A
+            // pencil + field border make it read as editable, not a caption.
             VStack(alignment: .leading, spacing: 4) {
-                Text("Your name", bundle: .module)
-                    .font(.subheadline).foregroundStyle(.secondary)
-                TextField(text: $editedName) { Text("Your name", bundle: .module) }
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { duel.rename(editedName) }
-                    .onChangeCompat(of: editedName) { PlayerName.set($0) }
+                Text("Your name (others see this)", bundle: .module)
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Image(systemName: "pencil").foregroundStyle(.secondary)
+                    TextField(text: $editedName) { Text("Your name", bundle: .module) }
+                        .textFieldStyle(.plain)
+                        .focused($nameFocused)
+                        .onSubmit { commitName() }  // iOS Return (macOS: KeyCatcher)
+                        .onChangeCompat(of: editedName) { PlayerName.set($0) }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(.tint.opacity(0.5)))
             }
+            .rowCursor(cursor == 0)
 
             Button {
                 duel.rename(editedName)  // apply a pending edit before hosting
@@ -102,7 +126,7 @@ struct NearbyDuelView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .rowCursor(cursor == 0)
+            .rowCursor(cursor == 1)
 
             Text("Games nearby", bundle: .module).font(.headline)
             if duel.games.isEmpty {
@@ -116,7 +140,7 @@ struct NearbyDuelView: View {
                     Text(verbatim: game.label).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .rowCursor(cursor == index + 1)
+                .rowCursor(cursor == index + 2)
             }
         }
     }
@@ -324,19 +348,40 @@ extension NearbyDuelView {
     }
 
     private func handleGuestLobby(_ key: KeyCatcher.Key) {
-        let count = duel.games.count + 1  // row 0 = Host, then each game
+        // Editing the name: KeyCatcher has already handed focus back and
+        // forwards Enter/Esc/Tab here. Commit + clear focus so arrow-nav resumes
+        // (Tab also advances a row). Don't dismiss on Esc while editing.
+        if nameFocused {
+            switch key {
+            case .enter, .escape: commitName()
+            case .tab: commitName(); cursor = min(cursor + 1, duel.games.count + 1)
+            case .backTab: commitName()
+            default: break
+            }
+            return
+        }
+        // Rows: 0 = name field, 1 = Host, 2… = each nearby game.
+        let count = duel.games.count + 2
         switch key {
         case .up: cursor = max(cursor - 1, 0)
         case .down: cursor = min(cursor + 1, count - 1)
-        case .enter, .space:
-            if cursor == 0 {
-                configCursor = .mode
-                configuringHost = true
-            } else if duel.games.indices.contains(cursor - 1) {
-                duel.join(duel.games[cursor - 1])
-            }
+        case .enter, .space: activateGuestRow()
         case .escape: dismiss()
         default: break
+        }
+    }
+
+    private func activateGuestRow() {
+        switch cursor {
+        case 0: nameFocused = true
+        case 1:
+            duel.rename(editedName)
+            configCursor = .mode
+            configuringHost = true
+        default:
+            if duel.games.indices.contains(cursor - 2) {
+                duel.join(duel.games[cursor - 2])
+            }
         }
     }
 
