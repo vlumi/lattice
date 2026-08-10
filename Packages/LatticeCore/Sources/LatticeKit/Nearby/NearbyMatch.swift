@@ -114,7 +114,7 @@ final class NearbyMatch: NSObject, ObservableObject {
     /// Display name per peer (from their hello).
     var peerNames: [MCPeerID: String] = [:]
     /// Host: peers accepted into the game, in acceptance order.
-    var acceptedPeers: [MCPeerID] = []
+    @Published var acceptedPeers: [MCPeerID] = []
 
     // Host's chosen config, set in host(config:).
     private var hostMode: DuelMode?
@@ -155,6 +155,16 @@ final class NearbyMatch: NSObject, ObservableObject {
         browser.stopBrowsingForPeers()
         session.disconnect()
     }
+
+    /// Whether the local player is still in the match (not resigned / out).
+    var localIsActive: Bool {
+        guard let m = match else { return false }
+        return m.players[m.local]?.status == .active
+    }
+
+    /// Host: are there still accepted players to (re)start a match with? If they
+    /// all left, Rematch/Back-to-Lobby can't proceed.
+    var hasAcceptedPeers: Bool { !acceptedPeers.isEmpty }
 
     /// Offerable tiers for the host's config UI, gated on the host's own best.
     func offerableTiers(variantKey: String) -> [Int] {

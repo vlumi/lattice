@@ -93,7 +93,7 @@ extension NearbyDuelView {
     // again with the same players, keeping the connection. Otherwise: Close.
     @ViewBuilder var dismissButton: some View {
         switch duel.stage {
-        case .dueling:
+        case .dueling where duel.localIsActive:
             // Resign concedes but stays: the match ends to the result (2-player)
             // or you watch the rest from the standings. Close leaves separately.
             Button(role: .destructive) {
@@ -102,7 +102,10 @@ extension NearbyDuelView {
                 Text("Resign", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-        case .finished where duel.role == .hosting:
+        case .dueling:
+            // Already out (resigned / dead-ended): just watching — Close leaves.
+            closeButton
+        case .finished where duel.role == .hosting && duel.hasAcceptedPeers:
             VStack(spacing: 8) {
                 Button(action: duel.rematch) {
                     Text("Rematch", bundle: .module).frame(maxWidth: .infinity)
@@ -114,6 +117,7 @@ extension NearbyDuelView {
                 closeButton
             }
         default:
+            // No peers left (everyone closed) → only Close.
             closeButton
         }
     }
