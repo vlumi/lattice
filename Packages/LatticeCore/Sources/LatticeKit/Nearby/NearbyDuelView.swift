@@ -227,22 +227,33 @@ struct NearbyDuelView: View {
         VStack(spacing: 12) {
             standingsBar
             if let m = duel.match {
-                let waiting = m.localWaitingForRound
-                DuelBoardView(
-                    game: m.game, waiting: waiting,
-                    onCommit: { duel.commitMove($0) }, onExit: resignOrClose
-                )
-                // Lock-step barrier: once you've moved you wait for the others —
-                // the board is locked and dimmed until the round resolves.
-                .disabled(waiting)
-                .opacity(waiting ? 0.4 : 1)
-                .overlay {
-                    if waiting {
-                        Text("Waiting for the others…", bundle: .module)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                // Once you've finished (reached the target / dead-ended) your
+                // board is done — the others play on, so watch the standings
+                // above rather than a dead board.
+                switch m.players[m.local]?.status {
+                case .placed(let rank): finishedPanel(reached: true, rank: rank)
+                case .eliminated: finishedPanel(reached: false, rank: nil)
+                default: liveBoard(m)
                 }
+            }
+        }
+    }
+
+    private func liveBoard(_ m: DuelMatch) -> some View {
+        let waiting = m.localWaitingForRound
+        return DuelBoardView(
+            game: m.game, waiting: waiting,
+            onCommit: { duel.commitMove($0) }, onExit: resignOrClose
+        )
+        // Lock-step barrier: once you've moved you wait for the others — the
+        // board is locked and dimmed until the round resolves.
+        .disabled(waiting)
+        .opacity(waiting ? 0.4 : 1)
+        .overlay {
+            if waiting {
+                Text("Waiting for the others…", bundle: .module)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -293,13 +304,14 @@ struct NearbyDuelView: View {
     // MARK: Result
 
     private func result(_ standings: [NearbyMatch.Standing]) -> some View {
-        // Competition ranking: equal scores share a position (1, 2, 2, 4).
+        // Standings arrive pre-ranked (the host authors race times). Competition
+        // ranking: rows with the same ranking key share a position (1, 2, 2, 4).
         var ranks: [Int] = []
         for (i, s) in standings.enumerated() {
-            if i > 0, s.score == standings[i - 1].score {
-                ranks.append(ranks[i - 1])  // tie → same position as the one above
+            if i > 0, rankKey(s) == rankKey(standings[i - 1]) {
+                ranks.append(ranks[i - 1])
             } else {
-                ranks.append(i + 1)  // else this row's 1-based position
+                ranks.append(i + 1)
             }
         }
         return VStack(spacing: 12) {
@@ -309,12 +321,31 @@ struct NearbyDuelView: View {
                     Text(verbatim: "\(ranks[index]).")
                     Text(verbatim: standing.name)
                     Spacer()
-                    Text("\(standing.score)", bundle: .module).monospacedDigit()
-                        .foregroundStyle(.secondary)
+                    resultValue(standing).monospacedDigit().foregroundStyle(.secondary)
                 }
                 .font(ranks[index] == 1 ? .title3.weight(.bold) : .body)
             }
         }
+    }
+
+    /// The tie key: a finisher's reach-time, else (nil) their move count negated
+    /// so more moves ranks higher — matching the host's sort.
+    private func rankKey(_ s: NearbyMatch.Standing) -> Double {
+        s.reachTime ?? Double(-s.score)
+    }
+
+    // Finishers show their time to the target; non-finishers show move count.
+    @ViewBuilder private func resultValue(_ s: NearbyMatch.Standing) -> some View {
+        if let time = s.reachTime {
+            Text(verbatim: timeString(time))
+        } else {
+            Text("\(s.score) moves", bundle: .module)
+        }
+    }
+
+    private func timeString(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds.rounded())
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 
     private func waiting(_ label: Text) -> some View {

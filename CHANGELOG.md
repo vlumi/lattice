@@ -20,6 +20,13 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Nearby race scoring: everyone races to the target, ranked by **time to
+  reach it** (fastest wins) rather than final move count — the host is the
+  sole timekeeper, so the standings share one clock and every device shows
+  the same result. Players who don't reach it rank below, by moves. When
+  you reach the target the board shows a "reached — waiting for the others"
+  state (with your placement) instead of going silently unresponsive; if
+  you dead-end it says so. The live standings stay visible throughout.
 - Keyboard (Nearby): the duel is now playable without a mouse on macOS —
   arrow-nav the lobby (host / pick a game, mode·variant·target as
   segmented pickers, accept/decline requests, Start), and the match board

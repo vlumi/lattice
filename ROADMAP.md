@@ -51,13 +51,6 @@ Lattice ever adds Game Center (it has none, and none is planned).
 - [ ] Nearby duel follow-ups: rematch / back-to-lobby (Close currently
       tears the match down); record each player's own duel game as a
       GameRecord (a duel currently leaves no history).
-- [ ] Race-mode reach feedback: when you reach the target the board goes
-      silently unresponsive (you've placed, others play on). Show a "You
-      reached N — waiting for the others" state with live standings so you
-      can watch the rest finish. (Board swaps to a "reached" overlay when
-      `players[local].status == .placed`; `standingsBar` already has the
-      live scores.) Possible mode tweak: everyone races to N, ranked by
-      time taken. Needs a real 2-device test to verify the end-condition.
 - [ ] Reset progress: per-pool and full reset behind destructive
       confirmations — arrives with a Settings surface (shared with the sync
       toggle above)

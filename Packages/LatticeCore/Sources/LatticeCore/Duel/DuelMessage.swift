@@ -26,6 +26,9 @@ public enum DuelMessage: Codable, Equatable, Sendable {
     case score(from: String, Int)
     /// `from` is out — clock expired, dead-ended, or resigned.
     case eliminated(from: String)
+    /// Host → all: the final standings, already ranked (the host is the sole
+    /// timekeeper for race reach-times, so it authors the result everyone shows).
+    case results([ResultRow])
 
     /// One roster slot: the peer's stable tag and display name.
     public struct RosterEntry: Codable, Equatable, Sendable {
@@ -34,6 +37,19 @@ public enum DuelMessage: Codable, Equatable, Sendable {
         public init(tag: String, name: String) {
             self.tag = tag
             self.name = name
+        }
+    }
+
+    /// One final-standings row on the wire. `reachMillis` is the host-timed ms
+    /// from match start to reaching the target (nil = didn't reach).
+    public struct ResultRow: Codable, Equatable, Sendable {
+        public let name: String
+        public let score: Int
+        public let reachMillis: Int?
+        public init(name: String, score: Int, reachMillis: Int?) {
+            self.name = name
+            self.score = score
+            self.reachMillis = reachMillis
         }
     }
 }
