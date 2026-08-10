@@ -45,26 +45,25 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
   you reach the target the board shows a "reached — waiting for the others"
   state (with your placement) instead of going silently unresponsive; if
   you dead-end it says so. The live standings stay visible throughout.
-- Keyboard (Nearby): the duel is now playable without a mouse on macOS —
-  arrow-nav the lobby (host / pick a game, mode·variant·target as
-  segmented pickers, accept/decline requests, Start), and the match board
-  gets the same cursor play as the main board (roam, place, cycle lines,
-  commit; Esc cancels or resigns). Nearby needs two devices, so the live
-  match is verified to build/render only.
-- Keyboard: the whole app is now operable without a mouse, and every
-  ⌘-shortcut lives in the menu bar (so it's discoverable). Menu commands —
-  New Game (⌘N), Restart (⌘R), Undo (⌘Z), Fit (⌘0), Settings (⌘,), the
-  tabs (⌘1–⌘4, in View), Nearby (⌘D), Share Challenge (⇧⌘C), Save Image
-  (⌘S) — with each disabled when it doesn't apply. In-view surfaces are
-  arrow-key navigable on macOS: the New Game modal, Settings, the History
-  list (↑/↓ rows, ←/→ filter, Return opens), and the replay viewer (Space
-  play/pause, ←/→ a move, PgUp/PgDn ±10, Home/End, Esc/Backspace back).
-  (Built on Donpa's model: menu `Commands` + an AppKit key catcher, which
-  receives keys reliably where hidden SwiftUI shortcut buttons didn't.)
-- Restart is disabled on an unplayed board (nothing to restart), so a
-  mis-tap toward Undo can't do anything there; a mid-game restart is
-  recoverable — Undo brings the game back. The challenge/QR popover closes
-  with Esc or a Done button (on iPhone it was a keyboard trap).
+- **Play and navigate without a mouse.** On the board, arrows or WASD roam
+  a cursor (clamped so every legal point is reachable), Enter/Space places
+  a dot, ←/→/Tab cycle the possible lines, Enter/Space commits, Backspace
+  undoes and Esc cancels; press **?** for a cheatsheet. Every other screen
+  is arrow-navigable on macOS too — the New Game modal, Settings, the
+  History list (↑/↓ rows, ←/→ filter, Return opens a replay), the replay
+  viewer (Space play/pause, ←/→ a move, PgUp/PgDn ±10, Home/End,
+  Esc/Backspace back), and the Nearby lobby and duel board. Every
+  ⌘-shortcut now lives in the **menu bar** where you can find it: New Game
+  (⌘N), Restart (⌘R), Undo (⌘Z), Fit (⌘0), Settings (⌘,), the tabs (⌘1–⌘4,
+  under View), Nearby (⌘D), Share Challenge (⇧⌘C) and Save Image (⌘S) —
+  each disabled when it doesn't apply.
+- Restart is safer: it's disabled on an unplayed board (nothing to
+  restart), so a mis-tap reaching for Undo can't do anything — and an
+  accidental restart or New Game mid-game is **undoable**, bringing the
+  replaced game and its openness history back, until your first move on
+  the fresh board. Free and Versus; the daily is unaffected. The
+  challenge/QR popover also closes with Esc or a Done button (on iPhone it
+  was a keyboard trap).
 - Header fit: on a narrow screen (iPhone SE) the seeded-game challenge
   chip drops its code text and shows just the QR icon, so the top bar no
   longer wraps; the code is still there in the share popover.
@@ -85,18 +84,6 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
   (or, on the code row, drops into the field to type), Esc closes (or
   steps out of the field while typing). Restart-this-board is now its
   own header button on **⌘R**.
-- Restart is undoable: an accidental restart / New Game mid-game can be
-  taken back with Undo, bringing the replaced game (and its openness
-  history) back — until the first move commits to the fresh board, at
-  which point the old game is gone. Free and Versus; the daily is
-  unaffected.
-- Keyboard play (accessibility): play a whole game without a mouse.
-  Arrow keys or WASD roam a board cursor (clamped so every legal point
-  is reachable); Enter/Space places a dot, then ←/→/Tab cycle the
-  possible lines and Enter/Space commits; Backspace undoes, Esc cancels.
-  ⌘1–⌘5 switch tabs (⌘, opens Settings). Press **?** for a keyboard
-  cheatsheet over the board (Esc, ?, ✕, or a tap-off closes it); the
-  floating Undo/Fit buttons show their shortcut badges while it's open.
 
 ### build 5 — 2026-08-08
 
