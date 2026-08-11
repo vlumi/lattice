@@ -5,27 +5,28 @@ import SwiftUI
 /// standings. Thin over `NearbyMatch`; the board reuses `DuelBoardView`.
 /// Verified on devices (the transport can't run headlessly).
 struct NearbyDuelView: View {
-    // Non-private: the +Finished extension (result screen, action bar) reads them.
+    // State is internal, not private: the +Lobby / +Match / +Finished extensions
+    // all read it.
     @StateObject var duel: NearbyMatch
     @Environment(\.dismiss) var dismiss
 
     // Host config flow.
-    @State private var configuringHost = false
-    @State private var chosenVariant = DuelTier.eligibleVariants.first ?? "5T"
-    @State private var chosenMode: ModeChoice = .lockStep
-    @State private var chosenTier = 0
+    @State var configuringHost = false
+    @State var chosenVariant = DuelTier.eligibleVariants.first ?? "5T"
+    @State var chosenMode: ModeChoice = .lockStep
+    @State var chosenTier = 0
     /// Keyboard row cursor for the list-like lobby stages (guest games, host
     /// join-requests). Its meaning is per-stage; reset on any stage change.
-    @State private var cursor = 0
+    @State var cursor = 0
     /// Keyboard focus row within host config (↑/↓ move, ←/→ change selection).
-    @State private var configCursor: ConfigRow = .mode
+    @State var configCursor: ConfigRow = .mode
     /// The name field in the guest lobby (seeded from the stored PlayerName).
-    @State private var editedName = PlayerName.current()
-    @FocusState private var nameFocused: Bool
+    @State var editedName = PlayerName.current()
+    @FocusState var nameFocused: Bool
 
-    private enum ModeChoice: Hashable { case lockStep, race }
+    enum ModeChoice: Hashable { case lockStep, race }
     /// Host-config rows ↑/↓ cycles (target only in race mode).
-    fileprivate enum ConfigRow: Hashable { case mode, variant, target }
+    enum ConfigRow: Hashable { case mode, variant, target }
 
     init(name: String, bests: BestScores) {
         _duel = StateObject(wrappedValue: NearbyMatch(name: name, bests: bests))
@@ -78,257 +79,16 @@ struct NearbyDuelView: View {
     // Resign concedes but stays in the screen: a 2-player match ends → the
     // result (with Rematch), and in a bigger match you watch the rest from the
     // standings. Leaving is a separate, explicit Close.
-    private func resign() {
+    func resign() {
         duel.resign()
     }
 
     /// Commit the name edit and leave the field (Return / Esc).
-    private func commitName() {
+    func commitName() {
         duel.rename(editedName)
         nameFocused = false
     }
 
-    // MARK: Guest lobby — host button + games to join
-
-    private var guestLobby: some View {
-        VStack(spacing: 16) {
-            // Your display name — defaults to the device name, so set it here
-            // before hosting/joining if you'd rather not broadcast that. A
-            // pencil + field border make it read as editable, not a caption.
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Your name (others see this)", bundle: .module)
-                    .font(.caption).foregroundStyle(.secondary)
-                HStack(spacing: 8) {
-                    Image(systemName: "pencil").foregroundStyle(.secondary)
-                    TextField(text: $editedName) { Text("Your name", bundle: .module) }
-                        .textFieldStyle(.plain)
-                        .focused($nameFocused)
-                        .onSubmit { commitName() }  // iOS Return (macOS: KeyCatcher)
-                        .onChangeCompat(of: editedName) { PlayerName.set($0) }
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8).strokeBorder(.tint.opacity(0.5)))
-            }
-            .rowCursor(cursor == 0)
-
-            Button {
-                duel.rename(editedName)  // apply a pending edit before hosting
-                configCursor = .mode
-                configuringHost = true
-            } label: {
-                Label {
-                    Text("Host a game", bundle: .module)
-                } icon: {
-                    Image(systemName: "plus.circle")
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .rowCursor(cursor == 1)
-
-            Text("Games nearby", bundle: .module).font(.headline)
-            if duel.games.isEmpty {
-                Text("Looking for a game to join…", bundle: .module)
-                    .foregroundStyle(.secondary)
-            }
-            ForEach(Array(duel.games.enumerated()), id: \.element.id) { index, game in
-                Button {
-                    duel.join(game)
-                } label: {
-                    Text(verbatim: game.label).frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .rowCursor(cursor == index + 2)
-            }
-        }
-    }
-
-    // MARK: Host config — pick mode + variant, then advertise
-
-    private var hostConfig: some View {
-        VStack(spacing: 16) {
-            Text("Host a game", bundle: .module).font(.headline)
-
-            Picker(selection: $chosenMode) {
-                Text("Lock-step", bundle: .module).tag(ModeChoice.lockStep)
-                Text("Race", bundle: .module).tag(ModeChoice.race)
-            } label: {
-                Text("Mode", bundle: .module)
-            }
-            .pickerStyle(.segmented)
-            .rowCursor(configCursor == .mode)
-
-            Picker(selection: $chosenVariant) {
-                ForEach(duel.eligibleVariants, id: \.self) { v in
-                    Text(verbatim: v).tag(v)
-                }
-            } label: {
-                Text("Variant", bundle: .module)
-            }
-            .pickerStyle(.segmented)
-            .rowCursor(configCursor == .variant)
-
-            if chosenMode == .race {
-                Picker(selection: $chosenTier) {
-                    ForEach(duel.offerableTiers(variantKey: chosenVariant), id: \.self) { tier in
-                        Text(verbatim: "\(tier)").tag(tier)
-                    }
-                } label: {
-                    Text("Target", bundle: .module)
-                }
-                .pickerStyle(.segmented)
-                .rowCursor(configCursor == .target)
-            }
-
-            Button(action: advertise) {
-                Text("Advertise", bundle: .module).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        // Keep the target a valid tier for the current variant.
-        .onChangeCompat(of: chosenVariant) { _ in clampTier() }
-        .onAppear(perform: clampTier)
-    }
-
-    private func clampTier() {
-        let tiers = duel.offerableTiers(variantKey: chosenVariant)
-        if !tiers.contains(chosenTier) { chosenTier = tiers.first ?? 0 }
-    }
-
-    private func advertise() {
-        switch chosenMode {
-        case .lockStep: duel.host(mode: .lockStep, variantKey: chosenVariant)
-        case .race: duel.host(mode: .race(tier: chosenTier), variantKey: chosenVariant)
-        }
-    }
-
-    // MARK: Host lobby — accepted players + join requests + start
-
-    private var hostLobby: some View {
-        VStack(spacing: 16) {
-            Text("Your game", bundle: .module).font(.headline)
-            ForEach(duel.lobbyNames, id: \.self) { name in
-                Text(verbatim: name)
-            }
-            if !duel.joinRequests.isEmpty {
-                Divider()
-                Text("Wants to join", bundle: .module).font(.subheadline)
-                ForEach(Array(duel.joinRequests.enumerated()), id: \.element.id) { index, request in
-                    HStack {
-                        Text(verbatim: request.name)
-                        Spacer()
-                        Button {
-                            duel.accept(request)
-                        } label: {
-                            Text("Accept", bundle: .module)
-                        }
-                        Button(role: .cancel) {
-                            duel.decline(request)
-                        } label: {
-                            Text("Decline", bundle: .module)
-                        }
-                    }
-                    .rowCursor(cursor == index)
-                }
-            }
-            Button {
-                duel.startMatch()
-            } label: {
-                Text("Start", bundle: .module).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(duel.lobbyNames.count < 2)
-        }
-    }
-
-    // MARK: Live match
-
-    private var matchView: some View {
-        VStack(spacing: 12) {
-            standingsBar
-            if let m = duel.match {
-                // Once you've finished (reached the target / dead-ended) your
-                // board is done — the others play on, so watch the standings
-                // above rather than a dead board.
-                switch m.players[m.local]?.status {
-                case .placed(let rank): finishedPanel(reached: true, rank: rank)
-                case .eliminated: finishedPanel(reached: false, rank: nil)
-                default: liveBoard(m)
-                }
-            }
-        }
-    }
-
-    private func liveBoard(_ m: DuelMatch) -> some View {
-        let waiting = m.localWaitingForRound
-        return DuelBoardView(
-            game: m.game, waiting: waiting,
-            onCommit: { duel.commitMove($0) }, onExit: resign
-        )
-        // Lock-step barrier: once you've moved you wait for the others — the
-        // board is locked and dimmed until the round resolves.
-        .disabled(waiting)
-        .opacity(waiting ? 0.4 : 1)
-        .overlay {
-            if waiting {
-                Text("Waiting for the others…", bundle: .module)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    @ViewBuilder private var standingsBar: some View {
-        if let m = duel.match {
-            VStack(spacing: 4) {
-                ForEach(m.order, id: \.self) { tag in
-                    if let p = m.players[tag] {
-                        HStack {
-                            Text(verbatim: p.name)
-                                .fontWeight(tag == m.local ? .bold : .regular)
-                            Spacer()
-                            scoreLabel(m, tag: tag, state: p)
-                        }
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(p.status == .eliminated ? .secondary : .primary)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func scoreLabel(_ m: DuelMatch, tag: String, state: DuelMatch.PlayerState) -> some View
-    {
-        switch m.mode {
-        case .race(let tier):
-            // Progress toward the target — the whole point of race.
-            Text("\(state.score) / \(tier)", bundle: .module)
-        case .lockStep:
-            if state.status == .eliminated {
-                Text("out", bundle: .module)
-            } else if let remaining = duel.clocks[tag] {
-                // On the clock — someone moved first, this player must keep up.
-                Text("\(remaining, specifier: "%.1f")s", bundle: .module)
-                    .foregroundStyle(remaining < 3 ? .red : .primary)
-            } else if state.movedThisRound {
-                // Committed this round, waiting at the barrier.
-                Image(systemName: "checkmark")
-            } else {
-                // Thinking, no clock yet (nobody has moved this round).
-                Image(systemName: "ellipsis")
-            }
-        }
-    }
-
-    private func waiting(_ label: Text) -> some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            label.foregroundStyle(.secondary)
-        }
-    }
 }
 
 #if os(macOS)

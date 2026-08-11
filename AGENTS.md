@@ -252,8 +252,8 @@ dies at ≤ 12 moves — neither is worth shipping.
 
 Donpa's split, scaled down. One package, `Packages/LatticeCore/`, with two
 library products, plus two thin app targets over a generated `.xcodeproj`
-(`Sources/iOS/`, `Sources/macOS/` — there is no `Sources/Shared/`; shared code
-lives in the package):
+(`Sources/iOS/`, `Sources/macOS/`, and `Sources/Shared/` for the shared asset
+catalog only — all shared *code* lives in the package):
 
 - **`LatticeCore`** — the pure logic core: board model, move validation, the
   segment-reuse bookkeeping, end detection, scoring, persistence, and the
@@ -264,6 +264,20 @@ lives in the package):
   line segments; **no image assets**), input, the screens, and the Nearby
   transport (`NearbyMatch`, which owns MultipeerConnectivity so the engine
   stays pure). Coverage-ignored: keep logic worth testing in `LatticeCore`.
+
+Both targets group **by domain, not by type** — no `Views/` or `Models/`
+folders. `LatticeCore`: `Daily/ Duel/ Persistence/ Sync/ Analysis/ Support/`.
+`LatticeKit`: `App/ Board/ Game/ Nearby/ Replay/ History/ Settings/ Share/
+Support/`. A file holds one concern; a screen that grows past it splits into
+`Screen+Concern.swift` in the same folder (e.g. `GameView+Header.swift`) rather
+than accumulating `// MARK:` sections. Both build systems reference
+directories, so adding a folder needs no project edit.
+
+Every renderer draws through the shared vocabulary in
+`Board/BoardRendering.swift` (`fill(dot:)`, `stroke(line:)`, `fill(casedDot:)`,
+`strokeRing(around:)`, `strokePlayed(moves:)`, the `Pinpoint` shade coding).
+Do NOT open-code ellipse rects or stroke styles in a new board view — four
+renderers had drifted that way before it was extracted.
 
 ### App-wide state and the screens
 
