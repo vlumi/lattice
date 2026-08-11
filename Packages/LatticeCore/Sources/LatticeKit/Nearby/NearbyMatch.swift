@@ -79,11 +79,10 @@ final class NearbyMatch: NSObject, ObservableObject {
         case hostLeft  // guest: the host disconnected — no result to await
     }
 
-    // Lobby state. Setters are internal (not private) where the delegate
-    // conformances in NearbyMatch+Delegates.swift mutate them.
+    // State is internal, not private: the +Delegates / +Clocks / +Lobby / +Wire
+    // extensions all mutate it. Internal members of a final class in this module
+    // are not LatticeKit public API.
     @Published private(set) var role: Role = .idle
-    // Non-private set: mutated by the delegate conformances in the +Delegates
-    // file (same module; a `final` class's internal members aren't public API).
     @Published var games: [AdvertisedGame] = []
     @Published var joinRequests: [JoinRequest] = []
     /// Accepted players in the host's lobby (display names), self first.
@@ -93,16 +92,11 @@ final class NearbyMatch: NSObject, ObservableObject {
     @Published var stage: Stage = .lobby
     @Published var match: DuelMatch?
     /// Seconds left on each running clock, by player tag (lock-step HUD).
-    /// Non-private set: written by the clock helpers in NearbyMatch+Clocks.swift.
     @Published var clocks: [String: TimeInterval] = [:]
 
     static let service = "lattice-duel"
 
-    // Members marked non-private are reached by the delegate conformances in
-    // NearbyMatch+Delegates.swift (same module; a `final` class's internal
-    // members aren't part of LatticeKit's public API).
-    // Editable in the guest lobby (rebuilds the peer identity — see rename in
-    // NearbyMatch+Lobby.swift; hence these are non-private).
+    /// Editing this rebuilds the peer identity — see `rename`.
     @Published var myName: String
     private let myBests: BestScores
     var myPeer: MCPeerID
@@ -122,8 +116,7 @@ final class NearbyMatch: NSObject, ObservableObject {
     private var hostMode: DuelMode?
     private var hostVariant: String?
 
-    // Clock timers, one per running player (lock-step). Non-private: the clock
-    // helpers live in NearbyMatch+Clocks.swift.
+    // Clock deadlines, one per running player (lock-step).
     var clockDeadlines: [String: Date] = [:]
     var clockTimer: Timer?
 

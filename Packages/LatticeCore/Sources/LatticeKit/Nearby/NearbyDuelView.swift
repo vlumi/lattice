@@ -5,7 +5,8 @@ import SwiftUI
 /// standings. Thin over `NearbyMatch`; the board reuses `DuelBoardView`.
 /// Verified on devices (the transport can't run headlessly).
 struct NearbyDuelView: View {
-    // Non-private: the +Finished extension (result screen, action bar) reads them.
+    // State is internal, not private: the +Lobby / +Match / +Finished extensions
+    // all read it.
     @StateObject var duel: NearbyMatch
     @Environment(\.dismiss) var dismiss
 
