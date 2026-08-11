@@ -246,54 +246,24 @@ public struct ReplayView: View {
 /// no pinpoints or input; auto-fits its content each step.
 struct ReplayBoardView: View {
     let game: Game
-    /// Lines this position permanently foreclosed (prototype: shown as faint
-    /// dashed ghosts, the "you closed this off" mistake marker).
+    /// Lines this position permanently foreclosed — faint dashed ghosts, the
+    /// "you closed this off" marker.
     var foreclosed: [Line] = []
 
     var body: some View {
         Canvas { context, size in
             let layout = Layout(fitting: Bounds(of: game.dots), in: size)
-            // Foreclosed lines first, so real lines/dots draw on top of them.
+            // Foreclosed first, so real lines and dots draw on top.
             for line in foreclosed {
-                guard let first = line.points.first, let last = line.points.last else { continue }
-                var path = Path()
-                path.move(to: layout.position(of: first))
-                path.addLine(to: layout.position(of: last))
                 context.stroke(
-                    path, with: .color(.red.opacity(0.5)),
-                    style: StrokeStyle(
-                        lineWidth: layout.lineWidth * 0.8, lineCap: .round,
-                        dash: [layout.lineWidth * 1.5, layout.lineWidth * 1.5]))
+                    line: line, .color(.red.opacity(0.5)), width: layout.lineWidth * 0.8,
+                    dash: layout.lineWidth * 1.5, layout)
             }
-            let lastLine = game.moves.last?.line
-            for move in game.moves {
-                guard let first = move.line.points.first, let last = move.line.points.last
-                else { continue }
-                var path = Path()
-                path.move(to: layout.position(of: first))
-                path.addLine(to: layout.position(of: last))
-                let isLast = move.line == lastLine
-                context.stroke(
-                    path,
-                    with: isLast ? .style(.tint) : .style(.primary.opacity(0.75)),
-                    style: StrokeStyle(lineWidth: layout.lineWidth, lineCap: .round))
-            }
+            context.strokePlayed(
+                moves: game.moves, layout,
+                shading: { _ in .style(.primary.opacity(0.75)) }, last: .style(.tint))
             for dot in game.dots {
-                let center = layout.position(of: dot)
-                let casing = layout.casingRadius
-                context.fill(
-                    Path(
-                        ellipseIn: CGRect(
-                            x: center.x - casing, y: center.y - casing,
-                            width: casing * 2, height: casing * 2)),
-                    with: .style(.background))
-                let radius = layout.dotRadius
-                context.fill(
-                    Path(
-                        ellipseIn: CGRect(
-                            x: center.x - radius, y: center.y - radius,
-                            width: radius * 2, height: radius * 2)),
-                    with: .style(.primary))
+                context.fill(casedDot: dot, .style(.primary), layout)
             }
         }
     }

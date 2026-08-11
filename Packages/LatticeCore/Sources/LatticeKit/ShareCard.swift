@@ -78,32 +78,15 @@ private struct ShareCardView: View {
         Canvas { context, size in
             let layout = Layout(fitting: Bounds(of: game.dots), in: size)
             for move in game.moves {
-                guard let first = move.line.points.first, let last = move.line.points.last
-                else { continue }
-                var path = Path()
-                path.move(to: layout.position(of: first))
-                path.addLine(to: layout.position(of: last))
                 context.stroke(
-                    path, with: .color(.black.opacity(0.6)),
-                    style: StrokeStyle(lineWidth: layout.lineWidth, lineCap: .round))
+                    line: move.line, .color(.black.opacity(0.6)),
+                    width: layout.lineWidth, layout)
             }
+            // Fixed ink-on-paper, not the theme's colours: the card must look
+            // the same wherever it lands.
             for dot in game.dots {
-                let casing = layout.casingRadius
-                context.fill(
-                    Path(
-                        ellipseIn: CGRect(
-                            x: layout.position(of: dot).x - casing,
-                            y: layout.position(of: dot).y - casing,
-                            width: casing * 2, height: casing * 2)),
-                    with: .color(.white))
-                let radius = layout.dotRadius
-                context.fill(
-                    Path(
-                        ellipseIn: CGRect(
-                            x: layout.position(of: dot).x - radius,
-                            y: layout.position(of: dot).y - radius,
-                            width: radius * 2, height: radius * 2)),
-                    with: .color(.black))
+                context.fill(dot: dot, radius: layout.casingRadius, .color(.white), layout)
+                context.fill(dot: dot, radius: layout.dotRadius, .color(.black), layout)
             }
         }
     }
