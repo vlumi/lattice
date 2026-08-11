@@ -2,6 +2,9 @@ import Charts
 import LatticeCore
 import SwiftUI
 
+// The app's colour identities. Both palettes draw from one CVD-validated set
+// of categorical slots via paletteRGB, which is why they share a file.
+
 /// Fixed visual identity per scoring pool — colour AND symbol, so identity
 /// never rides on colour alone. Colours are categorical slots validated for
 /// colour-vision-deficiency separation and both surfaces (dark mode uses

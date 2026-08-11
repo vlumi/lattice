@@ -36,25 +36,6 @@ enum ShareCard {
     }
 }
 
-/// Write-only PNG wrapper for `.fileExporter`.
-struct PNGDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.png] }
-
-    let data: Data
-
-    init(data: Data) {
-        self.data = data
-    }
-
-    init(configuration: ReadConfiguration) throws {
-        data = configuration.file.regularFileContents ?? Data()
-    }
-
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: data)
-    }
-}
-
 private struct ShareCardView: View {
     let game: Game
     let subtitle: String
