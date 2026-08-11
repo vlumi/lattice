@@ -20,6 +20,12 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Starting a random or coded board responds instantly: the New Game modal
+  closes on the tap and the board generates in the background, with a
+  "Generating board…" indicator over the board if it takes a moment. The
+  indicator waits a beat before appearing (so quick boards show nothing)
+  and stays briefly once shown (so it never flashes past).
+
 ### build 6 — 2026-08-10
 
 - Nearby name & privacy: your display name is now set on the Nearby screen
