@@ -32,6 +32,9 @@ public struct GameView: View {
         _showShortcuts = showShortcuts
     }
 
+    /// Lags `session.isGenerating` so a fast generate never flashes a spinner.
+    @StateObject private var busy = BusyIndicator()
+
     private var isActive: Bool { model.selection == tab }
 
     // What the Game menu's Share Challenge / Save Image enable on — recomputed
@@ -51,6 +54,7 @@ public struct GameView: View {
             BoardView(
                 session: session, camera: camera,
                 keyboardEnabled: !isShowingNewGame && !showShortcuts && !isShowingChallenge
+                    && !session.isGenerating
             )
             // Undo and Fit float over the board (bottom-trailing) rather
             // than crowding the header — the frequent in-game actions sit
@@ -67,6 +71,13 @@ public struct GameView: View {
             .overlay {
                 if isShowingNewGame { newGameModal }
             }
+            // Generating a seeded start takes a moment; the tap already closed
+            // the modal, so say what's happening over the board. The outgoing
+            // board stays visible but inert — it's about to be replaced.
+            .disabled(session.isGenerating)
+            .overlay {
+                if busy.isVisible { generatingOverlay }
+            }
             if session.pbCurve != nil {
                 ghost
             }
@@ -75,6 +86,7 @@ public struct GameView: View {
             }
         }
         .padding()
+        .onChangeCompat(of: session.isGenerating) { busy.update(busy: $0) }
         // Overlay dismissals live here at window level: hidden shortcut buttons
         // inside an .overlay/.popover don't reliably receive keys.
         .background(overlayDismissKeys)
@@ -358,6 +370,17 @@ extension GameView {
         if isShowingChallenge {
             HiddenShortcut(key: .escape) { isShowingChallenge = false }
         }
+    }
+
+    /// Shown over the board while a seeded start is being generated.
+    fileprivate var generatingOverlay: some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text("Generating board…", bundle: .module)
+                .font(.subheadline).foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 
     fileprivate var newGameModal: some View {

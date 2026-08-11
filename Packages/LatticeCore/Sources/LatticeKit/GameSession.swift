@@ -43,6 +43,9 @@ public final class GameSession: ObservableObject {
     /// Keyboard play: which of `candidates` is highlighted while a dot is
     /// tentative (stage two).
     @Published public private(set) var candidateIndex = 0
+    /// A seeded start is being generated off the main actor (see
+    /// `generateChallenge`) — the board shows a "generating" indicator.
+    @Published public private(set) var isGenerating = false
 
     public let mode: Mode
 
@@ -54,6 +57,11 @@ public final class GameSession: ObservableObject {
     private var dateKey: String
     /// Daily: armed by a commit, spent by an undo — one undo per move.
     private var undoArmed = false
+    /// Bumped per generate request so a stale one can't overwrite a newer board.
+    private var generation = 0
+    /// The in-flight seeded-start generation, exposed so tests (and any caller
+    /// that must sequence on it) can await the new board.
+    public private(set) var generateTask: Task<Void, Never>?
 
     private struct Resolved {
         let game: Game
@@ -326,7 +334,7 @@ public final class GameSession: ObservableObject {
         guard mode != .daily else { return }
         let newRules = rules ?? game.rules
         if rules == nil, let seed {
-            start(Game(rules: .fiveT, start: StartGenerator.pattern(seed: seed)), seed: seed)
+            generateChallenge(seed: seed)  // same seed again — regenerate off-main
         } else {
             start(Game(rules: newRules, start: StartingPattern.standard(for: newRules)), seed: nil)
         }
@@ -336,7 +344,26 @@ public final class GameSession: ObservableObject {
     /// the whole challenge — same seed, same board, anywhere.
     public func newChallenge(seed: UInt64) {
         guard mode == .free else { return }
-        start(Game(rules: .fiveT, start: StartGenerator.pattern(seed: seed)), seed: seed)
+        generateChallenge(seed: seed)
+    }
+
+    /// Generating a seeded start scans up to 256 candidates through the solver,
+    /// which is slow enough to freeze a tap — so it runs off the main actor and
+    /// the caller returns at once. `isGenerating` drives the board's indicator;
+    /// a newer request supersedes an in-flight one.
+    private func generateChallenge(seed: UInt64) {
+        generation &+= 1
+        let token = generation
+        isGenerating = true
+        generateTask?.cancel()
+        generateTask = Task { [weak self] in
+            let pattern = await Task.detached(priority: .userInitiated) {
+                StartGenerator.pattern(seed: seed)
+            }.value
+            guard let self, !Task.isCancelled, token == self.generation else { return }
+            self.start(Game(rules: .fiveT, start: pattern), seed: seed)
+            self.isGenerating = false
+        }
     }
 
     private func start(_ newGame: Game, seed: UInt64?) {

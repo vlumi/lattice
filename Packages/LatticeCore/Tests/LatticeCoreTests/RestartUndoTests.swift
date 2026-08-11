@@ -61,7 +61,7 @@ final class RestartUndoTests: XCTestCase {
         XCTAssertFalse(s.undoAllowed, "the pre-restart game is no longer recoverable")
     }
 
-    func testUndoRestoresPlayedGameAfterNewRandomChallenge() {
+    func testUndoRestoresPlayedGameAfterNewRandomChallenge() async {
         // The exact user flow: play a game, then start a new Random Start
         // challenge (New Game modal → Random), then undo — the played game
         // should come back.
@@ -72,6 +72,7 @@ final class RestartUndoTests: XCTestCase {
         XCTAssertEqual(playedMoves.count, 1)
 
         s.newChallenge(seed: SeedCode.randomSeed())
+        await s.generateTask?.value  // seeded starts generate off the main actor
         XCTAssertTrue(s.game.moves.isEmpty, "fresh challenge board")
         XCTAssertTrue(s.undoAllowed, "undo should recover the played game")
 
@@ -79,7 +80,7 @@ final class RestartUndoTests: XCTestCase {
         XCTAssertEqual(s.game.moves, playedMoves, "the played game comes back")
     }
 
-    func testUndoRestoresFinishedGameAfterNewChallenge() {
+    func testUndoRestoresFinishedGameAfterNewChallenge() async {
         // The reported flow used a *finished* game (game over), then New Game.
         // Play to completion, then start a new challenge, then undo.
         let s = session()
@@ -108,15 +109,17 @@ final class RestartUndoTests: XCTestCase {
         XCTAssertFalse(finishedMoves.isEmpty)
 
         s.newChallenge(seed: SeedCode.randomSeed())
+        await s.generateTask?.value
         XCTAssertTrue(s.undoAllowed, "undo should recover the finished game")
         s.undo()
         XCTAssertEqual(s.game.moves, finishedMoves, "the finished game comes back")
         XCTAssertTrue(s.isOver, "restored game is still the finished one")
     }
 
-    func testUndoRestoresSeededChallengeAfterVariantSwitch() {
+    func testUndoRestoresSeededChallengeAfterVariantSwitch() async {
         let s = session()
         s.newChallenge(seed: 12345)
+        await s.generateTask?.value
         s.place(firstPlaceable(s))
         s.commitHighlighted()
         let seededMoves = s.game.moves
