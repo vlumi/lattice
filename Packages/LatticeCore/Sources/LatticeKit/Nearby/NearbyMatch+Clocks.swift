@@ -3,6 +3,20 @@ import Foundation
 /// The per-player reactive countdown clocks (lock-step). Transport-owned so the
 /// pure DuelMatch stays clock-free — it only knows a clock is running or not.
 extension NearbyMatch {
+    /// Start browsing for advertised games (guest default on appear).
+    func start() {
+        browser.startBrowsingForPeers()
+    }
+
+    /// Idempotent: `onDisappear` and `deinit` may both run it.
+    func stop() {
+        clockTimer?.invalidate()
+        clockTimer = nil
+        advertiser?.stopAdvertisingPeer()
+        browser.stopBrowsingForPeers()
+        session.disconnect()
+    }
+
     func stopClocks() {
         clockTimer?.invalidate()
         clockTimer = nil

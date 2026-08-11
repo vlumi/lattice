@@ -221,11 +221,11 @@ extension BoardView {
             for y in (layout.bounds.minY - 1)...(layout.bounds.maxY + 1) {
                 let p = Point(x, y)
                 if dots.contains(p) || p == session.tentative { continue }
-                let radius = session.isPlaceable(p) ? layout.openPointRadius : layout.pinpointRadius
-                let shade = session.isPlaceable(p) ? 0.45 : 0.08
-                // A small background casing so an underlying dead-gap line stops
-                // short of the pinpoint (same margin idea as the filled dots'
-                // casing ring), then the pinpoint itself on top.
+                let placeable = session.isPlaceable(p)
+                let radius = placeable ? layout.openPointRadius : layout.pinpointRadius
+                let shade = placeable ? 0.45 : 0.08
+                // A background casing so an underlying dead-gap line stops short
+                // of the pinpoint (same idea as the filled dots' casing ring).
                 fillDot(p, radius: radius * 1.8, .style(.background), in: context, layout)
                 fillDot(p, radius: radius, .style(.primary.opacity(shade)), in: context, layout)
             }
