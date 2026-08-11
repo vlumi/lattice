@@ -90,7 +90,7 @@ final class NearbyMatch: NSObject, ObservableObject {
     @Published var lobbyNames: [String] = []
 
     // Match state
-    @Published private(set) var stage: Stage = .lobby
+    @Published var stage: Stage = .lobby
     @Published var match: DuelMatch?
     /// Seconds left on each running clock, by player tag (lock-step HUD).
     /// Non-private set: written by the clock helpers in NearbyMatch+Clocks.swift.
@@ -129,8 +129,8 @@ final class NearbyMatch: NSObject, ObservableObject {
 
     // Race timekeeping (host only, the sole authority): when the match started,
     // and each player's elapsed time to first reach the target.
-    private var matchStart: Date?
-    private var reachTimes: [String: TimeInterval] = [:]
+    var matchStart: Date?
+    var reachTimes: [String: TimeInterval] = [:]
 
     init(name: String, bests: BestScores) {
         let cleaned = Self.clean(name)
@@ -266,7 +266,7 @@ final class NearbyMatch: NSObject, ObservableObject {
 
     // MARK: Match
 
-    private func beginMatch(
+    func beginMatch(
         seed: UInt64, mode: DuelMode, variantKey: String, roster: [DuelMessage.RosterEntry]
     ) {
         match = DuelMatch(
@@ -323,7 +323,7 @@ final class NearbyMatch: NSObject, ObservableObject {
     /// The engine settled. The host is the timekeeper, so it authors the ranked
     /// standings and broadcasts them; guests show whatever the host sends (they
     /// wait for `.results` rather than ranking a copy without the reach-times).
-    private func finish(_ standings: [String]) {
+    func finish(_ standings: [String]) {
         stopClocks()
         guard role == .hosting else { return }  // guests await `.results`
         let rows = rankedRows(order: standings)
@@ -331,119 +331,4 @@ final class NearbyMatch: NSObject, ObservableObject {
         stage = .finished(standings: rows)
     }
 
-    // MARK: Send / receive
-
-    private func broadcast(_ message: DuelMessage) {
-        let peers = session.connectedPeers
-        guard !peers.isEmpty, let data = try? JSONEncoder().encode(message) else { return }
-        try? session.send(data, toPeers: peers, with: .reliable)
-    }
-
-    func send(_ message: DuelMessage, to peer: MCPeerID) {
-        guard let data = try? JSONEncoder().encode(message) else { return }
-        try? session.send(data, toPeers: [peer], with: .reliable)
-    }
-
-    func received(_ data: Data, from peer: MCPeerID) {
-        guard let message = try? JSONDecoder().decode(DuelMessage.self, from: data) else { return }
-        switch message {
-        case .hello(let name):
-            peerNames[peer] = name
-        case .requestJoin:
-            receivedJoinRequest(from: peer)
-        case .start(let seed, let mode, let variantKey, let roster):
-            // The host set our tag from our discovery context; the roster
-            // carries it, so `local: selfTag` finds us in it.
-            beginMatch(seed: seed, mode: mode, variantKey: variantKey, roster: roster)
-        case .move, .score, .eliminated:
-            receivedMatchEvent(message, from: peer)
-        case .results(let rows):
-            // The host is the timekeeper; show exactly what it ranked.
-            stopClocks()
-            stage = .finished(standings: rows.map(Standing.init))
-        case .backToLobby:
-            // Host reset for another game — wait for the next start.
-            stopClocks()
-            match = nil
-            stage = .waitingForHost
-        }
-    }
-
-    private func receivedJoinRequest(from peer: MCPeerID) {
-        guard role == .hosting, !joinRequests.contains(where: { $0.peer == peer }),
-            !acceptedPeers.contains(peer)
-        else { return }
-        joinRequests.append(.init(peer: peer, name: peerNames[peer] ?? peer.displayName))
-    }
-
-    private func receivedMatchEvent(_ message: DuelMessage, from peer: MCPeerID) {
-        // Route by the actor carried IN the message, not the physical sender —
-        // relayed events arrive from the host but belong to another guest.
-        let actor: String
-        switch message {
-        case .move(let from, _), .score(let from, _), .eliminated(let from): actor = from
-        default: return
-        }
-        guard actor != selfTag, var m = match else { return }  // skip our own echo
-        let actions: [DuelMatch.Action]
-        switch message {
-        case .move: actions = m.remoteMoved(actor)
-        case .score(_, let score): actions = m.remoteScored(actor, score: score)
-        case .eliminated: actions = m.remoteEliminated(actor)
-        default: return
-        }
-        match = m  // assign + stamp before apply (see commitMove)
-        stampReaches()
-        apply(actions)
-        // Star topology: guests connect only to the host, so the host relays
-        // each guest's event to the OTHERS (the actor tag survives the hop).
-        if role == .hosting { relay(message, from: peer) }
-        // A remote move may have completed the round, opening our next turn —
-        // if it has no legal move, we're out immediately.
-        checkLocalDeadEnd()
-    }
-
-    /// Host-only: forward a guest's message to the other connected guests.
-    private func relay(_ message: DuelMessage, from sender: MCPeerID) {
-        let others = session.connectedPeers.filter { $0 != sender }
-        guard !others.isEmpty, let data = try? JSONEncoder().encode(message) else { return }
-        try? session.send(data, toPeers: others, with: .reliable)
-    }
-}
-
-// MARK: Race timekeeping (host is the sole authority; same file → sees privates)
-extension NearbyMatch {
-    /// Host, race only: stamp the elapsed time the first moment a player's score
-    /// reaches the target. One clock (the host's), so times have no cross-device
-    /// skew. No-op on guests / lock-step.
-    fileprivate func stampReaches() {
-        guard role == .hosting, case .race(let tier) = match?.mode,
-            let start = matchStart, let players = match?.players
-        else { return }
-        let elapsed = Date().timeIntervalSince(start)
-        for (tag, state) in players where state.score >= tier && reachTimes[tag] == nil {
-            reachTimes[tag] = elapsed
-        }
-    }
-
-    /// Host: build the final rows. Race ranks finishers by reach-time (ascending)
-    /// then non-finishers by score (descending); lock-step keeps the engine's
-    /// settled order.
-    fileprivate func rankedRows(order standings: [String]) -> [Standing] {
-        let rows = standings.map { tag in
-            Standing(
-                name: match?.players[tag]?.name ?? tag,
-                score: match?.players[tag]?.score ?? 0,
-                reachTime: reachTimes[tag])
-        }
-        guard case .race = match?.mode else { return rows }
-        return rows.sorted { a, b in
-            switch (a.reachTime, b.reachTime) {
-            case (let ta?, let tb?): return ta < tb  // both reached — faster first
-            case (.some, .none): return true  // a reached, b didn't
-            case (.none, .some): return false
-            case (.none, .none): return a.score > b.score  // neither — more moves
-            }
-        }
-    }
 }

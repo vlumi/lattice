@@ -4,23 +4,23 @@ import SwiftUI
 
 /// One game screen (free or daily): score header, the board, end state.
 public struct GameView: View {
-    @ObservedObject private var session: GameSession
+    @ObservedObject var session: GameSession
     /// The shared app model — this view acts on menu-command intents only when
     /// it's the selected tab (`model.selection == tab`).
-    @ObservedObject private var model: AppModel
+    @ObservedObject var model: AppModel
     private let tab: AppModel.Tab
-    @StateObject private var camera = BoardCamera()
-    @Environment(\.colorScheme) private var colorScheme
-    @EnvironmentObject private var feedback: Feedback
-    @State private var exportDocument: PNGDocument?
-    @State private var isExporting = false
-    @State private var isShowingChallenge = false
-    @State private var isScanning = false
-    @State private var isShowingNearby = false
-    @State private var isShowingNewGame = false
+    @StateObject var camera = BoardCamera()
+    @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var feedback: Feedback
+    @State var exportDocument: PNGDocument?
+    @State var isExporting = false
+    @State var isShowingChallenge = false
+    @State var isScanning = false
+    @State var isShowingNearby = false
+    @State var isShowingNewGame = false
     /// App-wide "show keyboard shortcuts" state, owned by RootView (drives the
     /// board cheatsheet + control badges here, tab badges there).
-    @Binding private var showShortcuts: Bool
+    @Binding var showShortcuts: Bool
 
     public init(
         session: GameSession, model: AppModel, tab: AppModel.Tab,
@@ -33,7 +33,7 @@ public struct GameView: View {
     }
 
     /// Lags `session.isGenerating` so a fast generate never flashes a spinner.
-    @StateObject private var busy = BusyIndicator()
+    @StateObject var busy = BusyIndicator()
 
     private var isActive: Bool { model.selection == tab }
 
@@ -209,242 +209,4 @@ public struct GameView: View {
         .frame(height: 80)
     }
 
-    private var header: some View {
-        HStack(spacing: 16) {
-            Text("Score: \(session.game.score)", bundle: .module)
-                .font(.headline.monospacedDigit())
-            if session.mode == .passAndPlay {
-                // The turn chip: the current player's colour, filled — the
-                // same colour the board's interactive accent and their drawn
-                // lines wear.
-                if !session.isOver {
-                    playerChip(
-                        session.playerToMove,
-                        label: Text("Player \(session.playerToMove) to move", bundle: .module))
-                }
-                // Live same-room duel — the one online mode. Distinct from
-                // pass-and-play's shared device; a match is its own event.
-                Button {
-                    isShowingNearby = true
-                } label: {
-                    Image(systemName: "person.line.dotted.person.fill")
-                }
-                .accessibilityLabel(Text("Nearby", bundle: .module))
-            } else if session.mode == .daily, session.dailyStreak > 0 {
-                Text(
-                    "Streak: \(session.dailyStreak) (best \(session.dailyLongestStreak))",
-                    bundle: .module
-                )
-                .font(.subheadline.monospacedDigit())
-                .foregroundStyle(.secondary)
-            } else if let best = session.best {
-                Text("Best: \(best)", bundle: .module)
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            if let code = session.seedCode, let seed = session.seed {
-                Button {
-                    isShowingChallenge = true
-                } label: {
-                    // Show the code beside the icon when it fits; on a tight
-                    // header (iPhone SE) fall back to the icon alone so the row
-                    // doesn't wrap — the code still shows in the popover.
-                    ViewThatFits {
-                        challengeLabel(code: code, iconOnly: false)
-                        challengeLabel(code: code, iconOnly: true)
-                    }
-                }
-                .accessibilityLabel(Text("Share challenge", bundle: .module))
-                // Popover on Mac/iPad; adapts to a sheet on iPhone (the
-                // compact-popover modifier needs iOS 16.4; floor is 16.0).
-                .popover(isPresented: $isShowingChallenge) {
-                    ChallengeShareView(
-                        code: code, url: ChallengeLink.url(for: seed),
-                        dismiss: { isShowingChallenge = false }
-                    )
-                    .padding()
-                    .presentationDetents([.medium])
-                }
-            }
-            Spacer()
-            // Always present (hidden when there's nothing to cancel) so the
-            // header's size stays constant — otherwise the button appearing
-            // reflowed the row and nudged the board's fitted size (a wobble).
-            Button {
-                session.cancel()
-            } label: {
-                Text("Cancel", bundle: .module)
-            }
-            // Claim Esc only when there's a move to cancel — a disabled button
-            // still swallows its shortcut on macOS, which ate overlays' Esc.
-            .keyboardShortcut(session.tentative == nil ? nil : .cancelAction)
-            .disabled(session.tentative == nil)
-            .opacity(session.tentative == nil ? 0 : 1)
-            if session.mode != .daily {
-                // Restart the same board. Disabled on an unplayed board: nothing
-                // to restart, and it blocks a mis-tap toward Undo.
-                Button {
-                    session.newGame()
-                    camera.reset()
-                } label: {
-                    Image(systemName: "arrow.counterclockwise")
-                }
-                .disabled(session.game.moves.isEmpty)
-                .accessibilityLabel(Text("Restart", bundle: .module))
-            }
-            if session.mode == .free {
-                Button {
-                    showShortcuts = false
-                    isShowingNewGame = true
-                } label: {
-                    Label {
-                        Text(verbatim: session.variantKey)
-                    } icon: {
-                        Image(systemName: "square.grid.2x2")
-                    }
-                    .font(.subheadline)
-                }
-                .buttonStyle(.bordered)
-                .fixedSize()
-                .accessibilityLabel(Text("New Game", bundle: .module))
-                .accessibilityValue(Text(verbatim: session.variantKey))
-            }
-        }
-    }
-
-    // The New Game modal owns its own Esc via KeyCatcher; only the challenge
-    // popover needs a window-level Esc here.
-    private var gameOver: some View {
-        HStack(spacing: 12) {
-            Group {
-                if let winner = session.winner {
-                    playerChip(
-                        winner,
-                        label: Text(
-                            "Player \(winner) wins — \(session.game.score) lines",
-                            bundle: .module))
-                } else if session.mode == .daily {
-                    Text("Done for today — final score \(session.game.score)", bundle: .module)
-                } else {
-                    Text("No moves left — final score \(session.game.score)", bundle: .module)
-                }
-            }
-            .font(.title3.weight(.semibold))
-            if let image = shareImage {
-                ShareLink(
-                    item: image,
-                    preview: SharePreview(
-                        Text("Lattice Five — \(session.game.score)", bundle: .module),
-                        image: image)
-                )
-            }
-            Button {
-                exportDocument = ShareCard.pngData(game: session.game, subtitle: cardSubtitle)
-                    .map(PNGDocument.init)
-                isExporting = exportDocument != nil
-            } label: {
-                Text("Save Image", bundle: .module)
-            }
-            .fileExporter(
-                isPresented: $isExporting, document: exportDocument,
-                contentType: .png, defaultFilename: exportFilename
-            ) { _ in
-                exportDocument = nil
-            }
-        }
-    }
-
-    private func playerChip(_ player: Int, label: Text) -> some View {
-        label
-            .font(.subheadline.weight(.bold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(
-                Capsule().fill(PlayerStyle.color(for: player, scheme: colorScheme)))
-    }
-}
-
-extension GameView {
-    @ViewBuilder fileprivate var overlayDismissKeys: some View {
-        if isShowingChallenge {
-            HiddenShortcut(key: .escape) { isShowingChallenge = false }
-        }
-    }
-
-    /// Shown over the board while a seeded start is being generated.
-    fileprivate var generatingOverlay: some View {
-        VStack(spacing: 10) {
-            ProgressView()
-            Text("Generating board…", bundle: .module)
-                .font(.subheadline).foregroundStyle(.secondary)
-        }
-        .padding(20)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    fileprivate var newGameModal: some View {
-        NewGameModal(
-            session: session,
-            dismiss: { isShowingNewGame = false },
-            onVariant: { rules in
-                session.newGame(rules: rules)
-                camera.reset()
-            },
-            onRandom: {
-                session.newChallenge(seed: SeedCode.randomSeed())
-                camera.reset()
-            },
-            onCode: { seed in
-                session.newChallenge(seed: seed)
-                camera.reset()
-            },
-            onScan: scanAction)
-    }
-
-    @ViewBuilder fileprivate func challengeLabel(code: String, iconOnly: Bool) -> some View {
-        let label = Label {
-            Text(verbatim: code)
-        } icon: {
-            Image(systemName: "qrcode")
-        }
-        .font(.subheadline.monospaced())
-        if iconOnly {
-            label.labelStyle(.iconOnly).fixedSize()
-        } else {
-            label.labelStyle(.titleAndIcon).fixedSize()
-        }
-    }
-
-    /// The iOS scanner action, if the device supports it (nil otherwise / macOS).
-    fileprivate var scanAction: (() -> Void)? {
-        #if os(iOS)
-        guard CodeScannerView.isSupported else { return nil }
-        return {
-            isShowingNewGame = false
-            isScanning = true
-        }
-        #else
-        return nil
-        #endif
-    }
-}
-
-// Share-card / export text for the game-over row.
-extension GameView {
-    fileprivate var cardSubtitle: String {
-        session.dailyKey.map { key in
-            String(localized: "Daily \(key) — score \(session.game.score)", bundle: .module)
-        }
-            ?? String(localized: "Score \(session.game.score)", bundle: .module)
-    }
-
-    fileprivate var exportFilename: String {
-        session.dailyKey.map { "lattice-daily-\($0)-\(session.game.score)" }
-            ?? "lattice-\(session.game.score)"
-    }
-
-    fileprivate var shareImage: Image? {
-        ShareCard.render(game: session.game, subtitle: cardSubtitle)
-    }
 }
