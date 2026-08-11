@@ -18,7 +18,13 @@ further 0.5.0 builds before the version bump.
       doing)
 - [ ] Accessibility pass: VoiceOver on the board, Dynamic Type in chrome
       (keyboard-only play is done — see the keyboard model in AGENTS.md)
-- [ ] Performance/battery sanity pass on the render loop
+- [x] Performance/battery sanity pass on the render loop — measured, no
+      problem at these board sizes (dead-gap scan 0.05ms at 58 moves, ~420
+      canvas fills/frame). Cached `deadGaps`, de-duplicated an `isPlaceable`
+      call, and back-stopped Nearby teardown with a `deinit`. Timers,
+      observers and the gesture path audited clean. Not traced on device —
+      deliberately: with ~3 orders of magnitude of frame-budget headroom
+      there's no symptom to chase. Revisit only if one shows up.
 - [ ] Score ladder: local milestones against the known reference points
       (records/bounds table in AGENTS.md)
 - [ ] Solver-generated puzzles ("find N more moves", "find the only move")

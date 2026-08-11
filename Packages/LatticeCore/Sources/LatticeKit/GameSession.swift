@@ -180,7 +180,9 @@ public final class GameSession: ObservableObject {
 
     /// Gaps this game has permanently sealed between two collinear lines — a
     /// dead span no line can ever fill (see `Foreclosure`). Drawn by BoardView.
-    public var deadGaps: [Line] { Foreclosure.losses(in: game).map(\.span) }
+    /// Cached in `refresh()`, not computed per read: the scan is O(moves²) and
+    /// the board's draw would re-run it on every pan/zoom frame.
+    @Published public private(set) var deadGaps: [Line] = []
 
     /// The scoring pool of the current game ("5T", "5T#", …).
     public var variantKey: String { game.rules.variantKey(forStart: game.start) }
@@ -391,6 +393,7 @@ public final class GameSession: ObservableObject {
     private func refresh() {
         movesByDot = Self.linkedMovesByDot(of: game)
         freeLines = game.freeLines()
+        deadGaps = Foreclosure.losses(in: game).map(\.span)
     }
 
     private func persist() {

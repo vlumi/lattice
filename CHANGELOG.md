@@ -20,6 +20,10 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Leaving a Nearby game now always shuts the radio and its timers down,
+  including when the app is quit outright rather than closed from the
+  screen — previously that path could leave a stale connection behind and
+  risked a crash on a late network callback.
 - Starting a random or coded board responds instantly: the New Game modal
   closes on the tap and the board generates in the background, with a
   "Generating board…" indicator over the board if it takes a moment. The

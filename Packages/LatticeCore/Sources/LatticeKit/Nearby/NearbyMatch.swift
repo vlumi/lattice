@@ -108,7 +108,7 @@ final class NearbyMatch: NSObject, ObservableObject {
     var myPeer: MCPeerID
     let selfTag = UUID().uuidString.prefix(9).description
     var session: MCSession
-    private var advertiser: MCNearbyServiceAdvertiser?
+    var advertiser: MCNearbyServiceAdvertiser?
     var browser: MCNearbyServiceBrowser
 
     /// Discovery tag per connected/known peer (their advertised "k").
@@ -150,18 +150,17 @@ final class NearbyMatch: NSObject, ObservableObject {
         return trimmed.isEmpty ? "Lattice player" : String(trimmed.prefix(60))
     }
 
-    // MARK: Lobby lifecycle
-
-    /// Start browsing for advertised games (guest default on appear).
-    func start() {
-        browser.startBrowsingForPeers()
-    }
-
-    func stop() {
+    /// MCSession/browser/advertiser hold their delegate `unowned(unsafe)`, so a
+    /// late callback after dealloc hits freed memory. Backstops app termination,
+    /// which `onDisappear` misses. Inlined: `deinit` isn't main-actor isolated.
+    deinit {
         clockTimer?.invalidate()
         advertiser?.stopAdvertisingPeer()
         browser.stopBrowsingForPeers()
         session.disconnect()
+        session.delegate = nil
+        browser.delegate = nil
+        advertiser?.delegate = nil
     }
 
     /// Whether the local player is still in the match (not resigned / out).
