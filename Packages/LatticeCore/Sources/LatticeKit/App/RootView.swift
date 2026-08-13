@@ -47,9 +47,10 @@ public struct RootView: View {
                 .tag(AppModel.Tab.settings)
             #endif
         }
-        // macOS only: the cheatsheet lists keys that KeyCatcher handles, and
-        // that's a Mac. On iPhone/iPad there's no keyboard to describe (and the
-        // Mac-sized panel clipped on a phone).
+        // macOS only: "?" is a keyboard-only affordance, and the panel is sized
+        // for a Mac window (it clipped badly on a phone). iPad board play now
+        // works with a hardware keyboard, but its keys are listed in Help
+        // instead — reachable by touch, and laid out to fit.
         #if os(macOS)
         .background(ShortcutToggle(showShortcuts: $showShortcuts))
         #endif

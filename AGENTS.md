@@ -250,6 +250,16 @@ a firmer commit tap, the game-over tone, and a per-state tick as the keyboard
 cursor roams (placeable / dot / empty — pitch for sound, impact intensity for
 haptics). The roaming cue is the faintest: it fires on every arrow press.
 
+**Board keyboard play is two maps onto one vocabulary** (`BoardKeyCommand`,
+copied from Donpa's): macOS drives it with `BoardKeyboard`'s hidden
+`.keyboardShortcut` buttons; iOS can't — it won't route shortcuts to a
+zero-opacity, accessibility-hidden button — so `BoardKeyCatcher` takes first
+responder and reads `pressesBegan`. Add a key to the enum and both maps, never
+to one. First-responder changes are deferred with `DispatchQueue.main.async`;
+doing it synchronously in `updateUIView` re-enters the view graph and cycles
+AttributeGraph. Chrome actions stay on-screen buttons on iOS, NOT menu commands
+— see the iPad menu-bar crash note above.
+
 **Dynamic Type**: use semantic text styles only (never `.system(size:)`), and
 `@ScaledMetric` for any fixed dimension that wraps text — a hard-coded width
 clips at accessibility sizes. Fixed sizes are fine for pure graphics (the share

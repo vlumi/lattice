@@ -15,17 +15,6 @@ last feature milestone before 1.0.
 
 ## v0.5.0 — remaining
 
-- [ ] **iPad hardware-keyboard play.** The board's key handling is
-      `BoardKeyboard`'s hidden `.keyboardShortcut` buttons, which work on macOS
-      but do nothing on an iPad with a keyboard attached (verified on device) —
-      likely because they're `.opacity(0)` + `accessibilityHidden`, and iOS
-      doesn't route shortcuts to an invisible button the way AppKit does.
-      Everything richer (arrow nav in the modals, Settings, the lobby) goes
-      through `KeyCatcher`, which is `#if os(macOS)` outright. Until this is
-      fixed the keyboard cheatsheet stays macOS-only, since it would advertise
-      keys that don't work. Needs an iPad + keyboard to develop against; the
-      likely shape is a `UIKeyCommand`-based catcher mirroring KeyCatcher, or
-      `onKeyPress` once the floor moves past iOS 17.
 - [ ] In-the-moment teaching: the rejected-placement feedback already flagged
       as a TODO in `BoardView.handleTap` ("Rejected in place; a shake/haptic is
       later polish") — a shake plus a one-line reason teaches at the exact

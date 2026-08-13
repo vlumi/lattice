@@ -25,9 +25,14 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
   it installs there — the app died before showing anything. Those commands are
   now Mac-only, which is where the menu bar belongs; on iPhone and iPad
   everything they offered is reachable by touch. (This shipped in build 8.)
-- The keyboard cheatsheet is now Mac-only too. It listed keys that never
-  worked on iPhone or iPad — board keyboard play is macOS-only for now — and
-  its Mac-sized panel didn't fit a phone.
+- **Keyboard play works on iPad** with a hardware keyboard: arrows or WASD
+  roam the cursor, Return or Space places a dot and then commits the line,
+  Tab cycles the possible lines, Backspace undoes, Esc cancels — the same as
+  on the Mac. (New Game, Restart and Undo are the on-screen buttons, as
+  before.)
+- The `?` cheatsheet overlay is now Mac-only — it's a keyboard-only
+  affordance and its panel was sized for a Mac window (it clipped on a
+  phone). The same keys are listed in How to play, which fits.
 
 - **How to play**, in the app: a short illustrated guide to the rules
   — the goal, placing a dot and drawing its line, the one rule that really
