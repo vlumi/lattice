@@ -79,10 +79,18 @@ struct BoardKeyboard: View {
     }
 
     private func activate() {
-        if session.tentative == nil {
-            session.cursorSelect()
-        } else {
+        guard session.tentative == nil else {
             session.commitHighlighted()
+            return
         }
+        // Enter on a point no line can reach gets the same "nope" as a tap
+        // there, rather than silently doing nothing.
+        if let cursor = session.keyboardCursor, !session.isPlaceable(cursor),
+            !session.game.dots.contains(cursor)
+        {
+            feedback.rejected()
+            return
+        }
+        session.cursorSelect()
     }
 }

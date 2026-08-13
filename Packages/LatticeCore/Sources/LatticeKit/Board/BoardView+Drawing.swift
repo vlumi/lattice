@@ -103,6 +103,17 @@ extension BoardView {
             context.fill(dot: tentative, radius: layout.dotRadius * 1.25, accent(), layout)
         }
         drawFocusRing(in: context, layout)
+        drawRejection(in: context, layout)
+    }
+
+    /// A tap that couldn't become a move: a red ring that fades where the finger
+    /// landed. Answers "why did nothing happen?" at the point the player is
+    /// looking, in the board's existing vocabulary (red = you can't) rather than
+    /// with a message to read.
+    private func drawRejection(in context: GraphicsContext, _ layout: Layout) {
+        guard let point = rejectedPoint, rejectedFade > 0 else { return }
+        context.strokeRing(
+            around: point, .color(.red.opacity(0.7 * rejectedFade)), layout)
     }
 
     /// The hover/scrub preview, or — with no pointer — the roaming keyboard

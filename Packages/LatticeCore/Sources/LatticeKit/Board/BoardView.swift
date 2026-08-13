@@ -39,6 +39,11 @@ public struct BoardView: View {
     @State private var feltPoint: Point?
     /// Long-press arms a feel-sweep on a zoomed board, where a plain drag pans.
     @State private var feelArmed = false
+    /// Where a rejected tap landed, and how faded its marker is (1 → 0). A
+    /// `Canvas` can't animate a subview, so the fade is animated state the draw
+    /// reads.
+    @State var rejectedPoint: Point?
+    @State var rejectedFade: Double = 0
 
     public init(session: GameSession, camera: BoardCamera, keyboardEnabled: Bool = true) {
         self.session = session
@@ -219,6 +224,19 @@ public struct BoardView: View {
         hot = .place(point)
     }
 
+    /// A tap that can't become a move: shake a ring where the finger landed, so
+    /// the "why nothing happened" is answered where the player is looking rather
+    /// than in a message they have to read.
+    private func reject(_ p: Point) {
+        // Don't nag about tapping an existing dot — that's self-evident. The
+        // teachable case is empty space no line can reach.
+        guard !session.game.dots.contains(p) else { return }
+        feedback.rejected()
+        rejectedPoint = p
+        rejectedFade = 1
+        withAnimation(.easeOut(duration: 0.45)) { rejectedFade = 0 }
+    }
+
     private func select(_ target: HotTarget?) {
         switch target {
         case .ghost(let move):
@@ -257,7 +275,7 @@ extension BoardView {
         } else if session.isPlaceable(p) {
             session.place(p)
         } else {
-            // Rejected in place; a shake/haptic is later polish.
+            reject(p)
             session.cancel()
         }
     }

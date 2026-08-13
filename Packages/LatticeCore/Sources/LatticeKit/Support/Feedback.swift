@@ -50,6 +50,12 @@ final class Feedback: ObservableObject {
         }
     }
 
+    /// A tap on a point that can't take a dot. Haptic only, no sound: mis-taps
+    /// happen often while learning the board and a noise each time would nag.
+    func rejected() {
+        haptics.rejected()
+    }
+
     /// The game ended — no moves left.
     func gameOver() {
         haptics.gameOver()

@@ -20,6 +20,12 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Tapping a spot where no line could ever reach now says so: a red ring
+  flashes where your finger landed, with a soft tap on iPhone and iPad — so
+  "why did nothing happen?" gets answered where you're looking. Tapping an
+  existing dot stays quiet (that one's self-evident), and tapping open board
+  still just cancels. Return on the keyboard cursor does the same.
+
 - How to play is now a **?** button on the board itself, beside Undo — so the
   rules are one tap away while you're looking at the thing they describe,
   rather than something to go find in Settings.
