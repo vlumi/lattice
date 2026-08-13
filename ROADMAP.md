@@ -15,8 +15,29 @@ last feature milestone before 1.0.
 
 ## v0.5.0 — remaining
 
-- [ ] Interactive tutorial (teach the segment rule and no-free-lines by
-      doing)
+- [ ] **About view** — nothing exists today: no version, credits, licence or
+      links anywhere in the app. Copy-adapt Donpa's `App/AboutView.swift`
+      (icon, version+build pill, ©, site/repo links, a "How to play" row),
+      dropping its Japanese-name handling until Lattice is localized.
+- [ ] **How to play** — a scrolling illustrated reference, NOT a scripted
+      tutorial: Morpion is one rule plus two corollaries, so a forced-move
+      walkthrough would be more machinery than content and would gate the
+      exploration that *is* the game. Mostly pictures — a `BoardDiagram` built
+      on `Board/BoardRendering.swift` (its fifth consumer; same dots, lines and
+      pinpoint coding as the real board, so the diagrams *are* the game at
+      caption scale) with two or three sentences each: the goal,
+      place-a-dot-then-draw-a-line, **segment reuse (5T vs 5D)** — the one
+      genuinely hard rule, and unlearnable as prose — the no-free-lines
+      corollary, dead gaps, and the modes. Copy-adapt the shape of Donpa's
+      `Help/HowToPlayView` + `Help/HowToDiagrams`.
+      The keyboard cheatsheet (`?` during play) stays as it is: a glanceable
+      "what was it again". Help covers the same keys with depth — what each
+      does and why it matters — and the two are complementary, not
+      alternatives.
+- [ ] In-the-moment teaching: the rejected-placement feedback already flagged
+      as a TODO in `BoardView.handleTap` ("Rejected in place; a shake/haptic is
+      later polish") — a shake plus a one-line reason teaches at the exact
+      moment of confusion, which beats any up-front page.
 
 ## Open decisions
 

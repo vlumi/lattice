@@ -37,6 +37,12 @@
     "3rd" : {
 
     },
+    "About" : {
+
+    },
+    "About Lattice Five" : {
+
+    },
     "Accept" : {
 
     },
@@ -135,7 +141,13 @@
     "Host a game" : {
 
     },
+    "How to play" : {
+
+    },
     "iCloud Sync" : {
+
+    },
+    "Join five dots in a row. Again, and again, and again." : {
 
     },
     "Keep your best scores and daily streak across your devices. Games and replays stay on each device." : {
@@ -324,6 +336,9 @@
 
     },
     "Variant" : {
+
+    },
+    "Version %@" : {
 
     },
     "Versus" : {

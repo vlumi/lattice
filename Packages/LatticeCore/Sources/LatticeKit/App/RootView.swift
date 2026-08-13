@@ -63,6 +63,11 @@ public struct RootView: View {
             SettingsScene(model: model, done: { model.isShowingSettings = false })
         }
         #endif
+        // About: the macOS app menu opens it here; the Settings row on both
+        // platforms presents its own copy from inside that sheet/tab.
+        .sheet(isPresented: $model.isShowingAbout) {
+            AboutSheet(dismiss: { model.isShowingAbout = false })
+        }
         // Universal Links: a challenge link starts its board in Free.
         .onOpenURL { url in
             guard let seed = ChallengeLink.seed(from: url) else { return }

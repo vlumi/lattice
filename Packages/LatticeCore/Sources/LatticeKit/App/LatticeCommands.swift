@@ -12,9 +12,17 @@ public struct LatticeCommands: Commands {
     }
 
     /// A menu shortcut mustn't act on the game while a modal covers it.
-    private var modalOpen: Bool { model.isShowingSettings }
+    private var modalOpen: Bool { model.isShowingSettings || model.isShowingAbout }
 
     public var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button {
+                model.isShowingAbout = true
+            } label: {
+                Text("About Lattice Five", bundle: .module)
+            }
+        }
+
         CommandGroup(replacing: .appSettings) {
             Button {
                 #if os(macOS)

@@ -33,6 +33,8 @@ public final class AppModel: ObservableObject {
     /// macOS: whether the Settings sheet is shown (opened by the app's ⌘,
     /// command). iOS has Settings as a tab instead, so this is unused there.
     @Published public var isShowingSettings = false
+    /// The About sheet (macOS app menu, or the Settings row on both platforms).
+    @Published public var isShowingAbout = false
 
     // Menu-command intents, routed to the active GameView (which observes and
     // acts). Counters, not Bools, so a repeated press fires each time. This is

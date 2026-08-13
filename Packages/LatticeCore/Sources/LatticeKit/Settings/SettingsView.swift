@@ -15,8 +15,9 @@ struct SettingsView: View {
     @AppStorage(Feedback.hapticsDefaultsKey) private var hapticsOn = true
 
     // Keyboard row cursor: Up/Down move, Space toggles the focused row.
-    private enum Row: Int, CaseIterable { case sound, haptics, sync }
+    private enum Row: Int, CaseIterable { case sound, haptics, sync, about }
     @State private var cursor: Row = .sound
+    @State private var showAbout = false
 
     private var syncFooter: Text {
         if sync.isAvailable {
@@ -62,8 +63,25 @@ struct SettingsView: View {
             } footer: {
                 syncFooter
             }
+            Section {
+                // A sheet, not a NavigationLink: on macOS this Form is itself
+                // the content of a sheet, with no navigation stack to push onto.
+                Button {
+                    showAbout = true
+                } label: {
+                    Label {
+                        Text("About Lattice Five", bundle: .module)
+                    } icon: {
+                        Image(systemName: "info.circle")
+                    }
+                }
+                .rowCursor(cursor == .about)
+            }
         }
         .formStyle(.grouped)
+        .sheet(isPresented: $showAbout) {
+            AboutSheet(dismiss: { showAbout = false })
+        }
         #if os(macOS)
         .background(KeyCatcher(onKey: handle))
         #endif
@@ -90,6 +108,7 @@ struct SettingsView: View {
         case .sound: soundOn.toggle()
         case .haptics: hapticsOn.toggle()
         case .sync: if sync.isAvailable { sync.isOn.toggle() }
+        case .about: showAbout = true
         }
     }
     #endif
