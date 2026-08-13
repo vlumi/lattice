@@ -41,6 +41,18 @@ public final class SyncController: ObservableObject {
         if coordinator.isActive { coordinator.localDidChange() }
     }
 
+    /// Whether a reset can reach the cloud copy too. False when sync is off or
+    /// iCloud is unavailable, in which case a reset is this-device-only.
+    public var canWipeCloud: Bool { coordinator.isActive }
+
+    /// Clear the shared cloud blob so a reset isn't undone by the next merge.
+    /// Returns false if it couldn't (sync off / unreachable) — the caller must
+    /// then present the reset as local-only.
+    @discardableResult
+    public func wipeCloud() -> Bool {
+        coordinator.wipeCloud()
+    }
+
     /// The session calls this after persisting a best / daily result.
     public func localDidChange() {
         coordinator.localDidChange()

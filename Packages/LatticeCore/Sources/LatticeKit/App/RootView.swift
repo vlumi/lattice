@@ -42,9 +42,12 @@ public struct RootView: View {
             #if !os(macOS)
             // iOS keeps Settings as a tab; on macOS it's the standard Settings
             // window instead (see the app's `Settings` scene).
-            SettingsView(sync: model.sync, feedback: model.feedback)
-                .tabItem { tabLabel("Settings", "gearshape") }
-                .tag(AppModel.Tab.settings)
+            SettingsView(
+                sync: model.sync, feedback: model.feedback,
+                onReset: { model.resetAllProgress() }
+            )
+            .tabItem { tabLabel("Settings", "gearshape") }
+            .tag(AppModel.Tab.settings)
             #endif
         }
         // macOS only: "?" is a keyboard-only affordance, and the panel is sized

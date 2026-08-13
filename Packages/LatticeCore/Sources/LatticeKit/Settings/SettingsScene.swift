@@ -27,7 +27,9 @@ public struct SettingsScene: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             Divider()
-            SettingsView(sync: model.sync, feedback: model.feedback, onClose: done)
+            SettingsView(
+                sync: model.sync, feedback: model.feedback, onClose: done,
+                onReset: { model.resetAllProgress() })
         }
         // Compact, like a standard settings pane — but it has to widen with the
         // text, or accessibility sizes wrap the toggle labels to shreds.

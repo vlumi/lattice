@@ -159,6 +159,20 @@ public final class GameSession: ObservableObject {
         dailyLog = store.loadDailyLog()
     }
 
+    /// After a progress reset: drop the in-memory game and reload from the (now
+    /// empty) store, so the board, bests, streak and personal-best ghost all
+    /// reflect the wipe without needing a relaunch.
+    public func resetAfterWipe() {
+        restorePoint = nil
+        let resolved = Self.resolve(
+            mode: mode, rules: game.rules, store: store, todayKey: DailyChallenge.dateKey())
+        start(resolved.game, seed: resolved.seed)
+        bests = store.loadBests()
+        dailyLog = store.loadDailyLog()
+        pbCurve = nil
+        opennessHistory = [totalLegalMoves]
+    }
+
     /// The openness curve of the highest-scoring stored game in this
     /// scoring pool, if any.
     private static func bestCurve(in store: LatticeStore, key: String) -> [Int]? {
