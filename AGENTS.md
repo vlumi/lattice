@@ -287,6 +287,13 @@ board's own ceiling is unknown, so grading against the published 5T# record
 (190, over the *best* possible start) would tell players they fell short of
 something their board may never have allowed.
 
+**The daily does not rotate variants** (decided): it's always 5T rules over a
+per-date generated 36-dot start, which scores into the **`5T#`** pool — the same
+pool as Random Start, since `variantKey` keys off "is this the standard cross?"
+rather than off the mode. So the daily is mechanically a 5T# board that everyone
+shares for one day. Rotating rules would fragment bests across pools for no real
+gain, and the varied start already supplies the daily novelty.
+
 ### Variant landscape (established, per morpionsolitaire.com)
 
 The full matrix is small enough to offer without bloat: **length 4/5 ×
