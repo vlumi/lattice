@@ -86,9 +86,11 @@ struct Layout {
         return candidate
     }
 
-    /// The bottom-trailing square the floating board controls occupy (button +
-    /// padding), which the fit must keep clear.
-    static let controlsCorner = CGSize(width: 68, height: 68)
+    /// The bottom-trailing area the floating board controls occupy, which the
+    /// fit must keep clear. Height covers the tallest the stack gets — help and
+    /// Undo always, Fit once the camera moves (see BoardControls) — at 44pt a
+    /// button, 10 apart, in 12 of padding. Width is one button plus padding.
+    static let controlsCorner = CGSize(width: 68, height: 44 * 3 + 10 * 2 + 12 * 2)
 
     /// An inset that keeps the fitted board clear of the floating controls
     /// (bottom-trailing) at the fit zoom, where there's no panning to reveal a

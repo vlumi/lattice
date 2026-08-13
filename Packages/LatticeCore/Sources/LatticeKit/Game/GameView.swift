@@ -60,7 +60,9 @@ public struct GameView: View {
             // than crowding the header — the frequent in-game actions sit
             // under the thumb, near what they affect.
             .overlay(alignment: .bottomTrailing) {
-                BoardControls(session: session, camera: camera, showShortcuts: showShortcuts)
+                BoardControls(
+                    session: session, camera: camera, showShortcuts: showShortcuts,
+                    onHelp: { model.isShowingHowTo = true })
             }
             // At most one overlay at a time.
             .overlay {
