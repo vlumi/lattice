@@ -141,7 +141,11 @@ struct HowToPlaySheet: View {
 
     var body: some View {
         SheetChrome(title: Text("How to play", bundle: .module), dismiss: dismiss) {
+            #if os(macOS)
             HowToPlayView(onKeyboard: { showingKeys = true })
+            #else
+            HowToPlayView()
+            #endif
         }
         .overlay {
             if showingKeys {

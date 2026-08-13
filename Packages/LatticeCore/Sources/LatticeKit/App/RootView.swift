@@ -47,7 +47,12 @@ public struct RootView: View {
                 .tag(AppModel.Tab.settings)
             #endif
         }
+        // macOS only: the cheatsheet lists keys that KeyCatcher handles, and
+        // that's a Mac. On iPhone/iPad there's no keyboard to describe (and the
+        // Mac-sized panel clipped on a phone).
+        #if os(macOS)
         .background(ShortcutToggle(showShortcuts: $showShortcuts))
+        #endif
         // Board feedback (sound + haptics) available to the board views.
         .environmentObject(model.feedback)
         // Arriving at History (a tab tap, ⌘4, or the View menu — any route that

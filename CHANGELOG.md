@@ -20,6 +20,15 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- **Fixed a crash on launch on iPad.** iPadOS 26 builds a real menu bar from
+  the app's menu commands, and our Undo (⌘Z) collided with the standard Undo
+  it installs there — the app died before showing anything. Those commands are
+  now Mac-only, which is where the menu bar belongs; on iPhone and iPad
+  everything they offered is reachable by touch. (This shipped in build 8.)
+- The keyboard cheatsheet is now Mac-only too. It listed keys that never
+  worked on iPhone or iPad — board keyboard play is macOS-only for now — and
+  its Mac-sized panel didn't fit a phone.
+
 - **How to play**, in the app: a short illustrated guide to the rules
   — the goal, placing a dot and drawing its line, the one rule that really
   matters (lines may share an end dot but never overlap), why five dots
