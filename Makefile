@@ -121,3 +121,33 @@ release-distribute-retry:  ## Re-distribute an already-tagged release (no PR/tag
 .PHONY: release-upload
 release-upload:  ## Upload the already-built dist/ package (no rebuild)
 	@Scripts/release-distribute.sh $(PLATFORM) --upload-only
+
+##@ Demo & App Store screenshots
+##~ Capture guide, sizes and the shot list: Scripts/asc/SCREENSHOTS.md
+
+.PHONY: demo-iphone
+demo-iphone:  ## Launch the iPhone simulator in demo mode (seeded data, isolated storage)
+	@PLATFORM=iphone Scripts/demo.sh
+
+.PHONY: demo-ipad
+demo-ipad:  ## Launch the iPad simulator in demo mode
+	@PLATFORM=ipad Scripts/demo.sh
+
+.PHONY: demo-mac
+demo-mac:  ## Launch the Mac app in demo mode
+	@PLATFORM=mac Scripts/demo.sh
+
+.PHONY: demo-fixture
+demo-fixture:  ## Regenerate the committed demo games (~2 min; commit the result)
+	@cd Packages/LatticeCore && LATTICE_GEN_DEMO=1 swift test --filter GenerateDemoFixture
+
+##@ App Store Connect (dry-run by default; -apply writes)
+##~ Listing text: edit Scripts/asc/listing.json → make asc-listing → make asc-listing-apply
+
+.PHONY: asc-listing
+asc-listing:  ## Show what differs between listing.json and ASC (dry run)
+	@Scripts/asc/run.sh listing
+
+.PHONY: asc-listing-apply
+asc-listing-apply:  ## Push listing.json text to App Store Connect
+	@Scripts/asc/run.sh listing --apply

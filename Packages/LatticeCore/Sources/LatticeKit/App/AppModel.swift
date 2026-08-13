@@ -55,13 +55,19 @@ public final class AppModel: ObservableObject {
     /// The active game is over (Save Image applies).
     @Published public var isGameOver = false
 
-    public init(store: LatticeStore = .appSupport()) {
+    /// Defaults to the demo-aware store: isolated under `-demo-clean` so a
+    /// screenshot run can't touch real player data (see DemoMode).
+    public init(store: LatticeStore = DemoMode.store()) {
         self.store = store
+        let defaults = DemoMode.defaults
+        // Seed BEFORE the sessions read the store, or they load empty state and
+        // the screenshots show a fresh install.
+        if DemoMode.isSeeded { DemoSeed.apply(store: store, defaults: defaults) }
         freeSession = GameSession(mode: .free, store: store)
         dailySession = GameSession(mode: .daily, store: store)
         versusSession = GameSession(mode: .passAndPlay, store: store)
-        sync = SyncController(store: store, cloud: Self.makeCloud())
-        feedback = Feedback()
+        sync = SyncController(store: store, cloud: Self.makeCloud(), defaults: defaults)
+        feedback = Feedback(defaults: defaults)
 
         // Route finished-game persistence into sync (no-op when sync is off).
         freeSession.onSyncedChange = { [weak sync] in sync?.localDidChange() }
@@ -96,6 +102,10 @@ public final class AppModel: ObservableObject {
     }
 
     private static func makeCloud() -> CloudStore {
+        // Under -demo-clean there is NO cloud at all, whatever the real setting
+        // says: an unavailable store makes the coordinator inert, so seeded demo
+        // data can't be pushed to the player's iCloud.
+        if DemoMode.isClean { return FakeCloudStore(isAvailable: false) }
         #if os(Linux)
         return FakeCloudStore(isAvailable: false)
         #else

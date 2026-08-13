@@ -21,6 +21,9 @@ let package = Package(
             dependencies: ["LatticeCore"],
             resources: [
                 .process("Resources/Localizable.xcstrings"),
+                // Precomputed demo games for the screenshot harness — playing
+                // them live costs ~2 minutes (see DemoSeed).
+                .process("Resources/demo-games.json"),
                 .process("Resources/Sounds"),
             ]
         ),

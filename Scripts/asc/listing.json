@@ -1,0 +1,24 @@
+{
+  "_comment": "App Store listing text, pushed by listing.py (dry-run by default, --apply writes). Edit here, never in the ASC UI, so the shipped text is in git. English only for now — add fi/ja blocks when the app is localized (ROADMAP backlog). Limits: name 30, subtitle 30, keywords 100, promotionalText 170, description 4000.",
+  "bundleId": "fi.misaki.lattice",
+  "expectedLocales": [
+    "en-US"
+  ],
+  "appInfo": {
+    "en-US": {
+      "name": "Lattice Five",
+      "subtitle": "Morpion Solitaire, drawn clean",
+      "privacyPolicyUrl": "https://lattice.misaki.fi/privacy/"
+    }
+  },
+  "version": {
+    "en-US": {
+      "description": "Lattice Five is Morpion Solitaire — the pen-and-paper puzzle also known as Join Five, played on grid paper since the 1970s.\n\nPlace one dot, then draw a straight line through five dots in a row. The line has to run through the dot you just placed, and no stretch of the grid may ever be drawn twice. That single constraint is the whole game: every line you draw closes off possibilities, so a good move is one that scores now and still leaves the board alive.\n\nYour score is the number of lines you manage to draw. Beginners finish in the forties. The human record, set by hand in 1976, is 170.\n\nWHAT'S IN IT\n\n• Free play with unlimited undo — explore, back up, try the other line\n• A daily board everyone plays, with streaks\n• Five rule sets: 5T, 5D, the solved 4T and 4D, and the looser 5T+\n• Random starts with a six-character code you can share as a challenge\n• Every finished game saved as a replay you can scrub through\n• An openness curve under each game, charting where the position peaked and died — and your personal best drawn as a ghost to race\n• Two-player on one device, or a live duel with people in the same room over the local network\n• Full keyboard control on Mac and iPad, and a board you can read by feel: slide a finger and it buzzes wherever a dot can go\n\nNO NONSENSE\n\nNo ads. No purchases. No account. No server, no leaderboards, nothing collected — your scores are yours, on your devices, synced through your own iCloud if you want them to be.\n\nOne purchase, all platforms: iPhone, iPad and Mac.",
+      "keywords": "morpion,join five,solitaire,puzzle,pencil,paper,dots,lines,grid,daily,logic,offline,strategy",
+      "promotionalText": "Place a dot, draw a line through five, and try not to close off the board you still need. Now with a daily challenge and shareable boards.",
+      "supportUrl": "https://lattice.misaki.fi/support/",
+      "marketingUrl": "https://lattice.misaki.fi/",
+      "whatsNew": "First public release."
+    }
+  }
+}
