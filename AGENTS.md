@@ -222,11 +222,28 @@ ghost + post-game openness analysis; rule variants and seeded random starts
 last-to-move-wins; **Nearby duel** (see the two-player section); iCloud sync;
 dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
-Still open (see ROADMAP.md): interactive tutorial, VoiceOver + Dynamic Type,
-a performance/battery pass, solver-generated puzzle mode ("find N more
-moves"), and the **score ladder** — grading scores against known reference
-points (human record 170, best machine result 178 on classic 5T) as *local*
-milestones, the long single-player arc, no server needed.
+Still open (see ROADMAP.md): interactive tutorial, the Dynamic Type pass, and
+per-state cursor feedback (sound + haptics while roaming).
+
+**No VoiceOver board play, deliberately.** Naively exposing ~200 lattice
+points as accessibility elements would be technically compliant and
+practically hostile (swipe through 200 cells to find a move). The deeper
+problem is that Morpion's core skill is *seeing spatial structure* — which
+gaps are still threadable, which you've foreclosed — and one-cell-at-a-time
+linear traversal can't convey that. Unlike Minesweeper (Donpa), where the
+information is genuinely local and numeric, there's no honest way to make
+this playable blind, so we don't claim it. Chrome keeps its accessibility
+labels; the board gets ambient sound/haptic cues on the keyboard cursor
+instead, which serve sighted keyboard players too.
+
+**Dropped, deliberately:** a puzzle mode and a score ladder. Both founder on
+the same fact — Morpion has no cheaply-known optimum. Puzzles would need a
+real solver (nobody knows the best move; the 178 record took heavy
+Monte-Carlo search), and a ladder only has honest reference points on the
+solved 4T/4D and the standard 5T cross. On seeded starts and the daily, each
+board's own ceiling is unknown, so grading against the published 5T# record
+(190, over the *best* possible start) would tell players they fell short of
+something their board may never have allowed.
 
 ### Variant landscape (established, per morpionsolitaire.com)
 
@@ -244,7 +261,7 @@ dies at ≤ 12 moves — neither is worth shipping.
 - **5T#/5D#**: any 36-dot starting pattern, same rules — the established
   form of our seeded-random-starts mode (records 190/102 beat the standard
   cross).
-- Known bounds for the ladder: 5T record 178 (Rosin, NRPA, 2011; human 170,
+- Known bounds (context for the variant matrix, not a grading scale): 5T record 178 (Rosin, NRPA, 2011; human 170,
   Bruneau 1976), proven max ≤ 485. 5D record 82, proven max ≤ 84 — nearly
   closed.
 
@@ -428,7 +445,7 @@ translations do arrive.
 - **Comments minimal** — explain only what isn't obvious from the code; no
   roadmap/history narration in source (that goes in commit messages).
 - **Determinism for tests** — inject any randomness (`RandomNumberGenerator`)
-  so puzzle generation and solver behaviour are reproducible headlessly.
+  so seeded starts and the daily are reproducible headlessly.
 - **swift-format is the authority on whitespace/punctuation**; where SwiftLint
   conflicts, disable the SwiftLint rule rather than fight it. Run both
   `--strict` before committing. **Pin the SwiftLint version** in CI (an
