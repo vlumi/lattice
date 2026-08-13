@@ -20,6 +20,10 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- How to play is now a **?** button on the board itself, beside Undo — so the
+  rules are one tap away while you're looking at the thing they describe,
+  rather than something to go find in Settings.
+
 - **Fixed a crash on launch on iPad.** iPadOS 26 builds a real menu bar from
   the app's menu commands, and our Undo (⌘Z) collided with the standard Undo
   it installs there — the app died before showing anything. Those commands are

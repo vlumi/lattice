@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The floating controls over the board (bottom-trailing): Undo always, Fit
-/// only when the camera has moved. Subtle circular buttons on a faint material
+/// The floating controls over the board (bottom-trailing): help and Undo
+/// always, Fit only when the camera has moved. Subtle circular buttons on a faint material
 /// so they read as controls without competing with the board. Extracted from
 /// GameView; the board reserves this corner (see Layout.controlsClearInset).
 struct BoardControls: View {
@@ -9,6 +9,10 @@ struct BoardControls: View {
     @ObservedObject var camera: BoardCamera
     /// "?" is on — show each button's keyboard-shortcut badge.
     var showShortcuts = false
+    /// Opens the rules. Permanent rather than a first-run popup: help you can
+    /// only find once isn't help, and a new player shouldn't have to go digging
+    /// through Settings to learn the one rule the game turns on.
+    var onHelp: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 10) {
@@ -26,6 +30,11 @@ struct BoardControls: View {
                 session.undo()
             }
             .disabled(!session.undoAllowed)
+            if let onHelp {
+                button(
+                    systemName: "questionmark", label: Text("How to play", bundle: .module),
+                    shortcut: "⌘?", action: onHelp)
+            }
         }
         .padding(12)
     }
