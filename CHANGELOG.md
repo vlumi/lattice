@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 7 — 2026-08-13
+
 - Feel the board with your finger: slide across it and each lattice point
   gives a tick — strongest where a move is legal, softer on an existing dot,
   barely there on empty space — so you can hunt for a spot without staring at
