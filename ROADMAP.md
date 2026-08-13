@@ -20,8 +20,11 @@ Feature-complete; what remains is store prep (below).
 
 ## v1.0.0 — The store release
 
-- [ ] One ASC record (Universal Purchase), listing text + screenshots,
-      privacy questionnaire (nothing collected)
+- [ ] One ASC record (Universal Purchase), the privacy questionnaire
+      (nothing collected), and the screenshots themselves. The *plumbing* is
+      in: `Scripts/asc/listing.json` + `make asc-listing[-apply]` for the text,
+      `make demo-iphone|demo-ipad|demo-mac` for a seeded demo build, and
+      `Scripts/asc/SCREENSHOTS.md` for the shot list and sizes.
 - [ ] Submit to public App Store review, release (spends the 1.0.0 version)
 
 ASC tooling: Donpa's `asc-listing*` + `asc-screenshots*` Makefile targets
