@@ -15,7 +15,7 @@ struct SettingsView: View {
     @AppStorage(Feedback.hapticsDefaultsKey) private var hapticsOn = true
 
     // Keyboard row cursor: Up/Down move, Space toggles the focused row.
-    private enum Row: Int, CaseIterable { case sound, haptics, sync, about }
+    private enum Row: Int, CaseIterable { case sound, haptics, sync }
     @State private var cursor: Row = .sound
     @State private var showAbout = false
 
@@ -63,9 +63,10 @@ struct SettingsView: View {
             } footer: {
                 syncFooter
             }
+            // iOS only: the Mac reaches About from the app menu, where the
+            // platform expects it — a Settings row there would be redundant.
+            #if !os(macOS)
             Section {
-                // A sheet, not a NavigationLink: on macOS this Form is itself
-                // the content of a sheet, with no navigation stack to push onto.
                 Button {
                     showAbout = true
                 } label: {
@@ -75,8 +76,8 @@ struct SettingsView: View {
                         Image(systemName: "info.circle")
                     }
                 }
-                .rowCursor(cursor == .about)
             }
+            #endif
         }
         .formStyle(.grouped)
         .sheet(isPresented: $showAbout) {
@@ -108,7 +109,6 @@ struct SettingsView: View {
         case .sound: soundOn.toggle()
         case .haptics: hapticsOn.toggle()
         case .sync: if sync.isAvailable { sync.isOn.toggle() }
-        case .about: showAbout = true
         }
     }
     #endif

@@ -71,6 +71,13 @@ targets:
     dependencies:
       - package: LatticeCore
         product: LatticeKit
+    # Stamp the git commit into the bundled Info.plist (GitCommitSHA) so every
+    # build self-identifies its source. Runs last, after the plist is copied
+    # into the product; fires on archive too. See Scripts/embed-commit-sha.sh.
+    postBuildScripts:
+      - script: "\"$SRCROOT/Scripts/embed-commit-sha.sh\""
+        name: Embed git commit SHA
+        basedOnDependencyAnalysis: false
 
   Lattice-macOS:
     type: application
@@ -117,6 +124,13 @@ targets:
     dependencies:
       - package: LatticeCore
         product: LatticeKit
+    # Stamp the git commit into the bundled Info.plist (GitCommitSHA) so every
+    # build self-identifies its source. Runs last, after the plist is copied
+    # into the product; fires on archive too. See Scripts/embed-commit-sha.sh.
+    postBuildScripts:
+      - script: "\"$SRCROOT/Scripts/embed-commit-sha.sh\""
+        name: Embed git commit SHA
+        basedOnDependencyAnalysis: false
     # Explicit scheme so XcodeGen writes a SHARED scheme file — without it,
     # `xcodebuild -scheme Lattice-macOS` fails on a fresh checkout.
     scheme:

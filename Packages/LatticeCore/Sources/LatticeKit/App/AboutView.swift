@@ -8,6 +8,13 @@ struct AboutView: View {
     /// Opens the how-to-play reference; nil hides the row.
     var onHowTo: (() -> Void)?
 
+    /// The build's git commit, stamped into the bundled plist at build time by
+    /// Scripts/embed-commit-sha.sh. "-dirty" means it was built off uncommitted
+    /// changes; absent on a build made before that phase existed.
+    private var commitSHA: String? {
+        Bundle.main.infoDictionary?["GitCommitSHA"] as? String
+    }
+
     private var versionString: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "—"
@@ -36,6 +43,12 @@ struct AboutView: View {
                 .padding(.vertical, 4)
                 .background(Capsule().fill(.tint.opacity(0.15)))
                 .overlay(Capsule().strokeBorder(.tint.opacity(0.3), lineWidth: 1))
+
+            if let sha = commitSHA {
+                Text(verbatim: sha)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.tertiary)
+            }
 
             if let onHowTo {
                 Divider().frame(maxWidth: 220)

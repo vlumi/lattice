@@ -444,6 +444,13 @@ depend on Donpa):
     explicit key overrides the build-setting-derived minimum.
   - Declare `ITSAppUsesNonExemptEncryption: false` to skip the
     export-compliance prompt on every upload.
+  - **`GitCommitSHA`** is stamped into each built app's Info.plist by a
+    `postBuildScripts` phase on both targets
+    (`Scripts/embed-commit-sha.sh`), and shown in the About view — so a
+    TestFlight build self-identifies its exact source. A dirty tree gets a
+    `-dirty` suffix; a non-git checkout writes `unknown` rather than failing
+    the build. It only writes the *built product's* plist, never the
+    XcodeGen-owned source one.
   - `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` **lock-step across both
     targets**, bumped by the release lane only.
   - Give the macOS target an **explicit `scheme:` block** so XcodeGen writes
