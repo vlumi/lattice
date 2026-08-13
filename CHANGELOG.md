@@ -20,6 +20,8 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 9 — 2026-08-13
+
 - **Reset progress**, at the bottom of Settings: clears your best scores,
   replays, daily streak and any game in progress, behind a confirmation.
   Settings themselves stay put. With iCloud Sync on it erases on every device
