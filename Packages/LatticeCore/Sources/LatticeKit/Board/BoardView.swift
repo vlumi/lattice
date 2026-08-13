@@ -147,15 +147,16 @@ public struct BoardView: View {
             )
             // Zoomed in, a plain drag pans — hold first to sweep instead. The
             // arming press fires its own tick as the "you're in feel mode" cue.
+            // It must not touch a drag that's already doing something: a careful
+            // scrub between overlapping candidates easily exceeds this hold.
             .simultaneousGesture(
                 LongPressGesture(minimumDuration: 0.35)
                     .onEnded { _ in
-                        guard camera.zoom > 1, dragMode != .scrub else { return }
+                        guard camera.zoom > 1, session.tentative == nil,
+                            dragMode == .pan, gesturePan == .zero
+                        else { return }
                         feelArmed = true
-                        if dragMode == .pan {
-                            gesturePan = .zero
-                            dragMode = .feel
-                        }
+                        dragMode = .feel
                         feedback.cursorMoved(.placeable)
                     }
             )
@@ -190,28 +191,32 @@ public struct BoardView: View {
     /// a FITTED board there is nothing to pan (`clampPan` returns zero at zoom
     /// 1), so a drag over empty board is free to be a feel-sweep; zoomed in,
     /// panning wins unless a long press armed the sweep first.
+    ///
+    /// While a dot is tentative the drag is ALWAYS a scrub: the whole gesture
+    /// belongs to choosing among that dot's candidate lines, including the part
+    /// of it that passes over empty board between the ghosts.
     private func mode(startingAt location: CGPoint, _ layout: Layout) -> DragMode {
+        if session.tentative != nil { return .scrub }
         if target(at: location, layout) != nil { return .scrub }
         return camera.zoom <= 1 || feelArmed ? .feel : .pan
     }
 
-    /// Tick once per lattice point the sweep crosses, so the board's structure
-    /// comes through the fingertip: strongest where a move is legal.
+    /// Tick as the sweep crosses a point you can actually play, and stay silent
+    /// everywhere else — a buzz means "a dot goes here". Discriminating three
+    /// intensities under a moving finger asks too much; one unambiguous cue
+    /// against silence reads instantly.
     private func feel(at location: CGPoint, _ layout: Layout) {
         let point = layout.point(near: location)
         guard point != feltPoint else { return }
         feltPoint = point
-        guard let point else {
+        guard let point, session.isPlaceable(point) else {
             hot = nil
             return
         }
-        let state: CursorState =
-            session.game.dots.contains(point)
-            ? .dot : (session.isPlaceable(point) ? .placeable : .empty)
-        feedback.cursorMoved(state)
-        // Preview the placeable point the same way hover does, so the sweep is
-        // visible as well as tactile.
-        hot = state == .placeable ? .place(point) : nil
+        feedback.cursorMoved(.placeable)
+        // Preview it the same way hover does — the sweep is visible as well as
+        // tactile.
+        hot = .place(point)
     }
 
     private func select(_ target: HotTarget?) {

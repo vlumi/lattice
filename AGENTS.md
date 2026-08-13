@@ -224,8 +224,11 @@ dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
 Still open (see ROADMAP.md): the interactive tutorial — then store prep.
 
-Touch has a **feel-sweep**: dragging over empty board ticks once per lattice
-point crossed (`BoardView.feel`), lifting places on a playable one. It's free
+Touch has a **feel-sweep**: dragging over empty board buzzes on points you can
+play and stays silent elsewhere (`BoardView.feel`), lifting places on one. One
+unambiguous cue against silence — three graded intensities are not tellable
+apart under a moving finger. Never while a dot is tentative: that whole drag
+belongs to choosing a candidate line. It's free
 at fit zoom — `clampPan` returns zero there, so a drag had nothing to do — and
 needs a long press to arm when zoomed, where panning owns the plain drag. Note
 the keyboard cursor's haptics are macOS-dead (no Taptic Engine); touch is where
