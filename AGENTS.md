@@ -222,7 +222,17 @@ ghost + post-game openness analysis; rule variants and seeded random starts
 last-to-move-wins; **Nearby duel** (see the two-player section); iCloud sync;
 dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
-Still open (see ROADMAP.md): the interactive tutorial — then store prep.
+Still open (see ROADMAP.md): the rejected-placement shake (in-the-moment
+teaching) — then store prep.
+
+**Help is a reference, not a tutorial.** `Help/HowToPlayView` pairs short prose
+with `Help/BoardDiagram`, which draws through the shared `BoardRendering`
+vocabulary — so the diagrams *are* the board at caption scale and follow it
+automatically. `DiagramTruthTests` asserts each "Allowed"/"Not allowed" claim
+against the engine, so a diagram can never teach a rule the game doesn't have
+(it caught a dead-gap diagram whose lines touched, leaving no gap to be dead).
+The `?` cheatsheet stays a glanceable "what was it again" during play; Help
+covers the same keys with depth. Complementary, not alternatives.
 
 Touch has a **feel-sweep**: dragging over empty board buzzes on points you can
 play and stays silent elsewhere (`BoardView.feel`), lifting places on one. One

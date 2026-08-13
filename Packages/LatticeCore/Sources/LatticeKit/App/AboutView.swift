@@ -130,14 +130,32 @@ struct AboutView: View {
 /// the same chrome as the macOS Settings sheet.
 struct AboutSheet: View {
     let dismiss: () -> Void
-    var onHowTo: (() -> Void)?
 
     @ScaledMetric(relativeTo: .body) private var paneWidth: CGFloat = 380
+    /// The how-to-play reference, pushed in place of the About content — one
+    /// sheet, two panes, so there's no sheet-over-sheet stacking.
+    @State private var showingHowTo = false
+    @State private var showingKeys = false
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("About", bundle: .module).font(.headline)
+                if showingHowTo {
+                    Button {
+                        showingHowTo = false
+                    } label: {
+                        Label {
+                            Text("About", bundle: .module)
+                        } icon: {
+                            Image(systemName: "chevron.left")
+                        }
+                        .labelStyle(.titleAndIcon)
+                    }
+                    .buttonStyle(.plain)
+                    .font(.headline)
+                } else {
+                    Text("About", bundle: .module).font(.headline)
+                }
                 Spacer()
                 Button(action: dismiss) {
                     Text("Done", bundle: .module)
@@ -147,8 +165,17 @@ struct AboutSheet: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             Divider()
-            ScrollView {
-                AboutView(onHowTo: onHowTo).padding(20)
+            if showingHowTo {
+                HowToPlayView(onKeyboard: { showingKeys = true })
+            } else {
+                ScrollView {
+                    AboutView(onHowTo: { showingHowTo = true }).padding(20)
+                }
+            }
+        }
+        .overlay {
+            if showingKeys {
+                KeyboardCheatsheet(dismiss: { showingKeys = false })
             }
         }
         .background(

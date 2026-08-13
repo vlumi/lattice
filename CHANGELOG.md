@@ -20,6 +20,16 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- **How to play**, in the app at last: a short illustrated guide to the rules
+  — the goal, placing a dot and drawing its line, the one rule that really
+  matters (lines may share an end dot but never overlap), why five dots
+  already in a row aren't a line, the dead gaps the board marks for you, and
+  what the variants change. Mostly pictures, drawn by the board itself.
+- An **About** screen: version and build, a link to the site and the source,
+  and the way in to How to play. On iPhone and iPad it's the last row in
+  Settings; on the Mac it's where you'd expect, under the app menu. Every
+  build now also carries the exact commit it was built from.
+
 ### build 8 — 2026-08-13
 
 - Choosing a line by dragging works again: after placing a dot, sliding

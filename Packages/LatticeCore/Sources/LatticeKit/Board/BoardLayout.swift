@@ -6,6 +6,12 @@ import SwiftUI
 struct Bounds {
     let minX, maxX, minY, maxY: Int
 
+    /// An explicit window — the help diagrams pin their own extent so a row of
+    /// them shares one dot pitch instead of each fitting its own dots.
+    init(minX: Int, maxX: Int, minY: Int, maxY: Int) {
+        (self.minX, self.maxX, self.minY, self.maxY) = (minX, maxX, minY, maxY)
+    }
+
     init(of dots: Set<Point>) {
         guard let first = dots.first else {
             (minX, maxX, minY, maxY) = (0, 0, 0, 0)
