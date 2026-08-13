@@ -20,15 +20,28 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+### build 8 — 2026-08-13
+
+- Choosing a line by dragging works again: after placing a dot, sliding
+  between its overlapping candidate lines could slip into the new
+  feel-the-board mode partway through the gesture (and buzz when it
+  shouldn't). While a dot is waiting, the drag now always belongs to
+  picking its line.
+- The board's feel-sweep is simpler: it buzzes only where a dot can
+  actually go and stays quiet everywhere else, so a buzz means "a dot goes
+  here" — easier to read with a moving finger than the three different
+  strengths it used to give. Keyboard roaming still distinguishes open
+  points, dots and empty space.
+
 ### build 7 — 2026-08-13
 
-- Feel the board with your finger: slide across it and it buzzes wherever a
-  dot can go, staying quiet everywhere else — so you can hunt for a move
-  without staring at the board. Lift on one of those points to place your dot
-  there. When the board is fitted the sweep is just a drag (there's nothing to
-  pan); zoomed in, hold briefly first, then sweep — a plain drag still pans.
-  Roaming with the keyboard gives a per-point cue too, in sound as well as
-  touch, telling open points from dots from empty space.
+- Feel the board with your finger: slide across it and each lattice point
+  gives a tick — strongest where a move is legal, softer on an existing dot,
+  barely there on empty space — so you can hunt for a spot without staring at
+  it. Lift on a playable point to place your dot there. When the board is
+  fitted the sweep is just a drag (there's nothing to pan); zoomed in, hold
+  briefly first, then sweep — a plain drag still pans. Roaming with the
+  keyboard gives the same per-point cue, in sound as well as touch.
 - Large text sizes work properly: the board header no longer pushed its
   buttons off a narrow screen (at the largest accessibility size they were
   clipped clean off an iPhone SE) — it splits onto two lines when it has to.

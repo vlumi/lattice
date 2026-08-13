@@ -83,6 +83,29 @@ sed -i '' -E "s/(CURRENT_PROJECT_VERSION: *)\"[0-9]+\"/\1\"${new_build}\"/" "$PR
 say "Stamping the changelog…"
 promote_changelog_build "$new_build"
 
+# An empty Unreleased is legitimate for a docs/internal-only build, but it also
+# happens when user-facing notes were written into an ALREADY-SHIPPED section by
+# mistake — which shipped build 8 with no notes at all. If the tree has
+# user-facing commits since the last build tag, say so and make the author
+# confirm rather than stamping nothing in silence.
+if ! git diff --cached --quiet -- "$CHANGELOG_FILE" 2>/dev/null; then
+    :  # notes were promoted — nothing to warn about
+else
+    last_tag="$(git tag --list 'mac/v*' --sort=-v:refname | head -1)"
+    if [ -n "$last_tag" ]; then
+        n_commits="$(git log --oneline --no-merges "${last_tag}..HEAD" -- \
+            ':(exclude)*.md' ':(exclude)Scripts' | wc -l | tr -d ' ')"
+        if [ "$n_commits" != "0" ]; then
+            printf '  !! %s code commits since %s but no Unreleased notes.\n' \
+                "$n_commits" "$last_tag"
+            printf '     A build with user-facing changes should have notes.\n'
+            printf '     Continue anyway? [y/N] '
+            read -r reply || reply=""
+            case "$reply" in [yY]*) ;; *) die "aborted — write the notes first." ;; esac
+        fi
+    fi
+fi
+
 # ── Branch, commit, push, PR with auto-merge ──────────────────────────────────
 rel_branch="release/v${new_version}-${new_build}"
 git rev-parse --verify "$rel_branch" >/dev/null 2>&1 && die "branch '$rel_branch' already exists."
