@@ -11,14 +11,24 @@ collects entries merged to `main` but not yet in a TestFlight build; cutting a
 release renames it to that build's heading and opens a fresh empty one. A
 user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
-## [0.5.0]
+## [1.0.0]
 
-The first TestFlight milestone: the full single-player game (solitaire,
-daily, variants, seeded challenges, replays with analysis) plus pass-and-play
-two-player. Entries below are promoted to a `### build N` heading when the
-release lane cuts the build (see [RELEASING.md](RELEASING.md)).
+The store release: the same game, taken public. Builds accumulate here while
+1.0.0 is in TestFlight — the version is only spent once App Store review
+approves it, so a problem found in testing just gets another build.
 
 ### Unreleased (next build)
+
+- Version bumped to 1.0.0. No gameplay changes since build 9 — the game is
+  feature-complete and this is the first build of the store release.
+
+## [0.5.0]
+
+The TestFlight beta: the full single-player game (solitaire, daily, variants,
+seeded challenges, replays with analysis), pass-and-play and Nearby two-player,
+iCloud sync, full keyboard control, and the in-app rules. Entries are promoted
+to a `### build N` heading when the release lane cuts the build (see
+[RELEASING.md](RELEASING.md)).
 
 ### build 9 — 2026-08-13
 
