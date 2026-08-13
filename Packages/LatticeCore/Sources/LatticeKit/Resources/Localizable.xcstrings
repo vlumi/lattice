@@ -83,6 +83,9 @@
     "Choose the challenge" : {
 
     },
+    "Clears your best scores, replays, daily streak and any game in progress. Settings stay as they are." : {
+
+    },
     "Close" : {
 
     },
@@ -124,6 +127,12 @@
 
     },
     "Enter Code…" : {
+
+    },
+    "Erase everywhere" : {
+
+    },
+    "Erase progress on all your devices?" : {
 
     },
     "Every line needs a new dot" : {
@@ -288,6 +297,15 @@
     "Replay — %lld" : {
 
     },
+    "Reset all progress?" : {
+
+    },
+    "Reset progress" : {
+
+    },
+    "Reset progress…" : {
+
+    },
     "Resign" : {
 
     },
@@ -377,7 +395,13 @@
     "The name other players see when you duel nearby." : {
 
     },
+    "This erases your best scores, replays and daily streak on every device signed in to your iCloud. It can't be undone." : {
+
+    },
     "This move closed off a line for good" : {
+
+    },
+    "This resets your best scores, replays and daily streak on this device. It can't be undone." : {
 
     },
     "Two lines along the same direction may share an end dot, but they can never share a stretch between two dots. This is the rule the whole game turns on: every line you draw uses up four of those stretches for good." : {

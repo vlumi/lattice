@@ -146,6 +146,22 @@ public struct LatticeStore {
         SyncedState(bests: loadBests(), dailyLog: loadDailyLog())
     }
 
+    /// Erase everything this store owns: in-progress games, the versus slot,
+    /// every replay, the daily attempt and log, and the bests. Leaves settings
+    /// (sound, haptics, sync opt-in) alone — those are preferences, not progress.
+    public func wipeAllProgress() {
+        clearCurrent()
+        clearDailyAttempt()
+        // No synced-state file to remove: loadSyncedState assembles it from the
+        // bests + daily log, so clearing those clears it.
+        for url in [versusURL, dailyLogURL, bestsURL] {
+            try? fileManager.removeItem(at: url)
+        }
+        try? fileManager.removeItem(at: recordsDirectory)
+        try? fileManager.createDirectory(
+            at: recordsDirectory, withIntermediateDirectories: true)
+    }
+
     public func saveSyncedState(_ state: SyncedState) {
         saveBests(state.bests)
         saveDailyLog(state.dailyLog)

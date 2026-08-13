@@ -20,6 +20,12 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- **Reset progress**, at the bottom of Settings: clears your best scores,
+  replays, daily streak and any game in progress, behind a confirmation.
+  Settings themselves stay put. With iCloud Sync on it erases on every device
+  signed in to your iCloud and says so; with sync off it's this device only,
+  and says that instead.
+
 - Tapping a spot where no line could ever reach now says so: a red ring
   flashes where your finger landed, with a soft tap on iPhone and iPad — so
   "why did nothing happen?" gets answered where you're looking. Tapping an

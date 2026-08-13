@@ -74,6 +74,21 @@ public final class AppModel: ObservableObject {
         dailySession.reloadSyncedState()
     }
 
+    /// Erase all progress: bests, replays, the daily log and streak, and any
+    /// game in progress. Settings (sound, haptics, sync opt-in) survive — they're
+    /// preferences, not progress.
+    ///
+    /// Order matters: the cloud blob goes FIRST. Clearing locally while the blob
+    /// still holds the old bests would have the next merge take max-of-bests and
+    /// bring everything straight back.
+    public func resetAllProgress() {
+        sync.wipeCloud()
+        store.wipeAllProgress()
+        freeSession.resetAfterWipe()
+        dailySession.resetAfterWipe()
+        versusSession.resetAfterWipe()
+    }
+
     /// A challenge universal-link: start its board in Free and switch there.
     public func openChallenge(seed: UInt64) {
         freeSession.newChallenge(seed: seed)

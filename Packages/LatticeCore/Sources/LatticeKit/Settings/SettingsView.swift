@@ -8,6 +8,8 @@ struct SettingsView: View {
     let feedback: Feedback
     /// Closes the presenting sheet (macOS); no-op for the iOS tab.
     var onClose: () -> Void = {}
+    /// Erases all progress — owned by AppModel, which holds the sessions.
+    var onReset: () -> Void = {}
 
     // Sound off by default (opt-in); haptics on by default. Keys match
     // Feedback's; the live players are updated on change.
@@ -15,9 +17,10 @@ struct SettingsView: View {
     @AppStorage(Feedback.hapticsDefaultsKey) private var hapticsOn = true
 
     // Keyboard row cursor: Up/Down move, Space toggles the focused row.
-    private enum Row: Int, CaseIterable { case sound, haptics, sync }
+    private enum Row: Int, CaseIterable { case sound, haptics, sync, reset }
     @State private var cursor: Row = .sound
     @State private var showAbout = false
+    @State private var confirmingReset = false
     @State private var showHowTo = false
 
     private var syncFooter: Text {
@@ -64,6 +67,20 @@ struct SettingsView: View {
             } footer: {
                 syncFooter
             }
+            Section {
+                Button(role: .destructive) {
+                    confirmingReset = true
+                } label: {
+                    Text("Reset progress…", bundle: .module)
+                }
+                .rowCursor(cursor == .reset)
+            } footer: {
+                Text(
+                    """
+                    Clears your best scores, replays, daily streak and any game \
+                    in progress. Settings stay as they are.
+                    """, bundle: .module)
+            }
             // iOS only: the Mac reaches About from the app menu, where the
             // platform expects it — a Settings row there would be redundant.
             #if !os(macOS)
@@ -90,6 +107,40 @@ struct SettingsView: View {
             #endif
         }
         .formStyle(.grouped)
+        .confirmationDialog(
+            sync.canWipeCloud
+                ? Text("Erase progress on all your devices?", bundle: .module)
+                : Text("Reset all progress?", bundle: .module),
+            isPresented: $confirmingReset,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) {
+                onReset()
+            } label: {
+                sync.canWipeCloud
+                    ? Text("Erase everywhere", bundle: .module)
+                    : Text("Reset progress", bundle: .module)
+            }
+            Button(role: .cancel) {
+            } label: {
+                Text("Cancel", bundle: .module)
+            }
+        } message: {
+            // Say which it is. With sync off the cloud copy is deliberately left
+            // alone, and turning sync back on would restore it — the user has to
+            // know that rather than be surprised later.
+            sync.canWipeCloud
+                ? Text(
+                    """
+                    This erases your best scores, replays and daily streak on \
+                    every device signed in to your iCloud. It can't be undone.
+                    """, bundle: .module)
+                : Text(
+                    """
+                    This resets your best scores, replays and daily streak on \
+                    this device. It can't be undone.
+                    """, bundle: .module)
+        }
         .sheet(isPresented: $showAbout) {
             AboutSheet(dismiss: { showAbout = false })
         }
@@ -122,6 +173,8 @@ struct SettingsView: View {
         case .sound: soundOn.toggle()
         case .haptics: hapticsOn.toggle()
         case .sync: if sync.isAvailable { sync.isOn.toggle() }
+        // Space opens the confirmation, never resets outright.
+        case .reset: confirmingReset = true
         }
     }
     #endif

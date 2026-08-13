@@ -43,6 +43,24 @@ public final class SyncCoordinator {
         if isActive { reconcile() }
     }
 
+    /// Erase the shared cloud blob, so a reset isn't undone by the next merge
+    /// (which takes max-of-bests and would resurrect everything). Returns whether
+    /// the cloud was actually cleared: false means sync is off or iCloud is
+    /// unreachable, and the caller's reset is therefore THIS DEVICE ONLY — say so
+    /// in the UI rather than quietly leaving the cloud copy to come back.
+    ///
+    /// Simpler than Donpa's equivalent, which needs a reset-epoch tombstone: it
+    /// has per-device blobs, so an offline device must learn to wipe itself.
+    /// Lattice has one shared blob and no device IDs, so clearing it is enough.
+    @discardableResult
+    public func wipeCloud() -> Bool {
+        guard isActive else { return false }
+        // A well-formed EMPTY state, not empty bytes: merging against it is a
+        // no-op rather than relying on a decode failure being read as "no cloud".
+        if let data = SyncedState().encoded() { cloud.write(data) }
+        return true
+    }
+
     /// A local change happened (finished game, daily result) — fold it into
     /// the cloud. No-op when inactive.
     public func localDidChange() {
