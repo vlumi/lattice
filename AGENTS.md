@@ -224,6 +224,13 @@ dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
 Still open (see ROADMAP.md): the interactive tutorial — then store prep.
 
+Touch has a **feel-sweep**: dragging over empty board ticks once per lattice
+point crossed (`BoardView.feel`), lifting places on a playable one. It's free
+at fit zoom — `clampPan` returns zero there, so a drag had nothing to do — and
+needs a long press to arm when zoomed, where panning owns the plain drag. Note
+the keyboard cursor's haptics are macOS-dead (no Taptic Engine); touch is where
+that cue actually lands.
+
 The board's feedback vocabulary is four cues, all routed through `Feedback`
 and gated on the two Settings toggles: a scrub detent between candidate lines,
 a firmer commit tap, the game-over tone, and a per-state tick as the keyboard

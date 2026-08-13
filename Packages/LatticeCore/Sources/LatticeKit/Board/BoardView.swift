@@ -18,6 +18,8 @@ public struct BoardView: View {
         case undecided
         case scrub
         case pan
+        /// Sweeping empty board to feel where dots can go (haptics per point).
+        case feel
     }
 
     @ObservedObject var session: GameSession
@@ -32,6 +34,11 @@ public struct BoardView: View {
     @State private var gesturePan: CGSize = .zero
     @State private var dragMode: DragMode = .undecided
     @State var hot: HotTarget?
+    /// The lattice point a feel-sweep last ticked on, so the cue fires once per
+    /// point crossed rather than once per touch event.
+    @State private var feltPoint: Point?
+    /// Long-press arms a feel-sweep on a zoomed board, where a plain drag pans.
+    @State private var feelArmed = false
 
     public init(session: GameSession, camera: BoardCamera, keyboardEnabled: Bool = true) {
         self.session = session
@@ -76,17 +83,16 @@ public struct BoardView: View {
                     hot = nil
                 }
             }
-            // One drag gesture for tap / scrub-select / camera pan. Starting
-            // on a selectable target makes it a scrub: the nearest target
-            // highlights as the finger moves, lifting selects it. Starting
-            // anywhere else pans; a sub-threshold pan is a tap.
+            // One drag gesture for tap / scrub-select / feel-sweep / camera
+            // pan. Starting on a selectable target makes it a scrub: the
+            // nearest target highlights as the finger moves, lifting selects
+            // it. Over empty board it's a feel-sweep (see `mode(startingAt:)`).
+            // Otherwise it pans; a sub-threshold pan is a tap.
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         if dragMode == .undecided {
-                            dragMode =
-                                target(at: toWorld(value.startLocation), layout) != nil
-                                ? .scrub : .pan
+                            dragMode = mode(startingAt: toWorld(value.startLocation), layout)
                         }
                         switch dragMode {
                         case .scrub:
@@ -98,6 +104,8 @@ public struct BoardView: View {
                                 feedback.selectChanged()
                             }
                             hot = next
+                        case .feel:
+                            feel(at: toWorld(value.location), layout)
                         case .pan:
                             gesturePan = value.translation
                         case .undecided:
@@ -106,8 +114,20 @@ public struct BoardView: View {
                     }
                     .onEnded { value in
                         switch dragMode {
+                        // Lifting selects whatever is under the finger: a
+                        // candidate line commits, a playable point becomes the
+                        // tentative dot (freely cancellable).
                         case .scrub:
                             select(target(at: toWorld(value.location), layout))
+                        case .feel:
+                            // A sweep that never moved is just a tap — keep the
+                            // tap semantics (tapping empty board cancels a
+                            // tentative dot), which a bare `select` would drop.
+                            if abs(value.translation.width) + abs(value.translation.height) < 6 {
+                                handleTap(at: toWorld(value.location), layout)
+                            } else {
+                                select(target(at: toWorld(value.location), layout))
+                            }
                         case .pan:
                             gesturePan = .zero
                             if abs(value.translation.width) + abs(value.translation.height) < 6 {
@@ -121,6 +141,22 @@ public struct BoardView: View {
                         }
                         dragMode = .undecided
                         hot = nil
+                        feltPoint = nil
+                        feelArmed = false
+                    }
+            )
+            // Zoomed in, a plain drag pans — hold first to sweep instead. The
+            // arming press fires its own tick as the "you're in feel mode" cue.
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.35)
+                    .onEnded { _ in
+                        guard camera.zoom > 1, dragMode != .scrub else { return }
+                        feelArmed = true
+                        if dragMode == .pan {
+                            gesturePan = .zero
+                            dragMode = .feel
+                        }
+                        feedback.cursorMoved(.placeable)
                     }
             )
             .simultaneousGesture(
@@ -148,6 +184,34 @@ public struct BoardView: View {
         if p == session.tentative { return .cancelTentative }
         if session.isPlaceable(p) { return .place(p) }
         return nil
+    }
+
+    /// Which mode a drag starting here becomes. A selectable target scrubs. On
+    /// a FITTED board there is nothing to pan (`clampPan` returns zero at zoom
+    /// 1), so a drag over empty board is free to be a feel-sweep; zoomed in,
+    /// panning wins unless a long press armed the sweep first.
+    private func mode(startingAt location: CGPoint, _ layout: Layout) -> DragMode {
+        if target(at: location, layout) != nil { return .scrub }
+        return camera.zoom <= 1 || feelArmed ? .feel : .pan
+    }
+
+    /// Tick once per lattice point the sweep crosses, so the board's structure
+    /// comes through the fingertip: strongest where a move is legal.
+    private func feel(at location: CGPoint, _ layout: Layout) {
+        let point = layout.point(near: location)
+        guard point != feltPoint else { return }
+        feltPoint = point
+        guard let point else {
+            hot = nil
+            return
+        }
+        let state: CursorState =
+            session.game.dots.contains(point)
+            ? .dot : (session.isPlaceable(point) ? .placeable : .empty)
+        feedback.cursorMoved(state)
+        // Preview the placeable point the same way hover does, so the sweep is
+        // visible as well as tactile.
+        hot = state == .placeable ? .place(point) : nil
     }
 
     private func select(_ target: HotTarget?) {

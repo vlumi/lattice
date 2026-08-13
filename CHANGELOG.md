@@ -20,6 +20,13 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Feel the board with your finger: slide across it and each lattice point
+  gives a tick — strongest where a move is legal, softer on an existing dot,
+  barely there on empty space — so you can hunt for a spot without staring at
+  it. Lift on a playable point to place your dot there. When the board is
+  fitted the sweep is just a drag (there's nothing to pan); zoomed in, hold
+  briefly first, then sweep — a plain drag still pans.
+
 - Large text sizes work properly: the board header no longer pushes its
   buttons off a narrow screen (they were clipped clean off an iPhone SE at
   the largest accessibility size) — it splits onto two lines when it has to.
