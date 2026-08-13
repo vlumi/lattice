@@ -20,6 +20,12 @@ TestFlight — the version is only spent when review approves it.
       in: `Scripts/asc/listing.json` + `make asc-listing[-apply]` for the text,
       `make demo-iphone|demo-ipad|demo-mac` for a seeded demo build, and
       `Scripts/asc/SCREENSHOTS.md` for the shot list and sizes.
+      **Category** (set in the ASC web UI, not `listing.json` — the API uses a
+      different endpoint than `listing.py` covers): **Games → Puzzle**, second
+      subcategory **Board**. Morpion is unambiguously a puzzle (single-player,
+      deterministic, optimization); Board is the better second slot than
+      Strategy, whose browsers are after 4X and tower defence. This is separate
+      from the Info.plist `LSApplicationCategoryType` already set per platform.
 - [ ] Submit to public App Store review, release (spends the 1.0.0 version)
 
 ## Backlog (unversioned)
