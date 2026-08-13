@@ -30,7 +30,10 @@ final class DemoSeedTests: XCTestCase {
         XCTAssertNotNil(bests.best(forKey: "5T"), "classic pool has a best")
 
         let streak = store.loadDailyLog().streak(today: DailyChallenge.dateKey())
-        XCTAssertEqual(streak, 6, "six days including today")
+        XCTAssertEqual(streak, 5, "five days ending yesterday")
+        XCTAssertNil(
+            store.loadDailyLog().results[DailyChallenge.dateKey()],
+            "today deliberately unplayed, so the Daily tab shows its fresh board")
     }
 
     /// Same fixtures twice must give the same scores, or the iPhone and iPad
@@ -68,5 +71,56 @@ extension DemoSeedTests {
         print("demo fixture scores: \(scores)")
         print("total moves: \(store.loadRecords().reduce(0) { $0 + $1.moves.count })")
         XCTAssertGreaterThanOrEqual(scores.max() ?? 0, 40, "top game should look respectable")
+    }
+}
+
+extension DemoSeedTests {
+    /// The listing's lead shot is a mid-game board, so the demo has to open on
+    /// one — and it must still have moves available.
+    func testFreeBoardIsInProgressAndPlayable() {
+        let store = LatticeStore.ephemeral()
+        DemoSeed.apply(
+            store: store, defaults: UserDefaults(suiteName: "t.\(UUID().uuidString)")!)
+        let snapshot = try? XCTUnwrap(store.loadCurrent())
+        let game = try? XCTUnwrap(snapshot.flatMap(Game.init(snapshot:)))
+        XCTAssertGreaterThan(game?.score ?? 0, 20, "reads as a played board")
+        XCTAssertFalse(
+            game?.legalMoves().isEmpty ?? true, "still playable — a dead board sells nothing")
+    }
+
+    /// Dates must not drift between captures on different days.
+    func testHistoryDatesAreFixed() {
+        func dates() -> [Date] {
+            let store = LatticeStore.ephemeral()
+            DemoSeed.apply(
+                store: store, defaults: UserDefaults(suiteName: "t.\(UUID().uuidString)")!)
+            return store.loadRecords().map(\.finishedAt).sorted()
+        }
+        XCTAssertEqual(dates(), dates(), "same dates every run, on every device")
+        XCTAssertLessThan(
+            dates().last!, Date(), "the demo's history is in the past, not the future")
+    }
+}
+
+extension DemoSeedTests {
+    /// The three screens the demo has to stage correctly, asserted together so
+    /// the intent is visible in one place.
+    func testDemoStagesFreeInProgressAndDailyFresh() throws {
+        let store = LatticeStore.ephemeral()
+        DemoSeed.apply(
+            store: store, defaults: UserDefaults(suiteName: "t.\(UUID().uuidString)")!)
+
+        // Free: partway through a real game.
+        let current = try XCTUnwrap(store.loadCurrent())
+        let free = try XCTUnwrap(Game(snapshot: current))
+        XCTAssertGreaterThan(free.score, 20)
+
+        // Daily: no attempt today, so the tab opens on the day's fresh board.
+        XCTAssertNil(store.loadDailyAttempt(), "no attempt in progress")
+        XCTAssertNil(
+            store.loadDailyLog().results[DailyChallenge.dateKey()], "today unplayed")
+
+        // …but the streak is live, because an unplayed today doesn't break it.
+        XCTAssertEqual(store.loadDailyLog().streak(today: DailyChallenge.dateKey()), 5)
     }
 }

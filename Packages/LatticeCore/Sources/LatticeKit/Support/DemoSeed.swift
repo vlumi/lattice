@@ -33,6 +33,13 @@ public enum DemoSeed {
         Fixture(variant: .fiveT, days: 1, target: 79),
     ]
 
+    /// Which fixture the in-progress Free board comes from, and how far in to cut
+    /// it: far enough that the board reads as played (a real tangle of lines),
+    /// short enough that plenty of playable points remain — a board that looks
+    /// dead sells nothing.
+    private static let bestFixtureIndex = 7
+    private static let inProgressMoves = 34
+
     /// The committed fixture: one move list per game, in `games` order. Playing
     /// these takes ~2 minutes (see `playFixtureGames`), so the result ships as
     /// `Scripts/asc/demo-games.json` and a demo launch just replays it.
@@ -49,6 +56,15 @@ public enum DemoSeed {
         games.map { play(rules: $0.variant, upTo: $0.target).moves }
     }
 
+    /// The demo's "today". Fixed, not `Date()`: History plots real dates and the
+    /// recent-games list prints them, so a wall-clock demo would put the iPhone
+    /// and iPad shots on different days and shift the chart between captures.
+    /// The daily streak is seeded relative to this, so it reads the same forever.
+    ///
+    /// Only the seeded *history* uses it — the live daily board still follows the
+    /// real date (it has to; that's what the daily is).
+    static let today = Date(timeIntervalSince1970: 1_781_308_800)  // 2026-06-09
+
     public static func apply(store: LatticeStore, defaults: UserDefaults) {
         // Sound off, haptics on: the shipped defaults, so a capture shows the
         // app as a new player finds it.
@@ -57,7 +73,7 @@ public enum DemoSeed {
 
         var bests = BestScores()
         var log = DailyLog()
-        let now = Date()
+        let now = today
 
         let committed = fixtureMoves()
         for (index, spec) in games.enumerated() {
@@ -74,13 +90,28 @@ public enum DemoSeed {
             _ = bests.register(game.score, forKey: game.rules.variantKey(forStart: game.start))
         }
 
-        // A live streak: the last six days including today, so the header shows
-        // "Streak: 6" and the daily tab looks kept-up.
-        for back in 0..<6 {
-            let day = Calendar.current.date(byAdding: .day, value: -back, to: now)!
+        // A streak of five ending YESTERDAY, deliberately leaving today unplayed:
+        // the Daily tab then shows the day's fresh board — its initial state,
+        // which is what a newcomer sees — while the header still reads a live
+        // streak, because an unplayed today doesn't break one. Relative to the
+        // REAL today, since the daily board itself follows the real date.
+        let realToday = Date()
+        for back in 1...5 {
+            let day = Calendar.current.date(byAdding: .day, value: -back, to: realToday)!
             let key = DailyChallenge.dateKey(for: day)
             log.record(
-                DailyLog.Result(score: 38 + back * 3, finishedAt: day), for: key)
+                DailyLog.Result(score: 41 + back * 2, finishedAt: day), for: key)
+        }
+
+        // Free: a board partway through, not a fresh cross. The listing's lead
+        // shot is the mid-game board, and it has to look like the game actually
+        // looks — lines drawn, dots placed, the frontier of playable points still
+        // open — rather than the empty start every screenshot of this genre uses.
+        // Reuses the strongest fixture game, cut off partway.
+        if let moves = committed?[safe: bestFixtureIndex] {
+            var inProgress = Game(rules: games[bestFixtureIndex].variant)
+            for move in moves.prefix(inProgressMoves) where inProgress.play(move) {}
+            store.saveCurrent(GameSnapshot(game: inProgress, id: UUID()))
         }
 
         store.saveBests(bests)

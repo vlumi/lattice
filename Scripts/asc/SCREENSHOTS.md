@@ -13,10 +13,20 @@ so lead with the board and let the depth follow.
 make demo-iphone      # or demo-ipad / demo-mac
 ```
 
-The demo launches with seeded data: eight finished games spread over five weeks
-(so History charts a real curve), bests in several pools, and a six-day daily
-streak including today. Identical on every device — switch screens, capture,
-move to the next device, get the same content.
+The demo launches with seeded data, staged so each tab shows what it should:
+
+- **Free** opens on a board **34 moves in** — lines drawn, dots placed, the
+  frontier still open. This is the lead shot, and it has to look like the game
+  rather than an empty grid.
+- **Daily** is deliberately **unplayed today**, so it shows the day's fresh
+  board — the initial state a newcomer meets — while the header still reads a
+  live streak (an unplayed today doesn't break one).
+- **History** charts eight finished games over five weeks, with bests in several
+  pools.
+
+Dates are **fixed**, not wall-clock, so the chart and the recent-games list read
+identically whether you capture today or next week. Identical on every device —
+switch screens, capture, move to the next device, get the same content.
 
 Then capture per the list below:
 
@@ -59,10 +69,10 @@ Apple requires one set per display class:
 Capture in this order — it's the order the demo makes easiest, not the order
 they go in the store (see below).
 
-1. **mid-game board** — the Free tab, a board part-played. The core loop, and
-   the shot that has to carry the whole listing: dots, drawn lines, the faint
-   pinpoints showing where a move is still possible. Zoom so the board fills
-   the frame with a little air around it.
+1. **mid-game board** — the Free tab as the demo opens it (34 moves in). The
+   core loop, and the shot that has to carry the whole listing: dots, drawn
+   lines, the faint pinpoints showing where a move is still possible. Zoom so
+   the board fills the frame with a little air around it.
 2. **choosing a line** — tap a placeable point so the candidate ghosts fan out,
    and capture before committing. This is the one shot that explains the
    *mechanic* — a placement offering several lines — which no static board can.
@@ -75,8 +85,9 @@ they go in the store (see below).
 5. **replay with the openness curve** — open a finished game from History and
    scrub to mid-game, so the board and the openness chart are both visible.
    The analysis hook: *where did the position peak and die?*
-6. **the daily** — the Daily tab with the streak in the header. "One shared
-   board a day, a reason to come back."
+6. **the daily** — the Daily tab: the day's fresh board with the streak in the
+   header. Doubles as the "what you see on day one" shot. "One shared board a
+   day, a reason to come back."
 7. **New Game modal** — ⌘N (or the header button) showing the variant row and
    Random Start. Proves breadth: 5T/5D/4T/4D/5T+ plus seeded challenges.
 8. **How to play** — the illustrated rules, showing the segment-rule diagram.
