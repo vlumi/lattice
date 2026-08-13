@@ -40,20 +40,6 @@ extension GameView {
             onScan: scanAction)
     }
 
-    @ViewBuilder func challengeLabel(code: String, iconOnly: Bool) -> some View {
-        let label = Label {
-            Text(verbatim: code)
-        } icon: {
-            Image(systemName: "qrcode")
-        }
-        .font(.subheadline.monospaced())
-        if iconOnly {
-            label.labelStyle(.iconOnly).fixedSize()
-        } else {
-            label.labelStyle(.titleAndIcon).fixedSize()
-        }
-    }
-
     /// The iOS scanner action, if the device supports it (nil otherwise / macOS).
     var scanAction: (() -> Void)? {
         #if os(iOS)

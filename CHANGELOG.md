@@ -20,6 +20,15 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Large text sizes work properly: the board header no longer pushes its
+  buttons off a narrow screen (they were clipped clean off an iPhone SE at
+  the largest accessibility size) — it splits onto two lines when it has to.
+  The cheatsheet's key column, the History variant column, the code field
+  and the macOS Settings pane all grow with the text instead of clipping.
+- A tidier header, at every text size: the score shows as just the number
+  (the board is the context) and the challenge chip is the QR glyph alone —
+  the code is still in the popover when you tap it. Cancel now appears only
+  when there's something to cancel.
 - Feel the board while you roam it: moving the keyboard cursor now gives a
   distinct tick per point — bright for somewhere you can play, lower and
   rounder for an existing dot, near-silent for bare space. Sound and haptics

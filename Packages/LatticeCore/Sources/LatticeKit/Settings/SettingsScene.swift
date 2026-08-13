@@ -5,6 +5,7 @@ import SwiftUI
 /// Presented on the game window (see RootView) rather than a separate window,
 /// so it can't be orphaned. SettingsView itself stays internal to the package.
 public struct SettingsScene: View {
+    @ScaledMetric(relativeTo: .body) private var paneWidth: CGFloat = 460
     @ObservedObject private var model: AppModel
     private let done: () -> Void
 
@@ -28,6 +29,8 @@ public struct SettingsScene: View {
             Divider()
             SettingsView(sync: model.sync, feedback: model.feedback, onClose: done)
         }
-        .frame(width: 460)  // compact, like a standard settings pane
+        // Compact, like a standard settings pane — but it has to widen with the
+        // text, or accessibility sizes wrap the toggle labels to shreds.
+        .frame(width: paneWidth)
     }
 }

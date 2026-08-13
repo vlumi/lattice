@@ -6,6 +6,7 @@ import SwiftUI
 /// Left/Right pick a variant, Return/Space start. (Esc-to-close is bound by the
 /// presenting GameView — keys don't reach a hidden button inside an overlay.)
 struct NewGameModal: View {
+    @ScaledMetric(relativeTo: .body) private var codeFieldWidth: CGFloat = 120
     @ObservedObject var session: GameSession
     let dismiss: () -> Void
     let onVariant: (Rules) -> Void
@@ -143,7 +144,7 @@ struct NewGameModal: View {
                 Text("Code", bundle: .module)
             }
             .textFieldStyle(.roundedBorder)
-            .frame(width: 120)
+            .frame(width: codeFieldWidth)
             .focused($codeFocused)
             .onChangeCompat(of: code) { _ in row = .code }
             .onSubmit(start)  // iOS Return; on macOS KeyCatcher owns the field keys

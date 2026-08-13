@@ -58,6 +58,7 @@ private struct MovementCluster: View {
 /// (Esc, "?", the ✕, or a tap-off hides it). Chrome controls get their own
 /// inline shortcut badges; this panel covers the gameplay keys.
 struct KeyboardCheatsheet: View {
+    @ScaledMetric(relativeTo: .footnote) private var keyColumnWidth: CGFloat = 230
     let dismiss: () -> Void
 
     var body: some View {
@@ -113,7 +114,6 @@ struct KeyboardCheatsheet: View {
 
     /// Shared width for the key column — wide enough for the two movement
     /// clusters so every label to the right aligns and nothing overflows.
-    private static let keyColumnWidth: CGFloat = 230
 
     private func keyRow(_ keys: [String], _ label: Text) -> some View {
         row(
@@ -121,10 +121,12 @@ struct KeyboardCheatsheet: View {
             label)
     }
 
-    /// One cheatsheet row: keys centered in a fixed-width column, label after.
+    /// One cheatsheet row: keys centered in a column, label after. The column
+    /// scales with the text size — the keycaps inside it grow too, and a fixed
+    /// width would clip the longest chords at accessibility sizes.
     private func row(_ keys: some View, _ label: Text) -> some View {
         HStack(alignment: .center, spacing: 16) {
-            keys.frame(width: Self.keyColumnWidth, alignment: .center)
+            keys.frame(width: keyColumnWidth, alignment: .center)
             label.font(.callout).foregroundStyle(.secondary)
         }
     }

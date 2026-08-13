@@ -17,12 +17,6 @@ last feature milestone before 1.0.
 
 - [ ] Interactive tutorial (teach the segment rule and no-free-lines by
       doing)
-- [ ] Dynamic Type pass. Structurally already there — every font is a semantic
-      text style, no hard-coded `.system(size:)` — so this is testing at
-      accessibility sizes and fixing layout. Known suspects: the header's
-      `.fixedSize()` (already tight on iPhone SE, has a `ViewThatFits`
-      fallback) and History's `.frame(width: 64)` label and fixed-height
-      chart.
 
 ## Open decisions
 

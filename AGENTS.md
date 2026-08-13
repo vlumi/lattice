@@ -222,14 +222,20 @@ ghost + post-game openness analysis; rule variants and seeded random starts
 last-to-move-wins; **Nearby duel** (see the two-player section); iCloud sync;
 dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
-Still open (see ROADMAP.md): the interactive tutorial and the Dynamic Type
-pass — then store prep.
+Still open (see ROADMAP.md): the interactive tutorial — then store prep.
 
 The board's feedback vocabulary is four cues, all routed through `Feedback`
 and gated on the two Settings toggles: a scrub detent between candidate lines,
 a firmer commit tap, the game-over tone, and a per-state tick as the keyboard
 cursor roams (placeable / dot / empty — pitch for sound, impact intensity for
 haptics). The roaming cue is the faintest: it fires on every arrow press.
+
+**Dynamic Type**: use semantic text styles only (never `.system(size:)`), and
+`@ScaledMetric` for any fixed dimension that wraps text — a hard-coded width
+clips at accessibility sizes. Fixed sizes are fine for pure graphics (the share
+card, the QR, the charts' heights). The board header wraps to two lines rather
+than truncating; verify changes there on an iPhone SE at
+`accessibility-extra-extra-extra-large`, which is where it breaks first.
 
 **No VoiceOver board play, deliberately.** Naively exposing ~200 lattice
 points as accessibility elements would be technically compliant and
