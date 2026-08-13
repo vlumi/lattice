@@ -14,6 +14,12 @@ final class SoundPlayer {
         case place
         /// No moves left — the game ended.
         case gameOver = "gameover"
+        /// The keyboard cursor landed on a placeable point.
+        case cursorOpen = "cursor-open"
+        /// …on an existing dot.
+        case cursorDot = "cursor-dot"
+        /// …on bare lattice.
+        case cursorEmpty = "cursor-empty"
     }
 
     /// Off by default — the app opts into sound (set from the Settings toggle).

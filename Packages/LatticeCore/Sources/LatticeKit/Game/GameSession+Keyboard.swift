@@ -4,6 +4,15 @@ import LatticeCore
 /// pointer flow — place a dot, then choose among the lines it enables.
 extension GameSession {
 
+    /// What the cursor is sitting on, for the roaming feedback cues. The three
+    /// states are exclusive: `isPlaceable` is false on an occupied point, so a
+    /// dot never also reads as placeable.
+    public var cursorState: CursorState {
+        guard let cursor = keyboardCursor else { return .empty }
+        if game.dots.contains(cursor) { return .dot }
+        return isPlaceable(cursor) ? .placeable : .empty
+    }
+
     /// Move the roaming cursor by one cell, clamped to the current dots'
     /// bounding box plus a one-cell margin — a placeable point is always
     /// adjacent to an existing dot, so that margin reaches every legal move

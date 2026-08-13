@@ -20,6 +20,25 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Large text sizes work properly: the board header no longer pushes its
+  buttons off a narrow screen (they were clipped clean off an iPhone SE at
+  the largest accessibility size) — it splits onto two lines when it has to.
+  The cheatsheet's key column, the History variant column, the code field
+  and the macOS Settings pane all grow with the text instead of clipping.
+- iOS no longer draws a stray box around the first Settings row: that ring
+  marks the keyboard-navigation cursor, and the arrow keys that move it are
+  macOS-only, so on iPhone/iPad it was an unexplained border that never went
+  anywhere.
+- A tidier header, at every text size: the score shows as just the number
+  (the board is the context) and the challenge chip is the QR glyph alone —
+  the code is still in the popover when you tap it. Cancel now appears only
+  when there's something to cancel.
+- Feel the board while you roam it: moving the keyboard cursor now gives a
+  distinct tick per point — bright for somewhere you can play, lower and
+  rounder for an existing dot, near-silent for bare space. Sound and haptics
+  both, following the existing Settings toggles, so you can sweep for a move
+  without watching the cursor. Faint by design: it fires on every arrow
+  press, including a held-down key.
 - Leaving a Nearby game now always shuts the radio and its timers down,
   including when the app is quit outright rather than closed from the
   screen — previously that path could leave a stale connection behind and

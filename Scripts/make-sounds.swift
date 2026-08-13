@@ -2,7 +2,7 @@
 //
 // Procedural sound effects — the audio counterpart to the procedural app icon
 // (IconArt). Percussive, minimal, entirely synthesised: no samples, no
-// licensing, tunable by editing the numbers below. Emits three short mono CAF
+// licensing, tunable by editing the numbers below. Emits six short mono CAF
 // files into the LatticeKit resource bundle:
 //
 //   select   — a scrub-highlight blip (soft, quiet; may fire several times as
@@ -10,6 +10,8 @@
 //   place    — a line committed (a crisp, slightly fuller click)
 //   gameover — no moves left (a calm, neutral two-note settling tone; not a
 //              triumphant fanfare — the game just ended)
+//   cursor-*  — the keyboard cursor landed on a placeable point / an existing
+//              dot / bare lattice (faintest of all; fires on every arrow press)
 //
 //   swift Scripts/make-sounds.swift
 //
@@ -81,6 +83,28 @@ try write("place.caf", seconds: 0.06) { _, t in
     0.5 * sin(2 * .pi * 1_900 * t) * env(t, 0.008)
         + 0.18 * noise.next() * env(t, 0.003)
         + 0.1 * sin(2 * .pi * 420 * t) * env(t, 0.03)
+}
+
+// cursor-* — the keyboard cursor moved onto a point of this kind. These fire on
+// EVERY arrow press (and repeat while a key is held), so they're the faintest
+// and shortest cues in the set — a texture you feel more than hear. Pitch
+// carries the meaning: high = you can play here, low = occupied, muted = empty.
+//
+// cursorOpen — a placeable point: the brightest of the three, since it's the
+// one the player is hunting for.
+try write("cursor-open.caf", seconds: 0.022) { _, t in
+    0.12 * sin(2 * .pi * 1_760 * t) * env(t, 0.004)
+}
+
+// cursorDot — an existing dot: lower and rounder, reading as "solid".
+try write("cursor-dot.caf", seconds: 0.024) { _, t in
+    0.11 * sin(2 * .pi * 660 * t) * env(t, 0.005)
+}
+
+// cursorEmpty — bare lattice: the quietest, a dull mid tick that stays under
+// the other two so sweeping across dead space doesn't nag.
+try write("cursor-empty.caf", seconds: 0.018) { _, t in
+    0.05 * sin(2 * .pi * 320 * t) * env(t, 0.003)
 }
 
 // gameover — a calm, neutral two-note settling tone (a gentle DOWNWARD pair,

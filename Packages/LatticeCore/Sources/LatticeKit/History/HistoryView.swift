@@ -7,6 +7,7 @@ import SwiftUI
 /// legend, and the list rows — or filter down to one pool. Rows open
 /// replays.
 public struct HistoryView: View {
+    @ScaledMetric(relativeTo: .caption) private var variantColumnWidth: CGFloat = 64
     private let store: LatticeStore
     @Binding private var path: NavigationPath
     @Environment(\.colorScheme) private var colorScheme
@@ -95,7 +96,7 @@ public struct HistoryView: View {
                                     VariantStyle.color(
                                         for: record.variantKey, scheme: colorScheme))
                         }
-                        .frame(width: 64, alignment: .leading)
+                        .frame(width: variantColumnWidth, alignment: .leading)
                         Text(record.finishedAt, format: .dateTime.year().month().day())
                             .foregroundStyle(.secondary)
                         Spacer()

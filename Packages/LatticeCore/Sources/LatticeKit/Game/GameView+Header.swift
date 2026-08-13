@@ -4,10 +4,33 @@ import SwiftUI
 /// The board screen's top bar: score, variant/challenge chips, and the
 /// New Game / Restart / share controls.
 extension GameView {
+    /// One row normally. At accessibility text sizes it can't fit a narrow
+    /// screen (it clipped the New Game button clean off an SE), so the status
+    /// text and the controls split onto two lines rather than scroll or
+    /// truncate — everything stays visible and tappable without a gesture.
     var header: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) {
+                status
+                Spacer()
+                controls
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                status
+                HStack(spacing: 16) { controls }
+            }
+        }
+    }
+
+    @ViewBuilder private var status: some View {
         HStack(spacing: 16) {
-            Text("Score: \(session.game.score)", bundle: .module)
+            // The number alone: the board is the context, and the word cost
+            // the whole row its fit at accessibility sizes. VoiceOver still
+            // hears "Score".
+            Text(verbatim: "\(session.game.score)")
                 .font(.headline.monospacedDigit())
+                .accessibilityLabel(Text("Score", bundle: .module))
+                .accessibilityValue(Text(verbatim: "\(session.game.score)"))
             if session.mode == .passAndPlay {
                 // The turn chip: the current player's colour, filled — the
                 // same colour the board's interactive accent and their drawn
@@ -41,15 +64,13 @@ extension GameView {
                 Button {
                     isShowingChallenge = true
                 } label: {
-                    // Show the code beside the icon when it fits; on a tight
-                    // header (iPhone SE) fall back to the icon alone so the row
-                    // doesn't wrap — the code still shows in the popover.
-                    ViewThatFits {
-                        challengeLabel(code: code, iconOnly: false)
-                        challengeLabel(code: code, iconOnly: true)
-                    }
+                    // The glyph alone — the code itself is in the popover, and
+                    // spelling it out here cost the row its fit at large text.
+                    Image(systemName: "qrcode")
+                        .font(.subheadline)
                 }
                 .accessibilityLabel(Text("Share challenge", bundle: .module))
+                .accessibilityValue(Text(verbatim: code))
                 // Popover on Mac/iPad; adapts to a sheet on iPhone (the
                 // compact-popover modifier needs iOS 16.4; floor is 16.0).
                 .popover(isPresented: $isShowingChallenge) {
@@ -61,20 +82,23 @@ extension GameView {
                     .presentationDetents([.medium])
                 }
             }
-            Spacer()
-            // Always present (hidden when there's nothing to cancel) so the
-            // header's size stays constant — otherwise the button appearing
-            // reflowed the row and nudged the board's fitted size (a wobble).
-            Button {
-                session.cancel()
-            } label: {
-                Text("Cancel", bundle: .module)
+        }
+    }
+
+    @ViewBuilder private var controls: some View {
+        Group {
+            // Only while there IS something to cancel. It used to be always
+            // present (hidden) to keep the header's width constant, but at
+            // accessibility sizes a whole invisible word is what pushed the row
+            // off a narrow screen; the board re-fits smoothly enough without it.
+            if session.tentative != nil {
+                Button {
+                    session.cancel()
+                } label: {
+                    Text("Cancel", bundle: .module)
+                }
+                .keyboardShortcut(.cancelAction)
             }
-            // Claim Esc only when there's a move to cancel — a disabled button
-            // still swallows its shortcut on macOS, which ate overlays' Esc.
-            .keyboardShortcut(session.tentative == nil ? nil : .cancelAction)
-            .disabled(session.tentative == nil)
-            .opacity(session.tentative == nil ? 0 : 1)
             if session.mode != .daily {
                 // Restart the same board. Disabled on an unplayed board: nothing
                 // to restart, and it blocks a mis-tap toward Undo.

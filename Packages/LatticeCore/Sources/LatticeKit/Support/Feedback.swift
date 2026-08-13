@@ -1,3 +1,4 @@
+import LatticeCore
 import SwiftUI
 
 /// Board feedback — bundles the sound + haptic players and the enable flags,
@@ -35,6 +36,18 @@ final class Feedback: ObservableObject {
     func committed() {
         haptics.place()
         sound.play(.place)
+    }
+
+    /// The keyboard cursor moved onto a point of this kind — the board read by
+    /// feel while roaming. Deliberately ambient, not spoken: it fires on every
+    /// arrow press and has to keep up with a held-down key.
+    func cursorMoved(_ state: CursorState) {
+        haptics.cursor(state)
+        switch state {
+        case .placeable: sound.play(.cursorOpen)
+        case .dot: sound.play(.cursorDot)
+        case .empty: sound.play(.cursorEmpty)
+        }
     }
 
     /// The game ended — no moves left.
