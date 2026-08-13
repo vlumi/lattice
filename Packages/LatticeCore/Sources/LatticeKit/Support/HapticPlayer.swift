@@ -61,6 +61,17 @@ final class HapticPlayer {
         #endif
     }
 
+    /// A tap that can't become a move. A soft "nope" — clearly not the crisp
+    /// commit tap, and gentler than the game-over notification: a mis-tap is a
+    /// normal part of learning the board, not an error to scold.
+    func rejected() {
+        #if os(iOS)
+        guard isEnabled else { return }
+        cursorImpact.impactOccurred(intensity: 0.4)
+        cursorImpact.prepare()
+        #endif
+    }
+
     /// The game ended (no moves left) — a single neutral notification, clearly
     /// noticeable without reading as success or failure.
     func gameOver() {

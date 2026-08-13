@@ -15,10 +15,7 @@ last feature milestone before 1.0.
 
 ## v0.5.0 — remaining
 
-- [ ] In-the-moment teaching: the rejected-placement feedback already flagged
-      as a TODO in `BoardView.handleTap` ("Rejected in place; a shake/haptic is
-      later polish") — a shake plus a one-line reason teaches at the exact
-      moment of confusion, which beats any up-front page.
+Feature-complete; what remains is store prep (below).
 
 ## Open decisions
 
