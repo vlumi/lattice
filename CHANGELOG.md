@@ -22,41 +22,35 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### build 7 — 2026-08-13
 
-- Feel the board with your finger: slide across it and each lattice point
-  gives a tick — strongest where a move is legal, softer on an existing dot,
-  barely there on empty space — so you can hunt for a spot without staring at
-  it. Lift on a playable point to place your dot there. When the board is
-  fitted the sweep is just a drag (there's nothing to pan); zoomed in, hold
-  briefly first, then sweep — a plain drag still pans.
-
-- Large text sizes work properly: the board header no longer pushes its
-  buttons off a narrow screen (they were clipped clean off an iPhone SE at
-  the largest accessibility size) — it splits onto two lines when it has to.
+- Feel the board with your finger: slide across it and it buzzes wherever a
+  dot can go, staying quiet everywhere else — so you can hunt for a move
+  without staring at the board. Lift on one of those points to place your dot
+  there. When the board is fitted the sweep is just a drag (there's nothing to
+  pan); zoomed in, hold briefly first, then sweep — a plain drag still pans.
+  Roaming with the keyboard gives a per-point cue too, in sound as well as
+  touch, telling open points from dots from empty space.
+- Large text sizes work properly: the board header no longer pushed its
+  buttons off a narrow screen (at the largest accessibility size they were
+  clipped clean off an iPhone SE) — it splits onto two lines when it has to.
   The cheatsheet's key column, the History variant column, the code field
   and the macOS Settings pane all grow with the text instead of clipping.
-- iOS no longer draws a stray box around the first Settings row: that ring
-  marks the keyboard-navigation cursor, and the arrow keys that move it are
-  macOS-only, so on iPhone/iPad it was an unexplained border that never went
-  anywhere.
 - A tidier header, at every text size: the score shows as just the number
   (the board is the context) and the challenge chip is the QR glyph alone —
   the code is still in the popover when you tap it. Cancel now appears only
   when there's something to cancel.
-- Feel the board while you roam it: moving the keyboard cursor now gives a
-  distinct tick per point — bright for somewhere you can play, lower and
-  rounder for an existing dot, near-silent for bare space. Sound and haptics
-  both, following the existing Settings toggles, so you can sweep for a move
-  without watching the cursor. Faint by design: it fires on every arrow
-  press, including a held-down key.
-- Leaving a Nearby game now always shuts the radio and its timers down,
-  including when the app is quit outright rather than closed from the
-  screen — previously that path could leave a stale connection behind and
-  risked a crash on a late network callback.
 - Starting a random or coded board responds instantly: the New Game modal
   closes on the tap and the board generates in the background, with a
   "Generating board…" indicator over the board if it takes a moment. The
   indicator waits a beat before appearing (so quick boards show nothing)
   and stays briefly once shown (so it never flashes past).
+- Leaving a Nearby game now always shuts the radio and its timers down,
+  including when the app is quit outright rather than closed from the
+  screen — previously that path could leave a stale connection behind and
+  risked a crash on a late network callback.
+- iOS no longer draws a stray box around the first Settings row: that ring
+  marks the keyboard-navigation cursor, and the arrow keys that move it are
+  macOS-only, so on iPhone and iPad it was an unexplained border that never
+  went anywhere.
 
 ### build 6 — 2026-08-10
 
