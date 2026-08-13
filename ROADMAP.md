@@ -15,8 +15,10 @@ last feature milestone before 1.0.
 
 ## v0.5.0 — remaining
 
-- [ ] Interactive tutorial (teach the segment rule and no-free-lines by
-      doing)
+- [ ] In-the-moment teaching: the rejected-placement feedback already flagged
+      as a TODO in `BoardView.handleTap` ("Rejected in place; a shake/haptic is
+      later polish") — a shake plus a one-line reason teaches at the exact
+      moment of confusion, which beats any up-front page.
 
 ## Open decisions
 

@@ -60,6 +60,9 @@ private struct MovementCluster: View {
 struct KeyboardCheatsheet: View {
     @ScaledMetric(relativeTo: .footnote) private var keyColumnWidth: CGFloat = 230
     let dismiss: () -> Void
+    /// Opens the full rules guide — the cheatsheet is the quick reminder, this
+    /// is the way to the depth behind it. Nil when Help is already what's open.
+    var onHowTo: (() -> Void)?
 
     var body: some View {
         ZStack {
@@ -105,6 +108,17 @@ struct KeyboardCheatsheet: View {
 
             Divider()
             keyRow(["⌘1", "…", "⌘5"], Text("Switch tabs", bundle: .module))
+            if let onHowTo {
+                Button(action: onHowTo) {
+                    Label {
+                        Text("How to play", bundle: .module)
+                    } icon: {
+                        Image(systemName: "questionmark.circle")
+                    }
+                    .font(.footnote.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(20)
         .fixedSize()  // hug the content — don't stretch to fill the board overlay

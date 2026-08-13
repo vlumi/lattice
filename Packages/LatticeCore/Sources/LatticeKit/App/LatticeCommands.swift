@@ -12,21 +12,44 @@ public struct LatticeCommands: Commands {
     }
 
     /// A menu shortcut mustn't act on the game while a modal covers it.
-    private var modalOpen: Bool { model.isShowingSettings }
+    private var modalOpen: Bool {
+        model.isShowingSettings || model.isShowingAbout || model.isShowingHowTo
+    }
 
     public var body: some Commands {
+        // Mac-menu only. iPadOS 26 builds a real menu bar from these commands
+        // too, and UIKit's UIMenuBuilder raises on `.appInfo`/`.help` — it has
+        // no such replaceable groups — which crashed the app on launch (a bug
+        // that shipped in build 8 via `.appSettings`, before About/Help
+        // existed). iOS reaches all three from Settings instead: the tab
+        // itself, and rows inside it.
+        #if os(macOS)
+        CommandGroup(replacing: .appInfo) {
+            Button {
+                model.isShowingAbout = true
+            } label: {
+                Text("About Lattice Five", bundle: .module)
+            }
+        }
+
         CommandGroup(replacing: .appSettings) {
             Button {
-                #if os(macOS)
                 model.isShowingSettings = true
-                #else
-                model.selection = .settings
-                #endif
             } label: {
                 Text("Settings…", bundle: .module)
             }
             .keyboardShortcut(",", modifiers: .command)
         }
+
+        CommandGroup(replacing: .help) {
+            Button {
+                model.isShowingHowTo = true
+            } label: {
+                Text("Lattice Five Help", bundle: .module)
+            }
+            .keyboardShortcut("?", modifiers: .command)
+        }
+        #endif
 
         CommandGroup(replacing: .newItem) {
             Button {

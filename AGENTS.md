@@ -222,7 +222,17 @@ ghost + post-game openness analysis; rule variants and seeded random starts
 last-to-move-wins; **Nearby duel** (see the two-player section); iCloud sync;
 dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
-Still open (see ROADMAP.md): the interactive tutorial — then store prep.
+Still open (see ROADMAP.md): the rejected-placement shake (in-the-moment
+teaching) — then store prep.
+
+**Help is a reference, not a tutorial.** `Help/HowToPlayView` pairs short prose
+with `Help/BoardDiagram`, which draws through the shared `BoardRendering`
+vocabulary — so the diagrams *are* the board at caption scale and follow it
+automatically. `DiagramTruthTests` asserts each "Allowed"/"Not allowed" claim
+against the engine, so a diagram can never teach a rule the game doesn't have
+(it caught a dead-gap diagram whose lines touched, leaving no gap to be dead).
+The `?` cheatsheet stays a glanceable "what was it again" during play; Help
+covers the same keys with depth. Complementary, not alternatives.
 
 Touch has a **feel-sweep**: dragging over empty board buzzes on points you can
 play and stays silent elsewhere (`BoardView.feel`), lifting places on one. One
@@ -239,6 +249,16 @@ and gated on the two Settings toggles: a scrub detent between candidate lines,
 a firmer commit tap, the game-over tone, and a per-state tick as the keyboard
 cursor roams (placeable / dot / empty — pitch for sound, impact intensity for
 haptics). The roaming cue is the faintest: it fires on every arrow press.
+
+**Board keyboard play is two maps onto one vocabulary** (`BoardKeyCommand`,
+copied from Donpa's): macOS drives it with `BoardKeyboard`'s hidden
+`.keyboardShortcut` buttons; iOS can't — it won't route shortcuts to a
+zero-opacity, accessibility-hidden button — so `BoardKeyCatcher` takes first
+responder and reads `pressesBegan`. Add a key to the enum and both maps, never
+to one. First-responder changes are deferred with `DispatchQueue.main.async`;
+doing it synchronously in `updateUIView` re-enters the view graph and cycles
+AttributeGraph. Chrome actions stay on-screen buttons on iOS, NOT menu commands
+— see the iPad menu-bar crash note above.
 
 **Dynamic Type**: use semantic text styles only (never `.system(size:)`), and
 `@ScaledMetric` for any fixed dimension that wraps text — a hard-coded width
@@ -444,6 +464,13 @@ depend on Donpa):
     explicit key overrides the build-setting-derived minimum.
   - Declare `ITSAppUsesNonExemptEncryption: false` to skip the
     export-compliance prompt on every upload.
+  - **`GitCommitSHA`** is stamped into each built app's Info.plist by a
+    `postBuildScripts` phase on both targets
+    (`Scripts/embed-commit-sha.sh`), and shown in the About view — so a
+    TestFlight build self-identifies its exact source. A dirty tree gets a
+    `-dirty` suffix; a non-git checkout writes `unknown` rather than failing
+    the build. It only writes the *built product's* plist, never the
+    XcodeGen-owned source one.
   - `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` **lock-step across both
     targets**, bumped by the release lane only.
   - Give the macOS target an **explicit `scheme:` block** so XcodeGen writes

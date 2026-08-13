@@ -47,7 +47,13 @@ public struct RootView: View {
                 .tag(AppModel.Tab.settings)
             #endif
         }
+        // macOS only: "?" is a keyboard-only affordance, and the panel is sized
+        // for a Mac window (it clipped badly on a phone). iPad board play now
+        // works with a hardware keyboard, but its keys are listed in Help
+        // instead — reachable by touch, and laid out to fit.
+        #if os(macOS)
         .background(ShortcutToggle(showShortcuts: $showShortcuts))
+        #endif
         // Board feedback (sound + haptics) available to the board views.
         .environmentObject(model.feedback)
         // Arriving at History (a tab tap, ⌘4, or the View menu — any route that
@@ -63,6 +69,15 @@ public struct RootView: View {
             SettingsScene(model: model, done: { model.isShowingSettings = false })
         }
         #endif
+        // About: the macOS app menu opens it here; the Settings row on both
+        // platforms presents its own copy from inside that sheet/tab.
+        .sheet(isPresented: $model.isShowingAbout) {
+            AboutSheet(dismiss: { model.isShowingAbout = false })
+        }
+        // Help: the macOS Help menu (⌘?) and the iOS Settings row both land here.
+        .sheet(isPresented: $model.isShowingHowTo) {
+            HowToPlaySheet(dismiss: { model.isShowingHowTo = false })
+        }
         // Universal Links: a challenge link starts its board in Free.
         .onOpenURL { url in
             guard let seed = ChallengeLink.seed(from: url) else { return }

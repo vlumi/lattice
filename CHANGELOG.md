@@ -20,6 +20,33 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- **Fixed a crash on launch on iPad.** iPadOS 26 builds a real menu bar from
+  the app's menu commands, and our Undo (⌘Z) collided with the standard Undo
+  it installs there — the app died before showing anything. Those commands are
+  now Mac-only, which is where the menu bar belongs; on iPhone and iPad
+  everything they offered is reachable by touch. (This shipped in build 8.)
+- **Keyboard play works on iPad** with a hardware keyboard: arrows or WASD
+  roam the cursor, Return or Space places a dot and then commits the line,
+  Tab cycles the possible lines, Backspace undoes, Esc cancels — the same as
+  on the Mac. (New Game, Restart and Undo are the on-screen buttons, as
+  before.)
+- The `?` cheatsheet overlay is now Mac-only — it's a keyboard-only
+  affordance and its panel was sized for a Mac window (it clipped on a
+  phone). The same keys are listed in How to play, which fits.
+
+- **How to play**, in the app: a short illustrated guide to the rules
+  — the goal, placing a dot and drawing its line, the one rule that really
+  matters (lines may share an end dot but never overlap), why five dots
+  already in a row aren't a line, the dead gaps the board marks for you, and
+  what the variants change. Mostly pictures, drawn by the board itself.
+  Open it from the Help menu (⌘?) on the Mac, or from Settings on iPhone and
+  iPad — and from the `?` cheatsheet while you play, which stays the quick
+  reminder it was.
+- An **About** screen: version and build, a link to the site and the source,
+  and the way in to How to play. On iPhone and iPad it's the last row in
+  Settings; on the Mac it's under the app menu. Every
+  build now also carries the exact commit it was built from.
+
 ### build 8 — 2026-08-13
 
 - Choosing a line by dragging works again: after placing a dot, sliding

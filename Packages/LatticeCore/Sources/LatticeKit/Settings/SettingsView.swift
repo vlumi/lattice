@@ -17,6 +17,8 @@ struct SettingsView: View {
     // Keyboard row cursor: Up/Down move, Space toggles the focused row.
     private enum Row: Int, CaseIterable { case sound, haptics, sync }
     @State private var cursor: Row = .sound
+    @State private var showAbout = false
+    @State private var showHowTo = false
 
     private var syncFooter: Text {
         if sync.isAvailable {
@@ -62,8 +64,38 @@ struct SettingsView: View {
             } footer: {
                 syncFooter
             }
+            // iOS only: the Mac reaches About from the app menu, where the
+            // platform expects it — a Settings row there would be redundant.
+            #if !os(macOS)
+            Section {
+                Button {
+                    showHowTo = true
+                } label: {
+                    Label {
+                        Text("How to play", bundle: .module)
+                    } icon: {
+                        Image(systemName: "questionmark.circle")
+                    }
+                }
+                Button {
+                    showAbout = true
+                } label: {
+                    Label {
+                        Text("About Lattice Five", bundle: .module)
+                    } icon: {
+                        Image(systemName: "info.circle")
+                    }
+                }
+            }
+            #endif
         }
         .formStyle(.grouped)
+        .sheet(isPresented: $showAbout) {
+            AboutSheet(dismiss: { showAbout = false })
+        }
+        .sheet(isPresented: $showHowTo) {
+            HowToPlaySheet(dismiss: { showHowTo = false })
+        }
         #if os(macOS)
         .background(KeyCatcher(onKey: handle))
         #endif

@@ -12,26 +12,33 @@ struct BoardKeyboard: View {
     var enabled = true
 
     var body: some View {
+        // macOS: hidden shortcut buttons. iOS: a first-responder UIView reading
+        // pressesBegan, since those buttons never fire here. Same commands.
+        #if os(macOS)
         if enabled { keys }
+        #else
+        BoardKeyCatcher(enabled: enabled, perform: perform)
+        #endif
     }
 
+    #if os(macOS)
     private var keys: some View {
         Group {
             // Model y grows upward, screen y downward — Up increases model y.
             // WASD mirror the arrows (same cursor moves / candidate cycle).
-            key(.upArrow) { move(dx: 0, dy: 1) }
-            key(.downArrow) { move(dx: 0, dy: -1) }
-            key(.leftArrow) { horizontal(-1) }
-            key(.rightArrow) { horizontal(1) }
-            key("w") { move(dx: 0, dy: 1) }
-            key("s") { move(dx: 0, dy: -1) }
-            key("a") { horizontal(-1) }
-            key("d") { horizontal(1) }
-            key(.return) { activate() }
-            key(.space) { activate() }
-            key(.tab) { session.cycleCandidate(by: 1) }
-            key(.delete) { session.undo() }
-            key(.escape) { session.cancel() }
+            key(.upArrow) { perform(.move(dx: 0, dy: 1)) }
+            key(.downArrow) { perform(.move(dx: 0, dy: -1)) }
+            key(.leftArrow) { perform(.move(dx: -1, dy: 0)) }
+            key(.rightArrow) { perform(.move(dx: 1, dy: 0)) }
+            key("w") { perform(.move(dx: 0, dy: 1)) }
+            key("s") { perform(.move(dx: 0, dy: -1)) }
+            key("a") { perform(.move(dx: -1, dy: 0)) }
+            key("d") { perform(.move(dx: 1, dy: 0)) }
+            key(.return) { perform(.activate) }
+            key(.space) { perform(.activate) }
+            key(.tab) { perform(.cycleCandidate) }
+            key(.delete) { perform(.undo) }
+            key(.escape) { perform(.cancel) }
         }
         .opacity(0)
         .accessibilityHidden(true)
@@ -40,6 +47,25 @@ struct BoardKeyboard: View {
     private func key(_ shortcut: KeyEquivalent, _ action: @escaping () -> Void) -> some View {
         Button(action: action) { Color.clear.frame(width: 1, height: 1) }
             .keyboardShortcut(shortcut, modifiers: [])
+    }
+    #endif
+
+    /// Runs a command. Shared by both platforms' key maps — macOS's hidden
+    /// shortcut buttons above, and the iPad's `pressesBegan` (BoardKeyCatcher).
+    func perform(_ command: BoardKeyCommand) {
+        switch command {
+        case .move(let dx, let dy):
+            // Horizontal cycles candidates once a dot is tentative.
+            if dx != 0, session.tentative != nil {
+                session.cycleCandidate(by: dx)
+            } else {
+                move(dx: dx, dy: dy)
+            }
+        case .activate: activate()
+        case .cycleCandidate: session.cycleCandidate(by: 1)
+        case .undo: session.undo()
+        case .cancel: session.cancel()
+        }
     }
 
     /// Every cursor move goes through here so the roaming cue fires once per
@@ -50,16 +76,6 @@ struct BoardKeyboard: View {
         session.moveCursor(dx: dx, dy: dy)
         guard session.keyboardCursor != before else { return }
         feedback.cursorMoved(session.cursorState)
-    }
-
-    // Left/right move the cursor while placing a dot, but cycle candidate lines
-    // once a dot is tentative.
-    private func horizontal(_ dir: Int) {
-        if session.tentative == nil {
-            move(dx: dir, dy: 0)
-        } else {
-            session.cycleCandidate(by: dir)
-        }
     }
 
     private func activate() {
