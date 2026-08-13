@@ -6,6 +6,7 @@ import SwiftUI
 /// Backspace undoes; Escape cancels. Sits behind the board as a background.
 struct BoardKeyboard: View {
     @ObservedObject var session: GameSession
+    @EnvironmentObject private var feedback: Feedback
     /// Off while an overlay (cheatsheet / New Game modal) is up, so its Esc and
     /// other keys don't compete with the board's.
     var enabled = true
@@ -18,12 +19,12 @@ struct BoardKeyboard: View {
         Group {
             // Model y grows upward, screen y downward — Up increases model y.
             // WASD mirror the arrows (same cursor moves / candidate cycle).
-            key(.upArrow) { session.moveCursor(dx: 0, dy: 1) }
-            key(.downArrow) { session.moveCursor(dx: 0, dy: -1) }
+            key(.upArrow) { move(dx: 0, dy: 1) }
+            key(.downArrow) { move(dx: 0, dy: -1) }
             key(.leftArrow) { horizontal(-1) }
             key(.rightArrow) { horizontal(1) }
-            key("w") { session.moveCursor(dx: 0, dy: 1) }
-            key("s") { session.moveCursor(dx: 0, dy: -1) }
+            key("w") { move(dx: 0, dy: 1) }
+            key("s") { move(dx: 0, dy: -1) }
             key("a") { horizontal(-1) }
             key("d") { horizontal(1) }
             key(.return) { activate() }
@@ -41,11 +42,21 @@ struct BoardKeyboard: View {
             .keyboardShortcut(shortcut, modifiers: [])
     }
 
+    /// Every cursor move goes through here so the roaming cue fires once per
+    /// actual move — a press that only bumps the clamp stays silent rather than
+    /// re-ticking the same point.
+    private func move(dx: Int, dy: Int) {
+        let before = session.keyboardCursor
+        session.moveCursor(dx: dx, dy: dy)
+        guard session.keyboardCursor != before else { return }
+        feedback.cursorMoved(session.cursorState)
+    }
+
     // Left/right move the cursor while placing a dot, but cycle candidate lines
     // once a dot is tentative.
     private func horizontal(_ dir: Int) {
         if session.tentative == nil {
-            session.moveCursor(dx: dir, dy: 0)
+            move(dx: dir, dy: 0)
         } else {
             session.cycleCandidate(by: dir)
         }

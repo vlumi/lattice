@@ -20,6 +20,12 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
 
 ### Unreleased (next build)
 
+- Feel the board while you roam it: moving the keyboard cursor now gives a
+  distinct tick per point — bright for somewhere you can play, lower and
+  rounder for an existing dot, near-silent for bare space. Sound and haptics
+  both, following the existing Settings toggles, so you can sweep for a move
+  without watching the cursor. Faint by design: it fires on every arrow
+  press, including a held-down key.
 - Leaving a Nearby game now always shuts the radio and its timers down,
   including when the app is quit outright rather than closed from the
   screen — previously that path could leave a stale connection behind and

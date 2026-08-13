@@ -1,3 +1,5 @@
+import LatticeCore
+
 #if os(iOS)
 import UIKit
 #endif
@@ -17,6 +19,9 @@ final class HapticPlayer {
     private let selection = UISelectionFeedbackGenerator()
     private let commitImpact = UIImpactFeedbackGenerator(style: .medium)
     private let notification = UINotificationFeedbackGenerator()
+    /// `.rigid` reads as a crisp tick at low intensity — the cursor cue fires on
+    /// every arrow press, so it has to stay well under the commit tap.
+    private let cursorImpact = UIImpactFeedbackGenerator(style: .rigid)
     #endif
 
     /// The scrub highlight moved to a different candidate line — the
@@ -36,6 +41,23 @@ final class HapticPlayer {
         guard isEnabled else { return }
         commitImpact.impactOccurred()
         commitImpact.prepare()
+        #endif
+    }
+
+    /// The keyboard cursor moved onto a point of this kind. Intensity carries
+    /// the meaning, strongest for the placeable point being hunted; empty
+    /// lattice is a barely-there tick so sweeping dead space doesn't buzz.
+    func cursor(_ state: CursorState) {
+        #if os(iOS)
+        guard isEnabled else { return }
+        let intensity: CGFloat
+        switch state {
+        case .placeable: intensity = 0.55
+        case .dot: intensity = 0.35
+        case .empty: intensity = 0.18
+        }
+        cursorImpact.impactOccurred(intensity: intensity)
+        cursorImpact.prepare()
         #endif
     }
 

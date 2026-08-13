@@ -222,8 +222,14 @@ ghost + post-game openness analysis; rule variants and seeded random starts
 last-to-move-wins; **Nearby duel** (see the two-player section); iCloud sync;
 dead-gap markers; full keyboard control. See CHANGELOG.md for the detail.
 
-Still open (see ROADMAP.md): interactive tutorial, the Dynamic Type pass, and
-per-state cursor feedback (sound + haptics while roaming).
+Still open (see ROADMAP.md): the interactive tutorial and the Dynamic Type
+pass — then store prep.
+
+The board's feedback vocabulary is four cues, all routed through `Feedback`
+and gated on the two Settings toggles: a scrub detent between candidate lines,
+a firmer commit tap, the game-over tone, and a per-state tick as the keyboard
+cursor roams (placeable / dot / empty — pitch for sound, impact intensity for
+haptics). The roaming cue is the faintest: it fires on every arrow press.
 
 **No VoiceOver board play, deliberately.** Naively exposing ~200 lattice
 points as accessibility elements would be technically compliant and

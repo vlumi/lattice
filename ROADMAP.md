@@ -7,8 +7,9 @@ history](README.md#version-history), full detail in
 indicative, not contractual, and everything before 1.0 is beta (internal
 TestFlight; see [RELEASING.md](RELEASING.md)).
 
-**v0.5.0 is in flight** on internal TestFlight. The work below lands as
-further 0.5.0 builds before the version bump.
+**v0.5.0 is in flight** on internal TestFlight. Everything still open lands as
+further 0.5.0 builds; after that it's store prep, so 0.5.0 is effectively the
+last feature milestone before 1.0.
 
 ---
 
@@ -22,20 +23,6 @@ further 0.5.0 builds before the version bump.
       `.fixedSize()` (already tight on iPhone SE, has a `ViewThatFits`
       fallback) and History's `.frame(width: 64)` label and fixed-height
       chart.
-- [ ] Cursor feedback: a distinct sound + haptic per cursor state while
-      roaming with the keyboard — **placeable** / **occupied by a dot** /
-      **empty**. Pitch for sound, impact intensity for haptics; a fourth
-      `Feedback.cursorMoved(state:)` beside `selectChanged`/`committed`,
-      reusing both existing toggles. Ambient feedback, deliberately NOT
-      spoken announcements: it has to keep up with held-down arrow keys, and
-      it serves the sighted keyboard player as much as anyone.
-- [x] Performance/battery sanity pass on the render loop — measured, no
-      problem at these board sizes (dead-gap scan 0.05ms at 58 moves, ~420
-      canvas fills/frame). Cached `deadGaps`, de-duplicated an `isPlaceable`
-      call, and back-stopped Nearby teardown with a `deinit`. Timers,
-      observers and the gesture path audited clean. Not traced on device —
-      deliberately: with ~3 orders of magnitude of frame-budget headroom
-      there's no symptom to chase. Revisit only if one shows up.
 
 ## Open decisions
 
