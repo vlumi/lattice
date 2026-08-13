@@ -18,6 +18,7 @@ struct SettingsView: View {
     private enum Row: Int, CaseIterable { case sound, haptics, sync }
     @State private var cursor: Row = .sound
     @State private var showAbout = false
+    @State private var showHowTo = false
 
     private var syncFooter: Text {
         if sync.isAvailable {
@@ -68,6 +69,15 @@ struct SettingsView: View {
             #if !os(macOS)
             Section {
                 Button {
+                    showHowTo = true
+                } label: {
+                    Label {
+                        Text("How to play", bundle: .module)
+                    } icon: {
+                        Image(systemName: "questionmark.circle")
+                    }
+                }
+                Button {
                     showAbout = true
                 } label: {
                     Label {
@@ -82,6 +92,9 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .sheet(isPresented: $showAbout) {
             AboutSheet(dismiss: { showAbout = false })
+        }
+        .sheet(isPresented: $showHowTo) {
+            HowToPlaySheet(dismiss: { showHowTo = false })
         }
         #if os(macOS)
         .background(KeyCatcher(onKey: handle))

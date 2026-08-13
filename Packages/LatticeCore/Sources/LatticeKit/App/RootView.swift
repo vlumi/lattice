@@ -68,6 +68,10 @@ public struct RootView: View {
         .sheet(isPresented: $model.isShowingAbout) {
             AboutSheet(dismiss: { model.isShowingAbout = false })
         }
+        // Help: the macOS Help menu (⌘?) and the iOS Settings row both land here.
+        .sheet(isPresented: $model.isShowingHowTo) {
+            HowToPlaySheet(dismiss: { model.isShowingHowTo = false })
+        }
         // Universal Links: a challenge link starts its board in Free.
         .onOpenURL { url in
             guard let seed = ChallengeLink.seed(from: url) else { return }

@@ -5,9 +5,6 @@ import SwiftUI
 /// `AboutView` (plumbing kept in sync with the sibling app), minus its
 /// Japanese-name handling: Lattice isn't localized yet.
 struct AboutView: View {
-    /// Opens the how-to-play reference; nil hides the row.
-    var onHowTo: (() -> Void)?
-
     /// The build's git commit, stamped into the bundled plist at build time by
     /// Scripts/embed-commit-sha.sh. "-dirty" means it was built off uncommitted
     /// changes; absent on a build made before that phase existed.
@@ -48,18 +45,6 @@ struct AboutView: View {
                 Text(verbatim: sha)
                     .font(.caption2.monospaced())
                     .foregroundStyle(.tertiary)
-            }
-
-            if let onHowTo {
-                Divider().frame(maxWidth: 220)
-                Button(action: onHowTo) {
-                    Label {
-                        Text("How to play", bundle: .module)
-                    } icon: {
-                        Image(systemName: "questionmark.circle")
-                    }
-                    .font(.footnote.weight(.semibold))
-                }
             }
 
             VStack(spacing: 6) {
@@ -132,30 +117,53 @@ struct AboutSheet: View {
     let dismiss: () -> Void
 
     @ScaledMetric(relativeTo: .body) private var paneWidth: CGFloat = 380
-    /// The how-to-play reference, pushed in place of the About content — one
-    /// sheet, two panes, so there's no sheet-over-sheet stacking.
-    @State private var showingHowTo = false
+
+    var body: some View {
+        SheetChrome(title: Text("About", bundle: .module), dismiss: dismiss) {
+            ScrollView {
+                AboutView().padding(20)
+            }
+        }
+        #if os(macOS)
+        .frame(width: paneWidth, height: 520)
+        #endif
+    }
+}
+
+/// The how-to-play reference as its own sheet — reached from the macOS Help
+/// menu (⌘?) and the iOS Settings row, NOT via About: About is a dead end
+/// (version, credits), not a hub.
+struct HowToPlaySheet: View {
+    let dismiss: () -> Void
+
+    @ScaledMetric(relativeTo: .body) private var paneWidth: CGFloat = 460
     @State private var showingKeys = false
+
+    var body: some View {
+        SheetChrome(title: Text("How to play", bundle: .module), dismiss: dismiss) {
+            HowToPlayView(onKeyboard: { showingKeys = true })
+        }
+        .overlay {
+            if showingKeys {
+                KeyboardCheatsheet(dismiss: { showingKeys = false })
+            }
+        }
+        #if os(macOS)
+        .frame(width: paneWidth, height: 620)
+        #endif
+    }
+}
+
+/// Shared sheet chrome: a title bar with Done, plus Esc to close.
+private struct SheetChrome<Content: View>: View {
+    let title: Text
+    let dismiss: () -> Void
+    @ViewBuilder var content: Content
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                if showingHowTo {
-                    Button {
-                        showingHowTo = false
-                    } label: {
-                        Label {
-                            Text("About", bundle: .module)
-                        } icon: {
-                            Image(systemName: "chevron.left")
-                        }
-                        .labelStyle(.titleAndIcon)
-                    }
-                    .buttonStyle(.plain)
-                    .font(.headline)
-                } else {
-                    Text("About", bundle: .module).font(.headline)
-                }
+                title.font(.headline)
                 Spacer()
                 Button(action: dismiss) {
                     Text("Done", bundle: .module)
@@ -165,26 +173,12 @@ struct AboutSheet: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             Divider()
-            if showingHowTo {
-                HowToPlayView(onKeyboard: { showingKeys = true })
-            } else {
-                ScrollView {
-                    AboutView(onHowTo: { showingHowTo = true }).padding(20)
-                }
-            }
-        }
-        .overlay {
-            if showingKeys {
-                KeyboardCheatsheet(dismiss: { showingKeys = false })
-            }
+            content
         }
         .background(
             Button(action: dismiss) { Color.clear.frame(width: 1, height: 1) }
                 .keyboardShortcut(.escape, modifiers: [])
                 .opacity(0)
         )
-        #if os(macOS)
-        .frame(width: paneWidth, height: 520)
-        #endif
     }
 }

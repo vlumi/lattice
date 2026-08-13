@@ -34,7 +34,10 @@ struct HowToPlayView: View {
                 }
             }
             .padding(20)
-            .frame(maxWidth: 520, alignment: .leading)
+            // maxWidth keeps the prose readable on a wide window; the
+            // frame must FILL a narrow one, or the wider diagrams push the
+            // whole column out of view and clip the leading edge.
+            .frame(maxWidth: 520, alignment: .topLeading)
         }
     }
 
@@ -69,7 +72,7 @@ struct HowToPlayView: View {
                 anywhere along it — not just at the end.
                 """, bundle: .module)
         ) {
-            HStack(spacing: 16) {
+            pair(
                 captioned(Text("Place", bundle: .module)) {
                     BoardDiagram(
                         dots: fiveRun,
@@ -78,14 +81,14 @@ struct HowToPlayView: View {
                         ],
                         highlight: [Point(2, 0)],
                         bounds: Bounds(minX: -3, maxX: 3, minY: -1, maxY: 1))
-                }
+                },
                 captioned(Text("Draw", bundle: .module)) {
                     BoardDiagram(
                         dots: fiveRun,
                         marks: [.init(BoardDiagram.line(Point(-2, 0), .horizontal), .fresh)],
                         bounds: Bounds(minX: -3, maxX: 3, minY: -1, maxY: 1))
                 }
-            }
+            )
         }
     }
 
@@ -100,7 +103,7 @@ struct HowToPlayView: View {
                 of those stretches for good.
                 """, bundle: .module)
         ) {
-            HStack(spacing: 16) {
+            pair(
                 captioned(Text("Allowed", bundle: .module)) {
                     BoardDiagram(
                         dots: BoardDiagram.row(0, from: -4, count: 9),
@@ -109,7 +112,7 @@ struct HowToPlayView: View {
                             .init(BoardDiagram.line(Point(0, 0), .horizontal), .fresh),
                         ],
                         bounds: Bounds(minX: -5, maxX: 5, minY: -1, maxY: 1))
-                }
+                },
                 captioned(Text("Not allowed", bundle: .module)) {
                     BoardDiagram(
                         dots: BoardDiagram.row(0, from: -4, count: 8),
@@ -119,7 +122,7 @@ struct HowToPlayView: View {
                         ],
                         bounds: Bounds(minX: -5, maxX: 5, minY: -1, maxY: 1))
                 }
-            }
+            )
         }
     }
 
@@ -160,7 +163,8 @@ struct HowToPlayView: View {
                     // The dead span itself, as the board draws it.
                     .init(BoardDiagram.line(Point(-2, 0), .horizontal, 4), .forbidden),
                 ],
-                bounds: Bounds(minX: -7, maxX: 6, minY: -1, maxY: 1))
+                bounds: Bounds(minX: -6, maxX: 5, minY: -1, maxY: 1),
+                cell: 13)
         }
     }
 
@@ -176,7 +180,7 @@ struct HowToPlayView: View {
                 the line come apart, so five dots already in a row do count.
                 """, bundle: .module)
         ) {
-            HStack(spacing: 16) {
+            pair(
                 captioned(Text("5T", bundle: .module)) {
                     BoardDiagram(
                         dots: BoardDiagram.row(0, from: -4, count: 9),
@@ -185,7 +189,7 @@ struct HowToPlayView: View {
                             .init(BoardDiagram.line(Point(0, 0), .horizontal), .fresh),
                         ],
                         bounds: Bounds(minX: -5, maxX: 5, minY: -1, maxY: 1))
-                }
+                },
                 captioned(Text("5D", bundle: .module)) {
                     BoardDiagram(
                         dots: BoardDiagram.row(0, from: -4, count: 9),
@@ -195,7 +199,7 @@ struct HowToPlayView: View {
                         ],
                         bounds: Bounds(minX: -5, maxX: 5, minY: -1, maxY: 1))
                 }
-            }
+            )
         }
     }
 
@@ -217,6 +221,19 @@ struct HowToPlayView: View {
             title.font(.headline)
             diagram()
             body.font(.callout).foregroundStyle(.secondary)
+        }
+    }
+
+    /// Two labelled diagrams side by side, stacking when the width won't take
+    /// them — the pairs are the widest thing in here.
+    private func pair(_ a: some View, _ b: some View) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 16) {
+                a; b
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                a; b
+            }
         }
     }
 

@@ -78,9 +78,16 @@ struct BoardDiagram: View {
                 context.strokeRing(around: p, .style(.tint), layout)
             }
         }
+        // Aspect-locked and flexible, not a fixed size: a 16-column diagram at
+        // full pitch is wider than an iPhone SE, and demanding that width pushed
+        // the whole column sideways and clipped its leading edge.
+        .aspectRatio(
+            CGFloat(bounds.maxX - bounds.minX + 3) / CGFloat(bounds.maxY - bounds.minY + 3),
+            contentMode: .fit
+        )
         .frame(
-            width: CGFloat(bounds.maxX - bounds.minX + 3) * cell,
-            height: CGFloat(bounds.maxY - bounds.minY + 3) * cell
+            maxWidth: CGFloat(bounds.maxX - bounds.minX + 3) * cell,
+            maxHeight: CGFloat(bounds.maxY - bounds.minY + 3) * cell
         )
         .accessibilityHidden(true)  // the prose beside it carries the meaning
     }

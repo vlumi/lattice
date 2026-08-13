@@ -65,7 +65,12 @@ public struct GameView: View {
             // At most one overlay at a time.
             .overlay {
                 if showShortcuts && !isShowingNewGame {
-                    KeyboardCheatsheet { showShortcuts = false }
+                    KeyboardCheatsheet(
+                        dismiss: { showShortcuts = false },
+                        onHowTo: {
+                            showShortcuts = false
+                            model.isShowingHowTo = true
+                        })
                 }
             }
             .overlay {
