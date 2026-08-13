@@ -25,6 +25,10 @@ release lane cuts the build (see [RELEASING.md](RELEASING.md)).
   the largest accessibility size) — it splits onto two lines when it has to.
   The cheatsheet's key column, the History variant column, the code field
   and the macOS Settings pane all grow with the text instead of clipping.
+- iOS no longer draws a stray box around the first Settings row: that ring
+  marks the keyboard-navigation cursor, and the arrow keys that move it are
+  macOS-only, so on iPhone/iPad it was an unexplained border that never went
+  anywhere.
 - A tidier header, at every text size: the score shows as just the number
   (the board is the context) and the challenge chip is the QR glyph alone —
   the code is still in the popover when you tap it. Cancel now appears only

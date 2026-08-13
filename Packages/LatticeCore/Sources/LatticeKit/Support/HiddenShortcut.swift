@@ -17,14 +17,21 @@ struct HiddenShortcut: View {
 
 extension View {
     /// A subtle ring marking the keyboard-nav "cursor" row (New Game modal,
-    /// Settings).
+    /// Settings, Nearby lobby).
+    ///
+    /// macOS only: the arrow keys that move this cursor come from `KeyCatcher`,
+    /// which doesn't exist on iOS — there the ring would sit on the first row
+    /// forever, an unexplained box around nothing. The padding stays on both so
+    /// the layout doesn't shift between platforms.
     func rowCursor(_ active: Bool) -> some View {
         padding(4)
             .overlay {
+                #if os(macOS)
                 if active {
                     RoundedRectangle(cornerRadius: 8)
                         .strokeBorder(.secondary.opacity(0.5), lineWidth: 1.5)
                 }
+                #endif
             }
     }
 }
