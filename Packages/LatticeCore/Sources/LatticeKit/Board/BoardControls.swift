@@ -58,6 +58,19 @@ struct BoardControls: View {
     }
 }
 
+extension View {
+    /// Pins a shortcut badge to a control in the top bar. Anchored bottom-trailing
+    /// rather than the floating controls' top-leading: these buttons sit against
+    /// the top edge, where a badge above them is clipped by the window.
+    func shortcutBadge(_ text: String, showing: Bool) -> some View {
+        overlay(alignment: .bottomTrailing) {
+            if showing {
+                ShortcutBadge(text).offset(x: 6, y: 8)
+            }
+        }
+    }
+}
+
 /// A small key-combo badge pinned to a control while the cheatsheet is on.
 struct ShortcutBadge: View {
     let text: String

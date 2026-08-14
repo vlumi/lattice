@@ -110,6 +110,7 @@ extension GameView {
                 }
                 .disabled(session.game.moves.isEmpty)
                 .accessibilityLabel(Text("Restart", bundle: .module))
+                .shortcutBadge("⌘R", showing: showShortcuts)
             }
             if session.mode == .free {
                 Button {
@@ -131,6 +132,7 @@ extension GameView {
                 .accessibilityLabel(Text("New Game", bundle: .module))
                 .accessibilityValue(Text(verbatim: session.variantKey))
                 .accessibilityAddTraits(isShowingNewGame ? [.isSelected] : [])
+                .shortcutBadge("⌘N", showing: showShortcuts)
             }
         }
     }
