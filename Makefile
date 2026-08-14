@@ -7,7 +7,11 @@
 help:  ## List the available commands
 	@echo "Lattice Five — available make targets:"
 	@awk 'BEGIN {FS = ":.*## "} \
-		/^[a-zA-Z0-9_-]+:.*## / {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+		/^##@ / {printf "\n\033[1m%s\033[0m\n", substr($$0, 5); next} \
+		/^##~ / {printf "  \033[2m%s\033[0m\n", substr($$0, 5); next} \
+		/^[a-zA-Z0-9_-]+:.*## / {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+##@ Dev — build, run, test
 
 # Inputs xcodegen reads — regenerate the project when any of these change.
 PROJECT_INPUTS := project.yml \
@@ -72,7 +76,9 @@ clean:  ## Remove the generated project + local build output
 	@rm -rf Lattice.xcodeproj .build-xcode Packages/LatticeCore/.build
 	@echo "removed Lattice.xcodeproj, .build-xcode, package .build"
 
-# ── Release lane ─────────────────────────────────────────────────────────────
+##@ Release lane
+##~ make release runs preflight → publish → tag → distribute; each step also runs alone
+
 # The cut is split by concern, one script each, chained here in order:
 #   preflight → publish → tag → distribute
 # The pure ends (preflight, tag, distribute) re-derive their inputs from git +
