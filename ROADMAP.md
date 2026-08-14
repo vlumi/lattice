@@ -25,7 +25,11 @@ build 9); what's left is store prep.
       deterministic, optimization); Board is the better second slot than
       Strategy, whose browsers are after 4X and tower defence. This is separate
       from the Info.plist `LSApplicationCategoryType` already set per platform.
-- [ ] Submit to public App Store review, release (spends the 1.0.0 version)
+- [ ] Submit to public App Store review, release (spends the 1.0.0 version).
+      Paste `Scripts/asc/REVIEW-NOTES.md` into App Review Information ▸ Notes
+      first: Nearby is only reachable from the Versus tab and needs a second
+      device, so a reviewer testing alone sees a mode that appears to do
+      nothing — the same thing that drew questions on Donpa.
 
 ## Backlog (unversioned)
 
