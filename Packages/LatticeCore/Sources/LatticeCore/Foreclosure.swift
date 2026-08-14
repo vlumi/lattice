@@ -61,16 +61,25 @@ public enum Foreclosure {
         return gaps
     }
 
-    /// If `upper` is 1–5 steps beyond `lower` along `axis`, return the dead span
+    /// If `upper` is 1–3 steps beyond `lower` along `axis`, return the dead span
     /// from `lower` to `upper` inclusive; else nil.
     ///
-    /// `steps == 1` is the two lines ABUTTING — no empty dot between them, but
-    /// the single segment there can never be drawn: a line through it would have
-    /// to overlap one of the two neighbours. It was excluded originally (the
-    /// range started at 2, reading the rule as "a 1–4 dot gap"), which missed the
-    /// tightest and most obviously dead case of all.
+    /// The range is exactly the gaps a line can NEVER cross. A line needs five
+    /// consecutive dots but may start inside a neighbour's span, so long as it
+    /// reuses no unit segment — so with **three or more** empty dots between the
+    /// two lines a legal window still fits (with three, x −4…0 clears both).
+    /// Only 0, 1 or 2 empty dots — `steps` 1, 2, 3 — are genuinely sealed:
+    ///
+    /// - `steps == 1`: the lines abut; the single segment between them would
+    ///   have to overlap one of them.
+    /// - `steps == 2, 3`: one or two empty dots; every five-window covering them
+    ///   reuses a segment at one end or the other.
+    ///
+    /// Both bounds have been wrong: it started at 2 (missing the abutting case)
+    /// and ran to 5, claiming gaps of three and four empty dots that a line can
+    /// still cross — four such false claims in one reported 85-move game.
     private static func gapSpan(lower: Point, upper: Point, axis: Axis) -> Line? {
-        for steps in 1...5 where lower.offset(along: axis, by: steps) == upper {
+        for steps in 1...3 where lower.offset(along: axis, by: steps) == upper {
             return Line(origin: lower, axis: axis, length: steps + 1)
         }
         return nil
