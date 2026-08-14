@@ -23,8 +23,14 @@ final class DemoSeedTests: XCTestCase {
         DemoSeed.apply(store: store, defaults: defaults)
 
         let records = store.loadRecords()
-        XCTAssertEqual(records.count, 8, "one record per fixture game")
+        XCTAssertEqual(records.count, 10, "one record per fixture game")
         XCTAssertTrue(records.allSatisfy { $0.score > 0 }, "every game actually played")
+        XCTAssertEqual(
+            records.filter(\.isDaily).count, 2,
+            "History has to show the Daily row label in a capture")
+        XCTAssertTrue(
+            records.filter(\.isDaily).allSatisfy { $0.variantKey == "5T#" },
+            "a daily is 5T on a seeded start, so it scores in the 5T# pool")
 
         let bests = store.loadBests()
         XCTAssertNotNil(bests.best(forKey: "5T"), "classic pool has a best")

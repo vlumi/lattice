@@ -21,8 +21,8 @@ The demo launches with seeded data, staged so each tab shows what it should:
 - **Daily** is deliberately **unplayed today**, so it shows the day's fresh
   board — the initial state a newcomer meets — while the header still reads a
   live streak (an unplayed today doesn't break one).
-- **History** charts eight finished games over five weeks, with bests in several
-  pools.
+- **History** charts ten finished games over five weeks, with bests in several
+  pools. Two are dailies, so the "Daily" row label shows beside the variant keys.
 
 Dates are **fixed**, not wall-clock, so the chart and the recent-games list read
 identically whether you capture today or next week. Identical on every device —

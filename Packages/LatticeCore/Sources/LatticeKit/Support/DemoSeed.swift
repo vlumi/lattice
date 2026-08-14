@@ -20,6 +20,25 @@ public enum DemoSeed {
         let days: Int
         /// Play stops here (or when the board dead-ends).
         let target: Int
+        /// A seeded start, as the dailies and code challenges use — nil for the
+        /// variant's standard pattern.
+        var seed: UInt64?
+        /// Recorded as a daily, so History shows the "Daily" row label.
+        ///
+        /// The board isn't that date's real daily board. Demo data is staged
+        /// throughout — the streak scores are invented too — and using real
+        /// boards meant generating and solving one per launch (several seconds,
+        /// since the day's board changes daily and so can't be committed like
+        /// the fixtures below).
+        var isDaily = false
+
+        /// The board to play: a seeded start when `seed` is set, else the
+        /// variant's own standard pattern (the 4-in-a-row variants start from a
+        /// smaller cross, so this can't just default to the standard one).
+        var start: Set<Point> {
+            seed.map { StartGenerator.pattern(seed: $0) }
+                ?? StartingPattern.standard(for: variant)
+        }
     }
 
     private static let games: [Fixture] = [
@@ -29,7 +48,11 @@ public enum DemoSeed {
         Fixture(variant: .fiveT, days: 18, target: 61),
         Fixture(variant: .fourT, days: 13, target: 28),
         Fixture(variant: .fiveTPlus, days: 9, target: 74),
+        // The two dailies: 5T on a seeded start, like the real thing, so they
+        // score in the 5T# pool the chart and filter expect.
+        Fixture(variant: .fiveT, days: 6, target: 52, seed: 20_260_806, isDaily: true),
         Fixture(variant: .fiveT, days: 5, target: 68),
+        Fixture(variant: .fiveT, days: 2, target: 47, seed: 20_260_810, isDaily: true),
         Fixture(variant: .fiveT, days: 1, target: 79),
     ]
 
@@ -37,7 +60,7 @@ public enum DemoSeed {
     /// it: far enough that the board reads as played (a real tangle of lines),
     /// short enough that plenty of playable points remain — a board that looks
     /// dead sells nothing.
-    private static let bestFixtureIndex = 7
+    private static let bestFixtureIndex = 9
     private static let inProgressMoves = 34
 
     /// The committed fixture: one move list per game, in `games` order. Playing
@@ -53,7 +76,7 @@ public enum DemoSeed {
     /// Replays the fixture games from scratch — the generator's entry point, not
     /// used at launch. See Tests/GenerateDemoFixture.
     public static func playFixtureGames() -> [[Move]] {
-        games.map { play(rules: $0.variant, upTo: $0.target).moves }
+        games.map { play(rules: $0.variant, start: $0.start, upTo: $0.target).moves }
     }
 
     /// The demo's "today". Fixed, not `Date()`: History plots real dates and the
@@ -78,15 +101,18 @@ public enum DemoSeed {
         let committed = fixtureMoves()
         for (index, spec) in games.enumerated() {
             let finished = now.addingTimeInterval(-Double(spec.days) * 86_400)
-            var game = Game(rules: spec.variant)
+            var game = Game(rules: spec.variant, start: spec.start)
             if let moves = committed?[safe: index] {
                 for move in moves where game.play(move) {}
             } else {
                 // No committed fixture (or a stale one) — play it live. Slow, but
                 // the demo still works rather than showing an empty app.
-                game = play(rules: spec.variant, upTo: spec.target)
+                game = play(rules: spec.variant, start: spec.start, upTo: spec.target)
             }
-            store.saveRecord(GameRecord(game: game, id: UUID(), finishedAt: finished))
+            store.saveRecord(
+                GameRecord(
+                    game: game, id: UUID(), finishedAt: finished, seed: spec.seed,
+                    dailyDateKey: spec.isDaily ? DailyChallenge.dateKey(for: finished) : nil))
             _ = bests.register(game.score, forKey: game.rules.variantKey(forStart: game.start))
         }
 
@@ -109,7 +135,8 @@ public enum DemoSeed {
         // open — rather than the empty start every screenshot of this genre uses.
         // Reuses the strongest fixture game, cut off partway.
         if let moves = committed?[safe: bestFixtureIndex] {
-            var inProgress = Game(rules: games[bestFixtureIndex].variant)
+            var inProgress = Game(
+                rules: games[bestFixtureIndex].variant, start: games[bestFixtureIndex].start)
             for move in moves.prefix(inProgressMoves) where inProgress.play(move) {}
             store.saveCurrent(GameSnapshot(game: inProgress, id: UUID()))
         }
@@ -127,8 +154,8 @@ public enum DemoSeed {
     /// candidate every move costs ~30s across the fixtures. Sampling gets scores
     /// in the 50s–70s in a few seconds. Deterministic: the sample is a fixed
     /// prefix, and ties break by index.
-    private static func play(rules: Rules, upTo limit: Int) -> Game {
-        var game = Game(rules: rules)
+    private static func play(rules: Rules, start: Set<Point>, upTo limit: Int) -> Game {
+        var game = Game(rules: rules, start: start)
         while game.score < limit {
             let moves = game.legalMoves()
             guard !moves.isEmpty else { break }
