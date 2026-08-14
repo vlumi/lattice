@@ -44,7 +44,8 @@ public struct RootView: View {
             // window instead (see the app's `Settings` scene).
             SettingsView(
                 sync: model.sync, feedback: model.feedback,
-                onReset: { model.resetAllProgress() }
+                onReset: { model.resetAllProgress() },
+                exportData: { model.exportData() }
             )
             .tabItem { tabLabel("Settings", "gearshape") }
             .tag(AppModel.Tab.settings)
