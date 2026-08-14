@@ -107,7 +107,15 @@ struct KeyboardCheatsheet: View {
             keyRow(["esc"], Text("Cancel", bundle: .module))
 
             Divider()
-            keyRow(["⌘1", "…", "⌘5"], Text("Switch tabs", bundle: .module))
+            // Balloons, not keycaps: these point at the tab bar on screen, the
+            // same "this key drives that control" sense the badges over Undo and
+            // "?" carry. Spelled out rather than elided — there are only four,
+            // and "⌘1 … ⌘5" both overcounted (Settings is not a tab here) and
+            // made the reader guess the range.
+            row(
+                HStack(spacing: 4) {
+                    ForEach(["⌘1", "⌘2", "⌘3", "⌘4"], id: \.self) { ShortcutBadge($0) }
+                }, Text("Switch tabs", bundle: .module))
             if let onHowTo {
                 Button(action: onHowTo) {
                     Label {
