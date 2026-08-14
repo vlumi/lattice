@@ -63,7 +63,7 @@ public enum DemoSeed {
     ///
     /// Only the seeded *history* uses it — the live daily board still follows the
     /// real date (it has to; that's what the daily is).
-    static let today = Date(timeIntervalSince1970: 1_781_308_800)  // 2026-06-09
+    static let today = Date(timeIntervalSince1970: 1_781_308_800)  // 2026-06-13
 
     public static func apply(store: LatticeStore, defaults: UserDefaults) {
         // Sound off, haptics on: the shipped defaults, so a capture shows the

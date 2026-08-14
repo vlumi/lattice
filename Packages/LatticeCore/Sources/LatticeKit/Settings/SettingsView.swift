@@ -1,8 +1,9 @@
+import LatticeCore
 import SwiftUI
 
-/// Settings: sound & haptics and the iCloud sync opt-in (off by default).
-/// Reset-progress will join here later (roadmap). The Nearby name lives on the
-/// Nearby screen (set it where you broadcast it).
+/// Settings: sound & haptics, the iCloud sync opt-in (off by default), and the
+/// data actions — export and reset. The Nearby name lives on the Nearby screen
+/// (set it where you broadcast it).
 struct SettingsView: View {
     @ObservedObject var sync: SyncController
     let feedback: Feedback
@@ -10,6 +11,8 @@ struct SettingsView: View {
     var onClose: () -> Void = {}
     /// Erases all progress — owned by AppModel, which holds the sessions.
     var onReset: () -> Void = {}
+    /// Builds the export payload; AppModel owns the store.
+    var exportData: () -> Data? = { nil }
 
     // Sound off by default (opt-in); haptics on by default. Keys match
     // Feedback's; the live players are updated on change.
@@ -21,6 +24,8 @@ struct SettingsView: View {
     @State private var cursor: Row = .sound
     @State private var showAbout = false
     @State private var confirmingReset = false
+    @State private var exportDocument: JSONDocument?
+    @State private var isExportingData = false
     @State private var showHowTo = false
 
     private var syncFooter: Text {
@@ -68,6 +73,18 @@ struct SettingsView: View {
                 syncFooter
             }
             Section {
+                // Data portability, not a debug feature: the honest counterpart
+                // to Reset below, and what lets a bug report carry the exact
+                // game that misbehaved.
+                Button {
+                    beginExport()
+                } label: {
+                    Label {
+                        Text("Export game data…", bundle: .module)
+                    } icon: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
                 Button(role: .destructive) {
                     confirmingReset = true
                 } label: {
@@ -77,8 +94,9 @@ struct SettingsView: View {
             } footer: {
                 Text(
                     """
-                    Clears your best scores, replays, daily streak and any game \
-                    in progress. Settings stay as they are.
+                    Export writes every finished game — with its moves — plus \
+                    your bests and daily log, as JSON. Reset clears all of that; \
+                    settings stay as they are.
                     """, bundle: .module)
             }
             // iOS only: the Mac reaches About from the app menu, where the
@@ -141,6 +159,12 @@ struct SettingsView: View {
                     this device. It can't be undone.
                     """, bundle: .module)
         }
+        .fileExporter(
+            isPresented: $isExportingData, document: exportDocument,
+            contentType: .json, defaultFilename: DataExport.filename()
+        ) { _ in
+            exportDocument = nil
+        }
         .sheet(isPresented: $showAbout) {
             AboutSheet(dismiss: { showAbout = false })
         }
@@ -150,6 +174,12 @@ struct SettingsView: View {
         #if os(macOS)
         .background(KeyCatcher(onKey: handle))
         #endif
+    }
+
+    private func beginExport() {
+        guard let data = exportData() else { return }
+        exportDocument = JSONDocument(data: data)
+        isExportingData = true
     }
 
     #if os(macOS)

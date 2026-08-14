@@ -95,6 +95,16 @@ public final class AppModel: ObservableObject {
         versusSession.resetAfterWipe()
     }
 
+    /// The full data export — every finished game with its moves, bests, the
+    /// daily log and anything in progress. See `DataExport`.
+    public func exportData() -> Data? {
+        let info = Bundle.main.infoDictionary
+        let version = (info?["CFBundleShortVersionString"] as? String).map {
+            "\($0) (\(info?["CFBundleVersion"] as? String ?? "?"))"
+        }
+        return DataExport(store: store, appVersion: version).encoded()
+    }
+
     /// A challenge universal-link: start its board in Free and switch there.
     public func openChallenge(seed: UInt64) {
         freeSession.newChallenge(seed: seed)

@@ -19,6 +19,11 @@ approves it, so a problem found in testing just gets another build.
 
 ### Unreleased (next build)
 
+- **Export game data** in Settings: writes every finished game — with its full
+  move list — plus your bests and daily log to a JSON file you can keep or send
+  on. The counterpart to Reset, and the way to hand over the exact game when
+  something looks wrong.
+
 - Dead gaps are marked more completely: when two of your lines end up
   back-to-back along the same direction with no dot between them, that stretch
   can never be drawn either — and the board now says so. Previously only gaps

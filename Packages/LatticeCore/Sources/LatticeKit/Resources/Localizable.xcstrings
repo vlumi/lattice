@@ -83,9 +83,6 @@
     "Choose the challenge" : {
 
     },
-    "Clears your best scores, replays, daily streak and any game in progress. Settings stay as they are." : {
-
-    },
     "Close" : {
 
     },
@@ -139,6 +136,12 @@
 
     },
     "Every move places one new dot and draws a line through five dots in a row. Keep going as long as you can — your score is the number of lines you draw." : {
+
+    },
+    "Export game data…" : {
+
+    },
+    "Export writes every finished game — with its moves — plus your bests and daily log, as JSON. Reset clears all of that; settings stay as they are." : {
 
     },
     "Fit" : {
