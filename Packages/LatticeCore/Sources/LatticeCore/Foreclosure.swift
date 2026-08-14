@@ -61,11 +61,16 @@ public enum Foreclosure {
         return gaps
     }
 
-    /// If `upper` is 2–5 steps beyond `lower` along `axis` (a 1–4 dot gap that
-    /// can't hold a full line), return the dead span from `lower` to `upper`
-    /// inclusive; else nil.
+    /// If `upper` is 1–5 steps beyond `lower` along `axis`, return the dead span
+    /// from `lower` to `upper` inclusive; else nil.
+    ///
+    /// `steps == 1` is the two lines ABUTTING — no empty dot between them, but
+    /// the single segment there can never be drawn: a line through it would have
+    /// to overlap one of the two neighbours. It was excluded originally (the
+    /// range started at 2, reading the rule as "a 1–4 dot gap"), which missed the
+    /// tightest and most obviously dead case of all.
     private static func gapSpan(lower: Point, upper: Point, axis: Axis) -> Line? {
-        for steps in 2...5 where lower.offset(along: axis, by: steps) == upper {
+        for steps in 1...5 where lower.offset(along: axis, by: steps) == upper {
             return Line(origin: lower, axis: axis, length: steps + 1)
         }
         return nil

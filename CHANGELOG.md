@@ -19,8 +19,11 @@ approves it, so a problem found in testing just gets another build.
 
 ### Unreleased (next build)
 
-- Version bumped to 1.0.0. No gameplay changes since build 9 — the game is
-  feature-complete and this is the first build of the store release.
+- Dead gaps are marked more completely: when two of your lines end up
+  back-to-back along the same direction with no dot between them, that stretch
+  can never be drawn either — and the board now says so. Previously only gaps
+  with at least one empty dot were flagged, so the tightest case of all went
+  unmarked, live and in replays.
 
 ## [0.5.0]
 
