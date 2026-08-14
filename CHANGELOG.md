@@ -24,6 +24,9 @@ The store release.
   edges on a solid surface instead of stretching corner to corner over a murky
   grey, and the variant buttons read as buttons rather than glowing. The header
   button that opens it now looks pressed while it's open.
+- History tells dailies apart from other seeded games: they used to read "5T#",
+  the pool they share with random starts, so nothing said which was the day's
+  board. They now say **Daily**, with the date beside them as before.
 - Keyboard focus outlines only appear once you use the keyboard — on the Mac
   they showed the moment a panel opened, which looked like an unexplained
   highlight if you were using a pointer.
