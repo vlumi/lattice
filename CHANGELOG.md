@@ -13,9 +13,7 @@ user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
 ## [1.0.0]
 
-The store release: the same game, taken public. Builds accumulate here while
-1.0.0 is in TestFlight — the version is only spent once App Store review
-approves it, so a problem found in testing just gets another build.
+The store release.
 
 ### Unreleased (next build)
 
@@ -35,9 +33,7 @@ approves it, so a problem found in testing just gets another build.
 
 The TestFlight beta: the full single-player game (solitaire, daily, variants,
 seeded challenges, replays with analysis), pass-and-play and Nearby two-player,
-iCloud sync, full keyboard control, and the in-app rules. Entries are promoted
-to a `### build N` heading when the release lane cuts the build (see
-[RELEASING.md](RELEASING.md)).
+iCloud sync, full keyboard control, and the in-app rules.
 
 ### build 9 — 2026-08-13
 
@@ -46,22 +42,19 @@ to a `### build N` heading when the release lane cuts the build (see
   Settings themselves stay put. With iCloud Sync on it erases on every device
   signed in to your iCloud and says so; with sync off it's this device only,
   and says that instead.
-
 - Tapping a spot where no line could ever reach now says so: a red ring
   flashes where your finger landed, with a soft tap on iPhone and iPad — so
   "why did nothing happen?" gets answered where you're looking. Tapping an
   existing dot stays quiet (that one's self-evident), and tapping open board
   still just cancels. Return on the keyboard cursor does the same.
-
 - How to play is now a **?** button on the board itself, beside Undo — so the
   rules are one tap away while you're looking at the thing they describe,
   rather than something to go find in Settings.
-
 - **Fixed a crash on launch on iPad.** iPadOS 26 builds a real menu bar from
   the app's menu commands, and our Undo (⌘Z) collided with the standard Undo
   it installs there — the app died before showing anything. Those commands are
   now Mac-only, which is where the menu bar belongs; on iPhone and iPad
-  everything they offered is reachable by touch. (This shipped in build 8.)
+  everything they offered is reachable by touch.
 - **Keyboard play works on iPad** with a hardware keyboard: arrows or WASD
   roam the cursor, Return or Space places a dot and then commits the line,
   Tab cycles the possible lines, Backspace undoes, Esc cancels — the same as
@@ -70,7 +63,6 @@ to a `### build N` heading when the release lane cuts the build (see
 - The `?` cheatsheet overlay is now Mac-only — it's a keyboard-only
   affordance and its panel was sized for a Mac window (it clipped on a
   phone). The same keys are listed in How to play, which fits.
-
 - **How to play**, in the app: a short illustrated guide to the rules
   — the goal, placing a dot and drawing its line, the one rule that really
   matters (lines may share an end dot but never overlap), why five dots

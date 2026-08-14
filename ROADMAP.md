@@ -8,8 +8,7 @@ indicative, not contractual, and everything before 1.0 is beta (internal
 TestFlight; see [RELEASING.md](RELEASING.md)).
 
 **v1.0.0 is in flight.** The game is feature-complete (0.5.0 shipped through
-build 9); what's left is store prep. Builds accumulate under 1.0.0 while it's in
-TestFlight — the version is only spent when review approves it.
+build 9); what's left is store prep.
 
 ---
 
