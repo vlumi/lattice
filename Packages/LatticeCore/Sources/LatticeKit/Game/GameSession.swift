@@ -384,7 +384,12 @@ public final class GameSession: ObservableObject {
         // A pass-and-play match is its own event: no records, bests, or
         // daily side effects.
         guard mode != .passAndPlay else { return }
-        store.saveRecord(GameRecord(game: game, id: gameID, finishedAt: Date(), seed: seed))
+        store.saveRecord(
+            GameRecord(
+                game: game, id: gameID, finishedAt: Date(), seed: seed,
+                // Stamped at save time: History can't tell a daily from a
+                // random-start challenge afterwards — they share the 5T# pool.
+                dailyDateKey: mode == .daily ? dateKey : nil))
         var syncedChange = false
         if bests.register(game.score, forKey: variantKey) {
             store.saveBests(bests)
