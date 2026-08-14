@@ -17,6 +17,10 @@ The store release.
 
 ### Unreleased (next build)
 
+- The New Game screen now says what each variant is — "5T" means nothing on
+  its own, so a line under the row explains whichever you've selected: the
+  classic game, the relaxed one, the stricter one, or the shorter solved ones.
+
 ### build 10 — 2026-08-14
 
 - **Export game data** in Settings: writes every finished game — with its full

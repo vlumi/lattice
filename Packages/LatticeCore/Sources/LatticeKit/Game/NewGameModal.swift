@@ -115,8 +115,44 @@ struct NewGameModal: View {
                     }
                 }
             }
+            // "5T" means nothing to a newcomer, and five chips leave no room for
+            // per-chip text — so one line under the row explains whichever is
+            // selected, and changes as you move along it.
+            Self.variantSummary(for: variantKeys[variantIndex])
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, minHeight: 32, alignment: .topLeading)
         }
         .rowCursor(row == .variant)
+    }
+
+    /// One line per variant: what it is, not how it works. The rules themselves
+    /// are in How to play. Every key in `Rules.selectable` must appear here —
+    /// see VariantSummaryTests, which fails on a missing one rather than letting
+    /// the modal render a blank line.
+    static func variantSummary(for storageKey: String) -> Text {
+        switch storageKey {
+        case "5T":
+            return Text(
+                "The classic game — lines of five, sharing end dots allowed.",
+                bundle: .module)
+        case "5T+":
+            return Text(
+                "Relaxed: a dot and its line come apart, so more moves fit.",
+                bundle: .module)
+        case "5D":
+            return Text(
+                "Stricter: lines in the same direction may not touch at all.",
+                bundle: .module)
+        case "4T":
+            return Text(
+                "Shorter, with lines of four — solved, so 62 is perfect.", bundle: .module)
+        case "4D":
+            return Text("Shorter and strict — solved, so 35 is perfect.", bundle: .module)
+        default:
+            return Text(verbatim: "")
+        }
     }
 
     private var randomRow: some View {
