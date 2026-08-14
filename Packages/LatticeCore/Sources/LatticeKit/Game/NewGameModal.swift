@@ -21,6 +21,11 @@ struct NewGameModal: View {
     private enum Row: Int, CaseIterable { case variant, random, code }
 
     @State private var row: Row = .variant
+    /// Whether the keyboard has been used yet. The row ring is a keyboard
+    /// affordance, so it stays hidden until an arrow/Tab press — showing it on
+    /// open makes a pointer user wonder what the outline means (Donpa's
+    /// KeyCursor keeps its zone optional for the same reason).
+    @State private var keyboardActive = false
     @State private var variantIndex = 0
     @State private var code = ""
     @FocusState private var codeFocused: Bool
@@ -55,13 +60,14 @@ struct NewGameModal: View {
             leaveCodeField(key)
             return
         }
+        // Any navigation key reveals the row ring; Esc doesn't, since it leaves.
         switch key {
-        case .up: move(-1)
-        case .down, .tab: move(1)
-        case .backTab: move(-1)
-        case .left: stepVariant(-1)
-        case .right: stepVariant(1)
-        case .enter, .space: activate()
+        case .up: keyboardActive = true; move(-1)
+        case .down, .tab: keyboardActive = true; move(1)
+        case .backTab: keyboardActive = true; move(-1)
+        case .left: keyboardActive = true; stepVariant(-1)
+        case .right: keyboardActive = true; stepVariant(1)
+        case .enter, .space: keyboardActive = true; activate()
         case .escape: dismiss()
         default: break
         }
@@ -87,9 +93,18 @@ struct NewGameModal: View {
             startRow
         }
         .padding(20)
-        .fixedSize()
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 8)
+        // Was .fixedSize(), which sized the card to the widest row — wider than
+        // an iPhone, so it clipped to the screen edges with no margin. Cap it
+        // and let the rows wrap instead.
+        .frame(maxWidth: 420)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                // A solid surface, not .thinMaterial: over the dimmed board the
+                // material read as a muddy grey in light mode.
+                .fill(Color.cardBackground)
+                .shadow(radius: 12, y: 4)
+        )
+        .padding(.horizontal, 20)
     }
 
     private var header: some View {
@@ -107,7 +122,10 @@ struct NewGameModal: View {
     private var variantRow: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Variant", bundle: .module).font(.subheadline).foregroundStyle(.secondary)
-            HStack(spacing: 8) {
+            // Five chips are wider than an iPhone SE, and their intrinsic width
+            // used to force the whole card edge-to-edge. Let them shrink to fit
+            // rather than dictate the card's width.
+            HStack(spacing: 6) {
                 ForEach(Array(variantKeys.enumerated()), id: \.element) { index, storageKey in
                     chip(storageKey, selected: row == .variant && variantIndex == index) {
                         row = .variant
@@ -115,6 +133,7 @@ struct NewGameModal: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
             // "5T" means nothing to a newcomer, and five chips leave no room for
             // per-chip text — so one line under the row explains whichever is
             // selected, and changes as you move along it.
@@ -124,7 +143,7 @@ struct NewGameModal: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .topLeading)
         }
-        .rowCursor(row == .variant)
+        .rowCursor(keyboardActive && row == .variant)
     }
 
     /// One line per variant: what it is, not how it works. The rules themselves
@@ -165,7 +184,7 @@ struct NewGameModal: View {
                 Image(systemName: "shuffle")
             }
         }
-        .rowCursor(row == .random)
+        .rowCursor(keyboardActive && row == .random)
     }
 
     private var codeRow: some View {
@@ -194,7 +213,7 @@ struct NewGameModal: View {
                 }
             }
         }
-        .rowCursor(row == .code)
+        .rowCursor(keyboardActive && row == .code)
     }
 
     private var startRow: some View {
@@ -256,15 +275,31 @@ struct NewGameModal: View {
         dismiss()
     }
 
-    /// A selectable text chip.
+    /// A selectable text chip. Selection is a tinted outline and a heavier
+    /// label, not a filled capsule — `.bordered` with a `.tint` washed every
+    /// chip in translucent accent, which read as a glow rather than a control.
     private func chip(_ title: String, selected: Bool, _ select: @escaping () -> Void)
         -> some View
     {
         Button(action: select) {
-            Text(verbatim: title).frame(minWidth: 36)
+            Text(verbatim: title)
+                .font(.callout.weight(selected ? .semibold : .regular))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(selected ? Color.accentColor.opacity(0.12) : Color.chipBackground)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(
+                            selected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                )
         }
-        .buttonStyle(.bordered)
-        .tint(selected ? .accentColor : nil)
+        .buttonStyle(.plain)
     }
 
     /// A selectable chip with a custom label.

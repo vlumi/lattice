@@ -81,3 +81,25 @@ func paletteRGB(_ value: UInt32) -> Color {
         green: Double((value >> 8) & 0xFF) / 255,
         blue: Double(value & 0xFF) / 255)
 }
+
+/// Surfaces for the overlay cards (New Game, About, How to play). Deliberately
+/// solid rather than `.thinMaterial`: over the dimmed board a material reads as
+/// a muddy grey in light mode.
+extension Color {
+    static var cardBackground: Color {
+        #if os(macOS)
+        Color(nsColor: .windowBackgroundColor)
+        #else
+        Color(uiColor: .secondarySystemBackground)
+        #endif
+    }
+
+    /// An unselected chip: a hairline of contrast against the card, no fill.
+    static var chipBackground: Color {
+        #if os(macOS)
+        Color(nsColor: .controlBackgroundColor)
+        #else
+        Color(uiColor: .tertiarySystemBackground)
+        #endif
+    }
+}
