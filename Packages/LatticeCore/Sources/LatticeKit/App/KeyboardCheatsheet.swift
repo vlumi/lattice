@@ -107,15 +107,13 @@ struct KeyboardCheatsheet: View {
             keyRow(["esc"], Text("Cancel", bundle: .module))
 
             Divider()
-            // Balloons, not keycaps: these point at the tab bar on screen, the
-            // same "this key drives that control" sense the badges over Undo and
-            // "?" carry. Spelled out rather than elided — there are only four,
-            // and "⌘1 … ⌘5" both overcounted (Settings is not a tab here) and
-            // made the reader guess the range.
-            row(
-                HStack(spacing: 4) {
-                    ForEach(["⌘1", "⌘2", "⌘3", "⌘4"], id: \.self) { ShortcutBadge($0) }
-                }, Text("Switch tabs", bundle: .module))
+            // Keycaps, like every row above: balloons belong ON the control they
+            // drive, and a badge can't attach to a native tab item (SwiftUI drops
+            // any overlay inside `.tabItem`), so here they'd point at nothing.
+            // Spelled out rather than elided — there are only four, and "⌘1 … ⌘5"
+            // both overcounted (Settings is not a tab here) and made the reader
+            // guess the range.
+            keyRow(["⌘1", "⌘2", "⌘3", "⌘4"], Text("Switch tabs", bundle: .module))
             if let onHowTo {
                 Button(action: onHowTo) {
                     Label {
