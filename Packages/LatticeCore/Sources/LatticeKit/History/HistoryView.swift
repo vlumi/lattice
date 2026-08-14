@@ -46,6 +46,31 @@ public struct HistoryView: View {
         }
     }
 
+    /// A row's leading label. A daily says so: "5T#" is the scoring pool it
+    /// shares with random-start challenges, which told a player nothing about
+    /// where the game came from. The date column beside it says WHICH daily.
+    /// The colour stays the pool's, so rows still tally with the chart.
+    @ViewBuilder private func variantLabel(for record: GameRecord) -> some View {
+        Label {
+            Group {
+                if record.isDaily {
+                    Text("Daily", bundle: .module)
+                } else {
+                    Text(verbatim: record.variantKey)
+                }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+        } icon: {
+            Image(
+                systemName: record.isDaily
+                    ? "calendar" : VariantStyle.icon(for: record.variantKey)
+            )
+            .font(.caption)
+            .foregroundStyle(VariantStyle.color(for: record.variantKey, scheme: colorScheme))
+        }
+    }
+
     /// Scoring pools that actually have records, in canonical slot order.
     private var presentVariants: [String] {
         let present = Set(records.map(\.variantKey))
@@ -85,18 +110,8 @@ public struct HistoryView: View {
             List(Array(filtered.enumerated()), id: \.element.id) { index, record in
                 NavigationLink(value: record) {
                     HStack {
-                        Label {
-                            Text(verbatim: record.variantKey)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                        } icon: {
-                            Image(systemName: VariantStyle.icon(for: record.variantKey))
-                                .font(.caption)
-                                .foregroundStyle(
-                                    VariantStyle.color(
-                                        for: record.variantKey, scheme: colorScheme))
-                        }
-                        .frame(width: variantColumnWidth, alignment: .leading)
+                        variantLabel(for: record)
+                            .frame(width: variantColumnWidth, alignment: .leading)
                         Text(record.finishedAt, format: .dateTime.year().month().day())
                             .foregroundStyle(.secondary)
                         Spacer()
