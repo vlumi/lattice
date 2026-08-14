@@ -17,6 +17,8 @@ The store release.
 
 ### Unreleased (next build)
 
+### build 10 — 2026-08-14
+
 - **Export game data** in Settings: writes every finished game — with its full
   move list — plus your bests and daily log to a JSON file you can keep or send
   on. The counterpart to Reset, and the way to hand over the exact game when
