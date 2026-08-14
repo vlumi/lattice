@@ -28,7 +28,7 @@ extension NearbyDuelView {
                 .overlay(
                     RoundedRectangle(cornerRadius: 8).strokeBorder(.tint.opacity(0.5)))
             }
-            .rowCursor(cursor == 0)
+            .rowCursor(keyboardActive && (cursor == 0))
 
             Button {
                 duel.rename(editedName)  // apply a pending edit before hosting
@@ -42,7 +42,7 @@ extension NearbyDuelView {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .rowCursor(cursor == 1)
+            .rowCursor(keyboardActive && (cursor == 1))
 
             Text("Games nearby", bundle: .module).font(.headline)
             if duel.games.isEmpty {
@@ -56,7 +56,7 @@ extension NearbyDuelView {
                     Text(verbatim: game.label).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .rowCursor(cursor == index + 2)
+                .rowCursor(keyboardActive && (cursor == index + 2))
             }
         }
     }
@@ -74,7 +74,7 @@ extension NearbyDuelView {
                 Text("Mode", bundle: .module)
             }
             .pickerStyle(.segmented)
-            .rowCursor(configCursor == .mode)
+            .rowCursor(keyboardActive && (configCursor == .mode))
 
             Picker(selection: $chosenVariant) {
                 ForEach(duel.eligibleVariants, id: \.self) { v in
@@ -84,7 +84,7 @@ extension NearbyDuelView {
                 Text("Variant", bundle: .module)
             }
             .pickerStyle(.segmented)
-            .rowCursor(configCursor == .variant)
+            .rowCursor(keyboardActive && (configCursor == .variant))
 
             if chosenMode == .race {
                 Picker(selection: $chosenTier) {
@@ -95,7 +95,7 @@ extension NearbyDuelView {
                     Text("Target", bundle: .module)
                 }
                 .pickerStyle(.segmented)
-                .rowCursor(configCursor == .target)
+                .rowCursor(keyboardActive && (configCursor == .target))
             }
 
             Button(action: advertise) {
@@ -146,7 +146,7 @@ extension NearbyDuelView {
                             Text("Decline", bundle: .module)
                         }
                     }
-                    .rowCursor(cursor == index)
+                    .rowCursor(keyboardActive && (cursor == index))
                 }
             }
             Button {

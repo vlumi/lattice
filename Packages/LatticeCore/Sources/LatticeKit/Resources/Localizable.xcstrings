@@ -294,6 +294,9 @@
     "Reached the target — %@" : {
 
     },
+    "Relaxed: a dot and its line come apart, so more moves fit." : {
+
+    },
     "Rematch" : {
 
     },
@@ -359,6 +362,12 @@
     "Share Challenge…" : {
 
     },
+    "Shorter and strict — solved, so 35 is perfect." : {
+
+    },
+    "Shorter, with lines of four — solved, so 62 is perfect." : {
+
+    },
     "Sign in to iCloud to sync across your devices." : {
 
     },
@@ -374,6 +383,9 @@
     "Streak: %lld (best %lld)" : {
 
     },
+    "Stricter: lines in the same direction may not touch at all." : {
+
+    },
     "Subtle ticks while playing. Sound follows your ring/silent switch." : {
 
     },
@@ -387,6 +399,9 @@
 
     },
     "Target" : {
+
+    },
+    "The classic game — lines of five, sharing end dots allowed." : {
 
     },
     "The goal" : {

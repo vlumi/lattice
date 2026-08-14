@@ -22,6 +22,9 @@ struct SettingsView: View {
     // Keyboard row cursor: Up/Down move, Space toggles the focused row.
     private enum Row: Int, CaseIterable { case sound, haptics, sync, reset }
     @State private var cursor: Row = .sound
+    /// The row ring is a keyboard affordance — hidden until a key is used, so a
+    /// pointer user never sees an unexplained outline. See NewGameModal.
+    @State private var keyboardActive = false
     @State private var showAbout = false
     @State private var confirmingReset = false
     @State private var exportDocument: JSONDocument?
@@ -48,12 +51,12 @@ struct SettingsView: View {
                     Text("Sound effects", bundle: .module)
                 }
                 .onChangeCompat(of: soundOn) { feedback.setSound($0) }
-                .rowCursor(cursor == .sound)
+                .rowCursor(keyboardActive && cursor == .sound)
                 Toggle(isOn: $hapticsOn) {
                     Text("Haptics", bundle: .module)
                 }
                 .onChangeCompat(of: hapticsOn) { feedback.setHaptics($0) }
-                .rowCursor(cursor == .haptics)
+                .rowCursor(keyboardActive && cursor == .haptics)
             } header: {
                 Text("Sound & Haptics", bundle: .module)
             } footer: {
@@ -66,7 +69,7 @@ struct SettingsView: View {
                     Text("iCloud Sync", bundle: .module)
                 }
                 .disabled(!sync.isAvailable)
-                .rowCursor(cursor == .sync)
+                .rowCursor(keyboardActive && cursor == .sync)
             } header: {
                 Text("Sync", bundle: .module)
             } footer: {
@@ -90,7 +93,7 @@ struct SettingsView: View {
                 } label: {
                     Text("Reset progress…", bundle: .module)
                 }
-                .rowCursor(cursor == .reset)
+                .rowCursor(keyboardActive && cursor == .reset)
             } footer: {
                 Text(
                     """
@@ -185,9 +188,9 @@ struct SettingsView: View {
     #if os(macOS)
     private func handle(_ key: KeyCatcher.Key) {
         switch key {
-        case .up, .backTab: move(-1)
-        case .down, .tab: move(1)
-        case .space: activate()  // toggle the focused row
+        case .up, .backTab: keyboardActive = true; move(-1)
+        case .down, .tab: keyboardActive = true; move(1)
+        case .space: keyboardActive = true; activate()  // toggle the focused row
         case .enter, .escape: onClose()  // Done
         default: break
         }

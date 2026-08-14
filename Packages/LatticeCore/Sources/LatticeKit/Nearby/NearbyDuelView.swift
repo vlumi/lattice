@@ -20,6 +20,8 @@ struct NearbyDuelView: View {
     @State var cursor = 0
     /// Keyboard focus row within host config (↑/↓ move, ←/→ change selection).
     @State var configCursor: ConfigRow = .mode
+    /// Hides the row ring until the keyboard is used. See NewGameModal.
+    @State var keyboardActive = false
     /// The name field in the guest lobby (seeded from the stored PlayerName).
     @State var editedName = PlayerName.current()
     @FocusState var nameFocused: Bool
@@ -96,6 +98,9 @@ struct NearbyDuelView: View {
 // dispatched by the same stage/role/config the body switches on.
 extension NearbyDuelView {
     fileprivate func handle(_ key: KeyCatcher.Key) {
+        // Any key but Esc reveals the row ring — it's a keyboard affordance, so
+        // a pointer user shouldn't see an outline they didn't ask for.
+        if key != .escape { keyboardActive = true }
         switch duel.stage {
         case .lobby where duel.role == .hosting: handleHostLobby(key)
         case .lobby where configuringHost: handleHostConfig(key)

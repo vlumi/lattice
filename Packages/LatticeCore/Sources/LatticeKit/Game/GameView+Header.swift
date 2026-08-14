@@ -110,6 +110,7 @@ extension GameView {
                 }
                 .disabled(session.game.moves.isEmpty)
                 .accessibilityLabel(Text("Restart", bundle: .module))
+                .shortcutBadge("⌘R", showing: showShortcuts)
             }
             if session.mode == .free {
                 Button {
@@ -123,10 +124,15 @@ extension GameView {
                     }
                     .font(.subheadline)
                 }
+                // Reads as pressed while its modal is open — it's the control
+                // that opened it, so leaving it inert looked like a dead button.
                 .buttonStyle(.bordered)
+                .tint(isShowingNewGame ? .accentColor : nil)
                 .fixedSize()
                 .accessibilityLabel(Text("New Game", bundle: .module))
                 .accessibilityValue(Text(verbatim: session.variantKey))
+                .accessibilityAddTraits(isShowingNewGame ? [.isSelected] : [])
+                .shortcutBadge("⌘N", showing: showShortcuts)
             }
         }
     }

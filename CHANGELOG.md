@@ -17,6 +17,17 @@ The store release.
 
 ### Unreleased (next build)
 
+- The New Game screen now says what each variant is — "5T" means nothing on
+  its own, so a line under the row explains whichever you've selected: the
+  classic game, the relaxed one, the stricter one, or the shorter solved ones.
+- The New Game panel looks like it belongs on iPhone: it sits inset from the
+  edges on a solid surface instead of stretching corner to corner over a murky
+  grey, and the variant buttons read as buttons rather than glowing. The header
+  button that opens it now looks pressed while it's open.
+- Keyboard focus outlines only appear once you use the keyboard — on the Mac
+  they showed the moment a panel opened, which looked like an unexplained
+  highlight if you were using a pointer.
+
 ### build 10 — 2026-08-14
 
 - **Export game data** in Settings: writes every finished game — with its full

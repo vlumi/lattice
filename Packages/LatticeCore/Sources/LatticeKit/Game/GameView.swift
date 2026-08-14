@@ -65,19 +65,6 @@ public struct GameView: View {
                     onHelp: { model.isShowingHowTo = true })
             }
             // At most one overlay at a time.
-            .overlay {
-                if showShortcuts && !isShowingNewGame {
-                    KeyboardCheatsheet(
-                        dismiss: { showShortcuts = false },
-                        onHowTo: {
-                            showShortcuts = false
-                            model.isShowingHowTo = true
-                        })
-                }
-            }
-            .overlay {
-                if isShowingNewGame { newGameModal }
-            }
             // Generating a seeded start takes a moment; the tap already closed
             // the modal, so say what's happening over the board. The outgoing
             // board stays visible but inert — it's about to be replaced.
@@ -93,6 +80,22 @@ public struct GameView: View {
             }
         }
         .padding()
+        // The modals overlay the WHOLE screen, not the board: as board overlays
+        // their dim stopped at the header and the tab bar, leaving pale bands
+        // around a supposedly-modal panel. Only one shows at a time.
+        .overlay {
+            if showShortcuts && !isShowingNewGame {
+                KeyboardCheatsheet(
+                    dismiss: { showShortcuts = false },
+                    onHowTo: {
+                        showShortcuts = false
+                        model.isShowingHowTo = true
+                    })
+            }
+        }
+        .overlay {
+            if isShowingNewGame { newGameModal }
+        }
         .onChangeCompat(of: session.isGenerating) { busy.update(busy: $0) }
         // Overlay dismissals live here at window level: hidden shortcut buttons
         // inside an .overlay/.popover don't reliably receive keys.

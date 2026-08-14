@@ -107,7 +107,13 @@ struct KeyboardCheatsheet: View {
             keyRow(["esc"], Text("Cancel", bundle: .module))
 
             Divider()
-            keyRow(["⌘1", "…", "⌘5"], Text("Switch tabs", bundle: .module))
+            // Keycaps, like every row above: balloons belong ON the control they
+            // drive, and a badge can't attach to a native tab item (SwiftUI drops
+            // any overlay inside `.tabItem`), so here they'd point at nothing.
+            // Spelled out rather than elided — there are only four, and "⌘1 … ⌘5"
+            // both overcounted (Settings is not a tab here) and made the reader
+            // guess the range.
+            keyRow(["⌘1", "⌘2", "⌘3", "⌘4"], Text("Switch tabs", bundle: .module))
             if let onHowTo {
                 Button(action: onHowTo) {
                     Label {
