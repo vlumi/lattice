@@ -7,29 +7,19 @@ history](README.md#version-history), full detail in
 indicative, not contractual, and everything before 1.0 is beta (internal
 TestFlight; see [RELEASING.md](RELEASING.md)).
 
-**v1.0.0 is in flight.** The game is feature-complete (0.5.0 shipped through
-build 9); what's left is store prep.
+**v1.0.0 is submitted for review.** The game is feature-complete and store prep
+is done; what's left is Apple's verdict.
 
 ---
 
 ## v1.0.0 — The store release
 
-- [ ] One ASC record (Universal Purchase), the privacy questionnaire
-      (nothing collected), and the screenshots themselves. The *plumbing* is
-      in: `Scripts/asc/listing.json` + `make asc-listing[-apply]` for the text,
-      `make demo-iphone|demo-ipad|demo-mac` for a seeded demo build, and
-      `Scripts/asc/SCREENSHOTS.md` for the shot list and sizes.
-      **Category** (set in the ASC web UI, not `listing.json` — the API uses a
-      different endpoint than `listing.py` covers): **Games → Puzzle**, second
-      subcategory **Board**. Morpion is unambiguously a puzzle (single-player,
-      deterministic, optimization); Board is the better second slot than
-      Strategy, whose browsers are after 4X and tower defence. This is separate
-      from the Info.plist `LSApplicationCategoryType` already set per platform.
-- [ ] Submit to public App Store review, release (spends the 1.0.0 version).
-      Paste `Scripts/asc/REVIEW-NOTES.md` into App Review Information ▸ Notes
-      first: Nearby is only reachable from the Versus tab and needs a second
-      device, so a reviewer testing alone sees a mode that appears to do
-      nothing — the same thing that drew questions on Donpa.
+- [ ] Await App Store review, then release (spends the 1.0.0 version).
+      Build 12 is selected for both platforms, with the listing, privacy
+      questionnaire, category (**Games → Puzzle**, second subcategory
+      **Board**), 21 screenshots and the review notes all in place. A build can
+      still be added while the version is in review — the version is only spent
+      once it's approved and released.
 
 ## Backlog (unversioned)
 
