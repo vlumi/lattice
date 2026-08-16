@@ -12,16 +12,13 @@ and that everything else is testable alone.
 ---
 
 ```
-Lattice Five is a single-player pen-and-paper puzzle (Morpion Solitaire).
-No account, no server, no data collection — everything is on-device.
+Lattice Five is a single-player pen-and-paper puzzle (Morpion Solitaire). No account, no server, no data collection — everything is on-device.
 
-Everything except one mode is fully testable on a single device: the Free,
-Daily, Versus (pass-and-play on one device) and History tabs.
+Everything except one mode is fully testable on a single device: the Free, Daily, Versus (pass-and-play on one device) and History tabs.
 
 NEARBY DUEL — needs two devices
-The one exception is "Nearby", an optional local-multiplayer mode. It uses
-Apple's MultipeerConnectivity over the local network (Wi-Fi/Bluetooth) —
-there is no server and no internet connection involved.
+
+The one exception is "Nearby", an optional local-multiplayer mode. It uses Apple's MultipeerConnectivity over the local network (Wi-Fi/Bluetooth) — there is no server and no internet connection involved.
 
 To reach it:
   1. Open the "Versus" tab.
@@ -31,9 +28,7 @@ To reach it:
      game appears under "Games nearby"; tap it to ask to join.
   5. Back on the host, accept under "Wants to join", then tap "Start".
 
-With only one device, the second device never appears and the lobby stays on
-"Looking for a game to join…" — that is expected, not a failure. iOS asks for
-Local Network permission on first use; discovery cannot work if it's declined.
+With only one device, the second device never appears and the lobby stays on "Looking for a game to join…" — that is expected, not a failure. iOS asks for Local Network permission on first use; discovery cannot work if it's declined.
 
 The app is a Universal Purchase: one binary family for iPhone, iPad and Mac.
 ```
