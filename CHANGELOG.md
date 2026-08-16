@@ -17,6 +17,8 @@ The store release.
 
 ### Unreleased (next build)
 
+### build 11 — 2026-08-16
+
 - The New Game screen now says what each variant is — "5T" means nothing on
   its own, so a line under the row explains whichever you've selected: the
   classic game, the relaxed one, the stricter one, or the shorter solved ones.
