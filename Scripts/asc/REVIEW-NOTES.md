@@ -42,9 +42,11 @@ The app is a Universal Purchase: one binary family for iPhone, iPad and Mac.
 
 ## Also worth knowing at submission
 
-- **Export compliance:** `ITSAppUsesNonExemptEncryption: false` is in both
-  targets' Info.plist, so uploads skip the prompt — but the version-level
-  question in ASC still has to be answered.
+- **Export compliance:** nothing to do. `ITSAppUsesNonExemptEncryption: false`
+  is in both targets' Info.plist, which is the whole declaration — uploads skip
+  the prompt and ASC asks nothing further. The compliance *document* upload only
+  applies to apps that use non-exempt encryption; Lattice uses none (Nearby and
+  iCloud ride Apple's own transport, which is exempt).
 - **Support URL** routes to the GitHub issue tracker, with no public email.
   Donpa ships the same arrangement and passed review; the private contact
   email belongs in App Review Information, not on the site.
