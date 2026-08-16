@@ -17,6 +17,9 @@ The store release.
 
 ### Unreleased (next build)
 
+- **Light or Dark, set in the app** — Settings ▸ Appearance, or leave it on
+  System to follow the device as before.
+
 ### build 11 — 2026-08-16
 
 - The New Game screen now says what each variant is — "5T" means nothing on

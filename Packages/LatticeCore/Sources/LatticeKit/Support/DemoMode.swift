@@ -31,10 +31,14 @@ public enum DemoMode {
 
     /// Defaults suite for settings, isolated the same way — otherwise a demo run
     /// would flip the real player's sound/haptics/sync switches.
-    public static var defaults: UserDefaults {
+    ///
+    /// Resolved ONCE: the wipe has to happen at launch, not per access. This is
+    /// also read from a view body (`defaultAppStorage`), which re-runs on every
+    /// update — wiping there would erase a setting the moment it was changed.
+    public static let defaults: UserDefaults = {
         guard isClean else { return .standard }
         let suite = UserDefaults(suiteName: "fi.misaki.lattice.demo")!
         suite.removePersistentDomain(forName: "fi.misaki.lattice.demo")
         return suite
-    }
+    }()
 }

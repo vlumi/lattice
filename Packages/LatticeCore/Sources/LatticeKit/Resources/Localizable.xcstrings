@@ -64,6 +64,9 @@
     "Allowed" : {
 
     },
+    "Appearance" : {
+
+    },
     "Back to Lobby" : {
 
     },
@@ -96,6 +99,9 @@
 
     },
     "Cycle the possible lines" : {
+
+    },
+    "Dark" : {
 
     },
     "Daily" : {
@@ -196,6 +202,9 @@
 
     },
     "Keyboard shortcuts" : {
+
+    },
+    "Light" : {
 
     },
     "Lattice Five Help" : {
@@ -393,6 +402,9 @@
 
     },
     "Sync" : {
+
+    },
+    "System" : {
 
     },
     "Tap an empty point to place a dot, and the lines it makes possible appear. Tap the one you want to draw it. The line can run in any of the four directions, and your new dot can sit anywhere along it — not just at the end." : {

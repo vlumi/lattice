@@ -91,7 +91,8 @@ make shots-list PLATFORM=iphone
 Seven shots (eight with Nearby). Capture order is chosen so **each is a couple
 of seconds from the last** — the demo stages the state, so every step is
 navigation, never "play a game to the end". The dark twin is last, so the
-system appearance is switched once, at the end.
+appearance is changed once, at the end — in **Settings ▸ Appearance**, not the
+system settings, so it's the same two taps on every platform.
 
 Two screens are deliberately left out. **Game over** only appears on a live
 finished board, so it would mean playing a game out, and the final score is
