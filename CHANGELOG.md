@@ -17,6 +17,8 @@ The store release.
 
 ### Unreleased (next build)
 
+### build 12 — 2026-08-16
+
 - **Light or Dark, set in the app** — Settings ▸ Appearance, or leave it on System to follow the device as before.
 
 ### build 11 — 2026-08-16
