@@ -130,6 +130,19 @@ release-upload:  ## Upload the already-built dist/ package (no rebuild)
 
 ##@ Demo & App Store screenshots
 ##~ Capture guide, sizes and the shot list: Scripts/asc/SCREENSHOTS.md
+##~ Shoot a set: make shots PLATFORM=iphone|ipad|mac → make asc-screenshots → -apply
+
+.PHONY: shots
+shots:  ## Guided screenshot capture: PLATFORM=iphone|ipad|mac [OUT=shots] [WITH_NEARBY=1]
+	@Scripts/shoot.sh
+
+.PHONY: shots-list
+shots-list:  ## Print the shot list and capture order: PLATFORM=iphone|ipad|mac
+	@Scripts/asc/run.sh organize $${PLATFORM:-iphone} --list
+
+.PHONY: shots-organize
+shots-organize:  ## Rename raw freehand screenshots by capture order: DIR=<folder> PLATFORM=iphone|ipad|mac
+	@Scripts/asc/run.sh organize $${PLATFORM:-iphone} $(DIR)
 
 .PHONY: demo-iphone
 demo-iphone:  ## Launch the iPhone simulator in demo mode (seeded data, isolated storage)
@@ -157,3 +170,11 @@ asc-listing:  ## Show what differs between listing.json and ASC (dry run)
 .PHONY: asc-listing-apply
 asc-listing-apply:  ## Push listing.json text to App Store Connect
 	@Scripts/asc/run.sh listing --apply
+
+.PHONY: asc-screenshots
+asc-screenshots:  ## Show what the shots/ tree would upload to the ASC listings (dry run)
+	@Scripts/asc/run.sh screens $(ARGS)
+
+.PHONY: asc-screenshots-apply
+asc-screenshots-apply:  ## Replace + upload the shots/ tree to the ASC listings
+	@Scripts/asc/run.sh screens --apply $(ARGS)

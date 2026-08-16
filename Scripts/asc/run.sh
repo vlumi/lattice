@@ -29,7 +29,8 @@ cmd="${1:-listing}"
 shift || true
 case "$cmd" in
     listing) exec "$PY" listing.py "$@" ;;
-    # Donpa's achievement/screenshot-upload scripts aren't copied: Lattice has no
-    # Game Center, and screenshots are captured by hand per SCREENSHOTS.md.
-    *) echo "usage: run.sh listing [args]" >&2; exit 2 ;;
+    organize) exec "$PY" organize-shots.py "$@" ;;
+    screens) exec "$PY" screenshots.py "$@" ;;
+    # Donpa's achievement scripts aren't copied: Lattice has no Game Center.
+    *) echo "usage: run.sh {listing|organize|screens} [args]" >&2; exit 2 ;;
 esac
