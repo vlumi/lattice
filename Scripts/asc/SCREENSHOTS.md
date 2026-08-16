@@ -75,7 +75,7 @@ Apple requires one set per display class:
 
 | class | device | portrait |
 |---|---|---|
-| iPhone 6.9" | iPhone 16 Pro Max / 16 Plus | 1320×2868 |
+| iPhone 6.9" | iPhone 16/17 **Pro Max** | 1320×2868 |
 | iPad 13" | iPad Pro 13" | 2064×2752 |
 | Mac | any | 2880×1800 (16:10) |
 
@@ -85,8 +85,9 @@ window to 1440×900 — which captures at 2880×1800 on a Retina display. Each s
 is size-checked as it's taken, so a wrong one is caught immediately rather than
 at upload with the whole set to redo.
 
-Capturing on the wrong device is the easy mistake: an iPhone SE gives 1170×2532
-and an iPad Air 1640×2360, both of which ASC refuses.
+Capturing on the wrong device is the easy mistake, and "close enough" models are
+the trap — a 16 **Plus** is 6.7", not 6.9", and gives 1290×2796. An SE gives
+1170×2532 and an iPad Air 1640×2360. ASC refuses all of them.
 
 ## The shots
 

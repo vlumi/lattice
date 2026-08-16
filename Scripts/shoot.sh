@@ -22,8 +22,10 @@ LIST_FLAGS=(--plain)
 # The devices ASC wants, NOT demo.sh's small fast defaults: a 6.9" iPhone and a
 # 13" iPad. Capturing on an SE or an Air yields images ASC refuses, which is
 # only discovered at upload — so pin them here and check every shot below.
+# Pro Max ONLY — the "Plus" is a 6.7" device and captures 1290x2796, which ASC
+# refuses for the 6.9" class. Measured, not assumed.
 case "$PLATFORM" in
-    iphone) export DEVICE_PATTERN='iPhone 16 Pro Max|iPhone 16 Plus'; EXPECT="1320x2868" ;;
+    iphone) export DEVICE_PATTERN='iPhone 1[6-9] Pro Max'; EXPECT="1320x2868" ;;
     ipad) export DEVICE_PATTERN='iPad Pro 13-inch'; EXPECT="2064x2752" ;;
     mac) EXPECT="2880x1800|1440x900" ;;
 esac
