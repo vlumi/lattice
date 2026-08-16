@@ -32,6 +32,10 @@ public enum DemoSeed {
         /// the fixtures below).
         var isDaily = false
 
+        /// Rotates the lookahead's candidate window, so fixtures sharing a board
+        /// play different games rather than prefixes of one another. See `play`.
+        var variation = 0
+
         /// The board to play: a seeded start when `seed` is set, else the
         /// variant's own standard pattern (the 4-in-a-row variants start from a
         /// smaller cross, so this can't just default to the standard one).
@@ -41,26 +45,33 @@ public enum DemoSeed {
         }
     }
 
+    /// Each standard-cross game gets its own `variation`, or they'd all be
+    /// prefixes of the longest one (the lookahead is deterministic per board).
     private static let games: [Fixture] = [
-        Fixture(variant: .fiveT, days: 34, target: 42),
-        Fixture(variant: .fiveT, days: 27, target: 55),
+        Fixture(variant: .fiveT, days: 34, target: 42, variation: 1),
+        Fixture(variant: .fiveT, days: 27, target: 55, variation: 2),
         Fixture(variant: .fiveD, days: 22, target: 31),
-        Fixture(variant: .fiveT, days: 18, target: 61),
+        Fixture(variant: .fiveT, days: 18, target: 61, variation: 3),
         Fixture(variant: .fourT, days: 13, target: 28),
         Fixture(variant: .fiveTPlus, days: 9, target: 74),
         // The two dailies: 5T on a seeded start, like the real thing, so they
         // score in the 5T# pool the chart and filter expect.
         Fixture(variant: .fiveT, days: 6, target: 52, seed: 20_260_806, isDaily: true),
-        Fixture(variant: .fiveT, days: 5, target: 68),
+        Fixture(variant: .fiveT, days: 5, target: 68, variation: 4),
         Fixture(variant: .fiveT, days: 2, target: 47, seed: 20_260_810, isDaily: true),
-        Fixture(variant: .fiveT, days: 1, target: 79),
+        Fixture(variant: .fiveT, days: 1, target: 79, variation: 5),
     ]
 
     /// Which fixture the in-progress Free board comes from, and how far in to cut
     /// it: far enough that the board reads as played (a real tangle of lines),
     /// short enough that plenty of playable points remain — a board that looks
     /// dead sells nothing.
-    private static let bestFixtureIndex = 9
+    ///
+    /// Not the best 5T game: that one is the personal-best ghost, and a live
+    /// board cut from it would trace the ghost exactly — two lines on top of
+    /// each other, which shows nothing. Its `variation` also has to differ
+    /// (see `play`), or a different index alone still yields the same game.
+    private static let inProgressFixtureIndex = 1
     private static let inProgressMoves = 34
 
     /// The committed fixture: one move list per game, in `games` order. Playing
@@ -76,7 +87,10 @@ public enum DemoSeed {
     /// Replays the fixture games from scratch — the generator's entry point, not
     /// used at launch. See Tests/GenerateDemoFixture.
     public static func playFixtureGames() -> [[Move]] {
-        games.map { play(rules: $0.variant, start: $0.start, upTo: $0.target).moves }
+        games.map {
+            play(rules: $0.variant, start: $0.start, upTo: $0.target, variation: $0.variation)
+                .moves
+        }
     }
 
     /// The demo's "today". Fixed, not `Date()`: History plots real dates and the
@@ -107,7 +121,9 @@ public enum DemoSeed {
             } else {
                 // No committed fixture (or a stale one) — play it live. Slow, but
                 // the demo still works rather than showing an empty app.
-                game = play(rules: spec.variant, start: spec.start, upTo: spec.target)
+                game = play(
+                    rules: spec.variant, start: spec.start, upTo: spec.target,
+                    variation: spec.variation)
             }
             store.saveRecord(
                 GameRecord(
@@ -133,10 +149,10 @@ public enum DemoSeed {
         // shot is the mid-game board, and it has to look like the game actually
         // looks — lines drawn, dots placed, the frontier of playable points still
         // open — rather than the empty start every screenshot of this genre uses.
-        // Reuses the strongest fixture game, cut off partway.
-        if let moves = committed?[safe: bestFixtureIndex] {
-            var inProgress = Game(
-                rules: games[bestFixtureIndex].variant, start: games[bestFixtureIndex].start)
+        // Reuses a fixture game, cut off partway.
+        let inProgressSpec = games[inProgressFixtureIndex]
+        if let moves = committed?[safe: inProgressFixtureIndex] {
+            var inProgress = Game(rules: inProgressSpec.variant, start: inProgressSpec.start)
             for move in moves.prefix(inProgressMoves) where inProgress.play(move) {}
             store.saveCurrent(GameSnapshot(game: inProgress, id: UUID()))
         }
@@ -154,14 +170,24 @@ public enum DemoSeed {
     /// candidate every move costs ~30s across the fixtures. Sampling gets scores
     /// in the 50s–70s in a few seconds. Deterministic: the sample is a fixed
     /// prefix, and ties break by index.
-    private static func play(rules: Rules, start: Set<Point>, upTo limit: Int) -> Game {
+    ///
+    /// `variation` rotates where the sample window starts, so two fixtures on the
+    /// SAME board play genuinely different games. Without it the search is fully
+    /// determined by the start, and every standard-cross fixture was a strict
+    /// prefix of the longest one — which made the personal-best ghost trace the
+    /// live curve exactly, comparing a game against itself.
+    private static func play(
+        rules: Rules, start: Set<Point>, upTo limit: Int, variation: Int = 0
+    ) -> Game {
         var game = Game(rules: rules, start: start)
         while game.score < limit {
             let moves = game.legalMoves()
             guard !moves.isEmpty else { break }
-            var best = moves[0]
+            let offset = variation % moves.count
+            let window = Array(moves[offset...] + moves[..<offset]).prefix(24)
+            var best = window[0]
             var bestOpenness = -1
-            for move in moves.prefix(24) {
+            for move in window {
                 var probe = game
                 guard probe.play(move) else { continue }
                 let openness = probe.legalMoves().count

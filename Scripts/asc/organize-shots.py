@@ -26,40 +26,32 @@ import sys
 # Canonical shots in capture order (see SCREENSHOTS.md — the recommended STORE
 # order differs; arrange at upload). Each: (name, needs_two_devices, what to
 # capture). `needs_two_devices` marks shots the demo seed can't stage alone.
+# Every shot is reachable in seconds from where the previous one left you —
+# the demo stages the state, so these are navigation, never "play a game".
 SHOTS = [
     ("mid-game", False,
-     "The Free tab as the demo opens it (34 moves in) — dots, drawn lines, the "
-     "faint pinpoints showing where a move is still possible. Zoom so the "
-     "board fills the frame with a little air around it. The shot that has to "
-     "carry the whole listing."),
-    ("mid-game-dark", False,
-     "The SAME board in Dark (system appearance): flip to Dark, re-frame, "
-     "capture, flip back to Light. One dark taster is enough."),
+     "Already on screen: the Free tab opens 34 moves in. Pinch/zoom so the "
+     "board fills the frame with a little air around it, then capture. The "
+     "shot that has to carry the whole listing."),
     ("choosing-a-line", False,
-     "Tap a placeable point so the candidate ghosts fan out, and capture "
-     "BEFORE committing. The one shot that explains the mechanic — a "
-     "placement offering several lines."),
-    ("game-over", False,
-     "Play to the end (or resume a finished replay) so the final panel with "
-     "the score and Share is visible. Shows there's an outcome to chase."),
+     "Tap any dot with a faint pinpoint — the candidate lines fan out. "
+     "Capture BEFORE committing. The one shot that explains the mechanic. "
+     "(Esc / tap away to clear it afterwards.)"),
     ("history", False,
-     "The History tab: the score-over-time chart across pools with the "
-     "running-best lines, and the recent-games list beneath (two rows read "
-     "'Daily'). Nothing else in the genre shows a curve like it."),
+     "Tap History. The chart and the recent-games list are already there — "
+     "two rows read 'Daily'. Nothing else in the genre shows a curve like it."),
     ("replay", False,
-     "Open a finished game from History and scrub to mid-game, so the board "
-     "and the openness chart are both visible. Where did the position peak "
-     "and die?"),
+     "Tap the top row in that list, then drag the scrubber to about halfway. "
+     "Board plus openness chart: where did the position peak and die?"),
     ("daily", False,
-     "The Daily tab: the day's fresh board with the streak in the header. "
-     "Doubles as the 'what you see on day one' shot."),
+     "Tap Daily. The day's fresh board, streak in the header — also the 'what "
+     "you see on day one' shot."),
     ("new-game", False,
-     "⌘N (or the header button) showing the variant row with its explanation "
-     "line, and Random Start. Proves breadth: 5T/5D/4T/4D/5T+ plus seeded "
-     "challenges."),
-    ("how-to-play", False,
-     "The illustrated rules, showing the segment-rule diagram. Reassures a "
-     "newcomer that the one hard rule is explained."),
+     "Back to Free, then the header's variant button (⌘N on Mac). Shows the "
+     "variant row with its explanation line and Random Start."),
+    ("mid-game-dark", False,
+     "Last, because it needs a system-appearance change: close the modal, "
+     "switch to Dark, re-frame as in shot 1, capture, switch back to Light."),
     ("nearby", True,
      "The duel board with live standings. Needs a second device — do it last, "
      "or skip for v1."),
@@ -106,9 +98,9 @@ def main():
         for i, (name, desc) in enumerate(shots, 1):
             print(f"  {i}. {name}-{platform}.png")
             print(f"     {desc}")
-        print("\nShots 1 (mid-game, Light) and 2 (mid-game-dark) are the same "
-              "board:\nshoot 1, switch the system appearance to Dark, shoot 2, "
-              "switch back,\nthen carry on. Everything else is Light.")
+        print("\nEverything is Light except the last shot (mid-game-dark), "
+              "which is\ndeliberately last so the appearance is switched once, "
+              "at the end.")
         print("\nThe Nearby duel needs a second device and is left out by "
               "default;\npass --with-nearby once you have two to hand.")
         print("\n`make shots PLATFORM=" + platform + "` captures straight to "
