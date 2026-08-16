@@ -16,3 +16,7 @@ DerivedData/
 # Release artifacts; .asc-config holds the (local) ASC API Key ID / Issuer ID.
 /dist/
 Scripts/.asc-config
+
+# Python bytecode from the ASC scripts
+__pycache__/
+*.pyc

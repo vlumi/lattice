@@ -10,8 +10,21 @@ so lead with the board and let the depth follow.
 ## Workflow
 
 ```sh
-make demo-iphone      # or demo-ipad / demo-mac
+make shots PLATFORM=iphone     # or ipad / mac — guided capture
+make asc-screenshots           # dry run: what would upload
+make asc-screenshots-apply     # replace + upload
 ```
+
+`make shots` launches the demo, then walks the list below one shot at a time:
+it prints what to stage, waits for ⏎, and captures for you — canonically named
+into `shots/<platform>/`, ready to upload. `r` retakes, `s` skips, `q` stops.
+
+The Nearby duel needs a second device and is left out by default; add it with
+`WITH_NEARBY=1` once you have two to hand.
+
+To stage a board by hand instead, `make demo-iphone` (or `demo-ipad` /
+`demo-mac`) just launches the demo; capture freehand and then rename by capture
+order with `make shots-organize DIR=<folder> PLATFORM=iphone`.
 
 The demo launches with seeded data, staged so each tab shows what it should:
 
@@ -28,14 +41,16 @@ Dates are **fixed**, not wall-clock, so the chart and the recent-games list read
 identically whether you capture today or next week. Identical on every device —
 switch screens, capture, move to the next device, get the same content.
 
-Then capture per the list below:
+Capturing by hand instead of with `make shots`:
 
 - **Simulators:** `xcrun simctl io <udid> screenshot shots/<name>.png`
   (the launcher prints the exact command with the udid filled in).
 - **Mac:** ⇧⌘4 then Space to grab the window, or `screencapture -o -w out.png`.
 
-Save into `shots/<platform>/<name>.png`. Nothing renames or uploads yet — this
-is the handoff for the ASC upload.
+Save into `shots/<platform>/<name>-<platform>.png` — that's the name
+`asc-screenshots` looks for. Wrong-sized captures are refused before anything
+is uploaded, since ASC accepts them and then fails processing, which blocks
+submission.
 
 ### Demo isolation
 

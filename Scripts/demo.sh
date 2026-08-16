@@ -45,6 +45,9 @@ case "$PLATFORM" in
         xcrun simctl install "$udid" "$app"
         xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null || true
         xcrun simctl launch "$udid" "$BUNDLE" "${ARGS[@]}"
+        # So a caller (Scripts/shoot.sh) can capture from THIS device rather
+        # than `booted`, which picks arbitrarily with several sims open.
+        [ -n "${LATTICE_UDID_FILE:-}" ] && echo "$udid" > "$LATTICE_UDID_FILE"
         echo "Screenshot with: xcrun simctl io $udid screenshot shot.png"
         ;;
     *)
