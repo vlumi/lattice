@@ -79,6 +79,15 @@ Apple requires one set per display class:
 | iPad 13" | iPad Pro 13" | 2064×2752 |
 | Mac | any | 2880×1800 (16:10) |
 
+`make shots` pins all of this: it boots those exact simulators (not the smaller,
+faster ones `make demo-iphone` uses), and in demo mode the Mac app fixes its
+window to 1440×900 — which captures at 2880×1800 on a Retina display. Each shot
+is size-checked as it's taken, so a wrong one is caught immediately rather than
+at upload with the whole set to redo.
+
+Capturing on the wrong device is the easy mistake: an iPhone SE gives 1170×2532
+and an iPad Air 1640×2360, both of which ASC refuses.
+
 ## The shots
 
 The list lives in `organize-shots.py`, so one table drives this guide, the

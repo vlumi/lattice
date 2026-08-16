@@ -32,8 +32,12 @@ case "$PLATFORM" in
         open -n "$app" --args "${ARGS[@]}"
         ;;
     iphone | ipad)
+        # Small, fast simulators by default — a dev demo doesn't need a 13" iPad.
+        # DEVICE_PATTERN overrides it; Scripts/shoot.sh pins the store sizes,
+        # which these deliberately are NOT (see Scripts/asc/SCREENSHOTS.md).
         pattern='iPhone 16e|iPhone SE'
         [ "$PLATFORM" = ipad ] && pattern='iPad Pro|iPad Air'
+        [ -n "${DEVICE_PATTERN:-}" ] && pattern="$DEVICE_PATTERN"
         udid="$(pick_udid "$pattern")"
         [ -n "$udid" ] || { echo "No $PLATFORM simulator found." >&2; exit 1; }
         make build-ios
