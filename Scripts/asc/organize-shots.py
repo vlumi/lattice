@@ -49,12 +49,9 @@ SHOTS = [
     ("new-game", False,
      "Back to Free, then the header's variant button (⌘N on Mac). Shows the "
      "variant row with its explanation line and Random Start."),
-    ("how-to-play", False,
-     "The ? button on the board (⌘? on Mac), then scroll to the segment-rule "
-     "diagram — the one hard rule, explained."),
     ("mid-game-dark", False,
-     "Last, because it needs a system-appearance change: switch to Dark, go "
-     "back to Free, re-frame as in shot 1, capture, switch back to Light."),
+     "Last, because it needs a system-appearance change: close the modal, "
+     "switch to Dark, re-frame as in shot 1, capture, switch back to Light."),
     ("nearby", True,
      "The duel board with live standings. Needs a second device — do it last, "
      "or skip for v1."),

@@ -88,24 +88,26 @@ The list lives in `organize-shots.py`, so one table drives this guide, the
 make shots-list PLATFORM=iphone
 ```
 
-Eight shots (nine with Nearby). Capture order is chosen so **each is a couple of
-seconds from the last** — the demo stages the state, so every step is
+Seven shots (eight with Nearby). Capture order is chosen so **each is a couple
+of seconds from the last** — the demo stages the state, so every step is
 navigation, never "play a game to the end". The dark twin is last, so the
 system appearance is switched once, at the end.
 
-There is deliberately **no game-over shot**: that panel only appears on a live
-finished board, so it would mean playing a game out — and the final score is
-already visible in History and the replay.
+Two screens are deliberately left out. **Game over** only appears on a live
+finished board, so it would mean playing a game out, and the final score is
+already in History and the replay. **How to play** is documentation — nobody
+downloads a game because its rules are explained well, and the segment rule
+reads as homework in a carousel.
 
 **Store order ≠ capture order.** In ASC, arrange by persuasion — the first three
 carry it:
 
 > **mid-game board · choosing a line · History**
 
-then daily, replay, new-game, how-to-play, nearby, and the dark twin last.
+then daily, replay, new-game, nearby, and the dark twin last.
 `make asc-screenshots` uploads in that order automatically.
 
-Don't lead with How to play or the New Game modal: a picker doesn't sell a game.
+Don't lead with the New Game modal: a picker doesn't sell a game.
 
 ## Captions (optional, added in ASC)
 
