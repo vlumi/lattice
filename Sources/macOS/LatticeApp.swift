@@ -12,6 +12,11 @@ struct LatticeApp: App {
         WindowGroup {
             RootView(model: model)
                 .frame(minWidth: 480, minHeight: 520)
+                .onAppear {
+                    // Demo mode pins a fixed window, so every screenshot pass
+                    // captures at the same ASC-accepted size.
+                    if DemoMode.isSeeded { WindowSizer.fixToScreenshotSize() }
+                }
         }
         .commands {
             LatticeCommands(model: model)
