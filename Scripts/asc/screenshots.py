@@ -28,8 +28,8 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 
 # The carousel sells in this order — capture order is staging convenience only.
 # Don't lead with How to play or New Game — a picker doesn't sell a game.
-STORE_ORDER = ["mid-game", "choosing-a-line", "history", "game-over", "daily",
-               "replay", "new-game", "how-to-play", "nearby", "mid-game-dark"]
+STORE_ORDER = ["mid-game", "choosing-a-line", "history", "daily", "replay",
+               "new-game", "how-to-play", "nearby", "mid-game-dark"]
 
 # platform dir → (ASC version platform, screenshot display type)
 PLATFORMS = {

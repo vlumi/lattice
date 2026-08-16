@@ -130,3 +130,30 @@ extension DemoSeedTests {
         XCTAssertEqual(store.loadDailyLog().streak(today: DailyChallenge.dateKey()), 5)
     }
 }
+
+extension DemoSeedTests {
+    /// The Free board's curve must not trace the personal-best ghost. Cutting
+    /// the live board from the best game drew both lines on top of each other,
+    /// so the chart compared a game against itself and showed nothing.
+    func testLiveCurveDivergesFromTheGhost() throws {
+        let store = LatticeStore.ephemeral()
+        DemoSeed.apply(
+            store: store, defaults: UserDefaults(suiteName: "t.\(UUID().uuidString)")!)
+
+        let live = try XCTUnwrap(Game(snapshot: try XCTUnwrap(store.loadCurrent())))
+        let ghost = try XCTUnwrap(
+            store.loadRecords()
+                .filter { $0.variantKey == live.rules.variantKey(forStart: live.start) }
+                .max { $0.score < $1.score })
+        XCTAssertGreaterThan(
+            ghost.score, live.score, "the ghost has to be a game worth chasing")
+
+        let liveCurve = live.opennessCurve()
+        let ghostCurve = ghost.legalMoveCurve()
+        let overlap = min(liveCurve.count, ghostCurve.count)
+        let shared = zip(liveCurve, ghostCurve).prefix { $0 == $1 }.count
+        XCTAssertLessThan(
+            shared, overlap / 2,
+            "the curves must part well inside the visible chart, not near its end")
+    }
+}
