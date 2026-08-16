@@ -149,11 +149,11 @@ public struct GameView: View {
         // Keep the menu's availability for the active tab in sync.
         .onChangeCompat(of: menuAvailability) { _ in publishAvailability() }
         .onAppear { publishAvailability() }
-        .sheet(isPresented: $isShowingNearby) {
+        .appearanceSheet(isPresented: $isShowingNearby) {
             NearbyDuelView(name: PlayerName.current(), bests: session.bests)
         }
         #if os(iOS)
-        .sheet(isPresented: $isScanning) {
+        .appearanceSheet(isPresented: $isScanning) {
             NavigationStack {
                 CodeScannerView { payload in
                     // The QR encodes the universal link; accept a bare

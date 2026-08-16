@@ -50,8 +50,9 @@ SHOTS = [
      "Back to Free, then the header's variant button (⌘N on Mac). Shows the "
      "variant row with its explanation line and Random Start."),
     ("mid-game-dark", False,
-     "Last, because it needs a system-appearance change: close the modal, "
-     "switch to Dark, re-frame as in shot 1, capture, switch back to Light."),
+     "Settings ▸ Appearance ▸ Dark, back to Free, re-frame as in shot 1, "
+     "capture, then set Appearance back to System. Last because it's the one "
+     "shot that changes a setting."),
     ("nearby", True,
      "The duel board with live standings. Needs a second device — do it last, "
      "or skip for v1."),
@@ -99,8 +100,8 @@ def main():
             print(f"  {i}. {name}-{platform}.png")
             print(f"     {desc}")
         print("\nEverything is Light except the last shot (mid-game-dark), "
-              "which is\ndeliberately last so the appearance is switched once, "
-              "at the end.")
+              "which flips\nSettings \u25b8 Appearance \u2014 no trip through "
+              "the system settings needed.")
         print("\nThe Nearby duel needs a second device and is left out by "
               "default;\npass --with-nearby once you have two to hand.")
         print("\n`make shots PLATFORM=" + platform + "` captures straight to "

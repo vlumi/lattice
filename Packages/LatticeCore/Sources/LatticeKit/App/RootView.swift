@@ -11,6 +11,8 @@ public struct RootView: View {
     /// "?" reveals keyboard shortcuts app-wide (the board cheatsheet + the
     /// floating-control badges in GameView).
     @State private var showShortcuts = false
+    @AppStorage(AppearancePreference.defaultsKey) private var appearance = AppearancePreference
+        .system
 
     public init(model: AppModel) {
         self.model = model
@@ -58,6 +60,14 @@ public struct RootView: View {
         #if os(macOS)
         .background(ShortcutToggle(showShortcuts: $showShortcuts))
         #endif
+        // Point every @AppStorage at the demo-aware suite. Sound, haptics and
+        // appearance are read through @AppStorage but the demo hands its
+        // isolated defaults to Feedback and SyncController, so without this a
+        // demo run would read and write the REAL player's switches.
+        .defaultAppStorage(DemoMode.defaults)
+        // The app-wide appearance override. Sheets don't inherit it (see
+        // appearanceSheet), so each is pinned separately.
+        .preferredColorScheme(appearance.colorScheme)
         // Board feedback (sound + haptics) available to the board views.
         .environmentObject(model.feedback)
         // Arriving at History (a tab tap, ⌘4, or the View menu — any route that
@@ -69,17 +79,17 @@ public struct RootView: View {
         // menu, via the app's command). A sheet can't be orphaned or outlive
         // the game, unlike a separate Settings window. iOS uses the tab above.
         #if os(macOS)
-        .sheet(isPresented: $model.isShowingSettings) {
+        .appearanceSheet(isPresented: $model.isShowingSettings) {
             SettingsScene(model: model, done: { model.isShowingSettings = false })
         }
         #endif
         // About: the macOS app menu opens it here; the Settings row on both
         // platforms presents its own copy from inside that sheet/tab.
-        .sheet(isPresented: $model.isShowingAbout) {
+        .appearanceSheet(isPresented: $model.isShowingAbout) {
             AboutSheet(dismiss: { model.isShowingAbout = false })
         }
         // Help: the macOS Help menu (⌘?) and the iOS Settings row both land here.
-        .sheet(isPresented: $model.isShowingHowTo) {
+        .appearanceSheet(isPresented: $model.isShowingHowTo) {
             HowToPlaySheet(dismiss: { model.isShowingHowTo = false })
         }
         // Universal Links: a challenge link starts its board in Free.

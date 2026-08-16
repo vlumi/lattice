@@ -18,10 +18,12 @@ struct SettingsView: View {
     // Feedback's; the live players are updated on change.
     @AppStorage(Feedback.soundDefaultsKey) private var soundOn = false
     @AppStorage(Feedback.hapticsDefaultsKey) private var hapticsOn = true
+    @AppStorage(AppearancePreference.defaultsKey) private var appearance = AppearancePreference
+        .system
 
     // Keyboard row cursor: Up/Down move, Space toggles the focused row.
-    private enum Row: Int, CaseIterable { case sound, haptics, sync, reset }
-    @State private var cursor: Row = .sound
+    private enum Row: Int, CaseIterable { case appearance, sound, haptics, sync, reset }
+    @State private var cursor: Row = .appearance
     /// The row ring is a keyboard affordance — hidden until a key is used, so a
     /// pointer user never sees an unexplained outline. See NewGameModal.
     @State private var keyboardActive = false
@@ -44,8 +46,21 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            // First — the quickest setting to reach; sound is a bit more
-            // prominent than the buried haptics toggle below it.
+            Section {
+                Picker(selection: $appearance) {
+                    ForEach(AppearancePreference.allCases) { option in
+                        Text(option.label, bundle: .module).tag(option)
+                    }
+                } label: {
+                    Text("Appearance", bundle: .module)
+                }
+                .pickerStyle(.segmented)
+                .rowCursor(keyboardActive && cursor == .appearance)
+            } header: {
+                Text("Appearance", bundle: .module)
+            }
+            // Sound is a bit more prominent than the buried haptics toggle
+            // below it.
             Section {
                 Toggle(isOn: $soundOn) {
                     Text("Sound effects", bundle: .module)
@@ -168,10 +183,10 @@ struct SettingsView: View {
         ) { _ in
             exportDocument = nil
         }
-        .sheet(isPresented: $showAbout) {
+        .appearanceSheet(isPresented: $showAbout) {
             AboutSheet(dismiss: { showAbout = false })
         }
-        .sheet(isPresented: $showHowTo) {
+        .appearanceSheet(isPresented: $showHowTo) {
             HowToPlaySheet(dismiss: { showHowTo = false })
         }
         #if os(macOS)
@@ -203,6 +218,11 @@ struct SettingsView: View {
 
     private func activate() {
         switch cursor {
+        // Not a toggle — Space steps to the next option and wraps.
+        case .appearance:
+            let all = AppearancePreference.allCases
+            let next = (all.firstIndex(of: appearance).map { $0 + 1 } ?? 0) % all.count
+            appearance = all[next]
         case .sound: soundOn.toggle()
         case .haptics: hapticsOn.toggle()
         case .sync: if sync.isAvailable { sync.isOn.toggle() }
