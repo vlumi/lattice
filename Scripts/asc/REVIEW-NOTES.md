@@ -9,6 +9,13 @@ multiplayer — a reviewer testing on one device sees a mode that appears to do
 nothing. The fix is to say plainly where it is, that it needs a second device,
 and that everything else is testable alone.
 
+**Both apps also tripped the automated `com.apple.security.network.server`
+check**, which flags the entitlement when it "does not appear to have matching
+functionality". The entitlement IS required: hosting a Nearby duel advertises a
+Bonjour service and accepts incoming connections, which the App Sandbox blocks
+without it. Keep the explanation in the notes block below — the scan runs on
+every submission, so leaving it out invites the same rejection next release.
+
 ---
 
 ```
@@ -29,6 +36,14 @@ To reach it:
   5. Back on the host, accept under "Wants to join", then tap "Start".
 
 With only one device, the second device never appears and the lobby stays on "Looking for a game to join…" — that is expected, not a failure. iOS asks for Local Network permission on first use; discovery cannot work if it's declined.
+
+WHY THE MAC APP NEEDS com.apple.security.network.server
+
+Hosting a Nearby duel is the functionality that uses it. When a player taps "Advertise" in step 3 above, the Mac app becomes the host: it publishes a Bonjour service (_lattice-duel._tcp/._udp, declared in NSBonjourServices) via MCNearbyServiceAdvertiser and then LISTENS FOR AND ACCEPTS INCOMING connections from other players' devices — MCNearbyServiceAdvertiserDelegate's didReceiveInvitationFromPeer is what handles each join request, which the host approves under "Wants to join".
+
+That is an incoming-connection listener, so the App Sandbox denies it without com.apple.security.network.server. With only the client entitlement, a Mac can join a game hosted elsewhere but can never host one, and the "Advertise" button silently fails to attract any joiner.
+
+Both entitlements are needed because either device can take either role: client for browsing and joining (MCNearbyServiceBrowser), server for hosting. Nothing is exposed to the internet — MultipeerConnectivity is peer-to-peer over the local link (Wi-Fi/AWDL/Bluetooth) only, there is no server software, no open port for general traffic, and no connection leaves the local network.
 
 The app is a Universal Purchase: one binary family for iPhone, iPad and Mac.
 ```
