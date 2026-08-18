@@ -52,6 +52,13 @@ build-ios: Lattice.xcodeproj  ## Build the iOS app (simulator, unsigned)
 icon:  ## Regenerate the app icon assets from IconArt (deterministic)
 	@Scripts/gen-icon.sh
 
+.PHONY: icon-svg
+icon-svg:  ## Emit the icon as SVG for the website (OUT=dir, default ../lattice-site/static)
+	@out="$$(cd "$${OUT:-../lattice-site/static}" && pwd)"; \
+	LATTICE_ICON_SVG="$$out/icon.svg" LATTICE_ICON_SVG_SMALL="$$out/favicon.svg" \
+		swift test --package-path Packages/LatticeCore \
+		--filter "IconRender/testRenderIconSVG" 2>&1 | grep -E "wrote " || true
+
 .PHONY: sounds
 sounds:  ## Regenerate the sound effects from make-sounds.swift (deterministic)
 	@Scripts/gen-sounds.sh
