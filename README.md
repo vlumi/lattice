@@ -3,11 +3,15 @@
 [![CI](https://github.com/vlumi/lattice/actions/workflows/ci.yml/badge.svg)](https://github.com/vlumi/lattice/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/vlumi/lattice/branch/main/graph/badge.svg)](https://codecov.io/gh/vlumi/lattice)
 
+**[Download on the App Store](https://apps.apple.com/app/id6792997007)** ·
+[lattice.misaki.fi](https://lattice.misaki.fi)
+
 A procedural, turn-based puzzle game for Apple platforms — a digital
 **Morpion Solitaire** (a.k.a. *Join Five*).
 
-> **Status: feature-complete, preparing for the App Store** (v1.0.0, in
-> TestFlight). See [CHANGELOG.md](CHANGELOG.md) for the full version detail,
+> **Released** on the App Store for iPhone, iPad and Mac — one Universal
+> Purchase. No version number here on purpose: it would go stale on the first
+> patch. See [CHANGELOG.md](CHANGELOG.md) for what shipped when,
 > [ROADMAP.md](ROADMAP.md) for what's next, and [AGENTS.md](AGENTS.md) for the
 > architecture and conventions.
 
@@ -55,10 +59,14 @@ Modes (single-player is the main focus):
 High-level only — see [CHANGELOG.md](CHANGELOG.md) for the full detail
 (and which TestFlight build each piece landed in).
 
-### 1.0.0 — the store release *(in progress)*
+### 1.0.0 — the store release
 
-No gameplay changes: the game is feature-complete at 0.5.0 build 9, and 1.0.0
-is store preparation — the listing, the screenshots and review.
+The first public release. Little of it is gameplay — the game was
+feature-complete at 0.5.0 build 9, and 1.0.0 was mostly store work (the listing,
+the screenshots, review) — but it also brought an in-app **Light/Dark setting**,
+**data export** in Settings, variant explanations on the New Game screen,
+dailies labelled as such in History, and a dead-gap rule corrected in both
+directions.
 
 ### 0.5.0 — two-player, sync & first TestFlight
 
