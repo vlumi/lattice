@@ -508,6 +508,12 @@ translations do arrive.
   unpinned install follows latest and can redden CI on untouched code);
   swift-format ships with the pinned Xcode toolchain.
 - **`.vscode/` is gitignored** and must not be pushed.
+- **No version numbers in prose that isn't about a specific version.** The
+  README's status line says "released", not "v1.0.0 is released": a number there
+  has to be remembered on every patch, and won't be. Donpa's README still
+  enumerates versions in its intro while shipping 1.0.2. Version detail belongs
+  in CHANGELOG.md, and per-version README entries describe what that release
+  did — not what is currently on the store.
 
 ## Pull requests & CI (carried from Donpa)
 

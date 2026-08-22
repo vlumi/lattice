@@ -9,10 +9,11 @@
 A procedural, turn-based puzzle game for Apple platforms — a digital
 **Morpion Solitaire** (a.k.a. *Join Five*).
 
-> **Status: released** — v1.0.0 is on the App Store for iPhone, iPad and Mac
-> (one Universal Purchase). See [CHANGELOG.md](CHANGELOG.md) for the full
-> version detail, [ROADMAP.md](ROADMAP.md) for what's next, and
-> [AGENTS.md](AGENTS.md) for the architecture and conventions.
+> **Released** on the App Store for iPhone, iPad and Mac — one Universal
+> Purchase. No version number here on purpose: it would go stale on the first
+> patch. See [CHANGELOG.md](CHANGELOG.md) for what shipped when,
+> [ROADMAP.md](ROADMAP.md) for what's next, and [AGENTS.md](AGENTS.md) for the
+> architecture and conventions.
 
 ## The game
 
@@ -60,12 +61,12 @@ High-level only — see [CHANGELOG.md](CHANGELOG.md) for the full detail
 
 ### 1.0.0 — the store release
 
-On the App Store for iPhone, iPad and Mac. Little of it is gameplay — the game
-was feature-complete at 0.5.0 build 9, and 1.0.0 was mostly store work (the
-listing, the screenshots, review) — but it also brought an in-app **Light/Dark
-setting**, **data export** in Settings, variant explanations on the New Game
-screen, dailies labelled as such in History, and a dead-gap rule corrected in
-both directions.
+The first public release. Little of it is gameplay — the game was
+feature-complete at 0.5.0 build 9, and 1.0.0 was mostly store work (the listing,
+the screenshots, review) — but it also brought an in-app **Light/Dark setting**,
+**data export** in Settings, variant explanations on the New Game screen,
+dailies labelled as such in History, and a dead-gap rule corrected in both
+directions.
 
 ### 0.5.0 — two-player, sync & first TestFlight
 

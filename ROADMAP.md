@@ -4,22 +4,13 @@
 history](README.md#version-history), full detail in
 [CHANGELOG.md](CHANGELOG.md); settled rules and design decisions in
 [AGENTS.md](AGENTS.md). This file is only *what's next* — versions are
-indicative, not contractual, and everything before 1.0 is beta (internal
-TestFlight; see [RELEASING.md](RELEASING.md)).
+indicative, not contractual (see [RELEASING.md](RELEASING.md) for how a build
+is cut).
 
-**v1.0.0 is submitted for review.** The game is feature-complete and store prep
-is done; what's left is Apple's verdict.
+**Shipped.** The game is on the App Store for iPhone, iPad and Mac; everything
+below is unscheduled.
 
 ---
-
-## v1.0.0 — The store release
-
-- [ ] Await App Store review, then release (spends the 1.0.0 version).
-      Build 12 is selected for both platforms, with the listing, privacy
-      questionnaire, category (**Games → Puzzle**, second subcategory
-      **Board**), 21 screenshots and the review notes all in place. A build can
-      still be added while the version is in review — the version is only spent
-      once it's approved and released.
 
 ## Backlog (unversioned)
 
