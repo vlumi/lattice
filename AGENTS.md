@@ -523,7 +523,9 @@ translations do arrive.
   has to be remembered on every patch, and won't be. Donpa's README still
   enumerates versions in its intro while shipping 1.0.2. Version detail belongs
   in CHANGELOG.md, and per-version README entries describe what that release
-  did — not what is currently on the store.
+  did — not what is currently on the store. **Patch releases get no README
+  entry at all**: the version history is minor versions only, and a fix or two
+  is what the changelog is for.
 
 ## Pull requests & CI (carried from Donpa)
 
