@@ -115,7 +115,16 @@ turns — sits on top of this pure, headless-testable core.
    the line commits the move.
 
 **Cancel needs no mechanism**: before selection, tap the tentative dot again,
-tap empty board, or Esc (macOS) — nothing was committed.
+tap empty board, or Esc (macOS) — nothing was committed. (A Cancel button sits
+in the header too, for discoverability.)
+
+**The scrub zone.** A pending dot claims only its own neighbourhood: a drag or
+tap starting within ~1.2 cells of a candidate ghost or the tentative dot is a
+scrub, and everything further out is still the board's — it pans when zoomed
+in, and a tap there cancels. The pending choice used to own the WHOLE board,
+which made it a mode you were stuck in, escapable only via the button. The
+reach is deliberately generous: a scrub that selects nothing costs far less
+than the board panning out from under a choice.
 
 ### Undo (policy per mode; engine keeps the full move stack for replays)
 
@@ -237,8 +246,9 @@ covers the same keys with depth. Complementary, not alternatives.
 Touch has a **feel-sweep**: dragging over empty board buzzes on points you can
 play and stays silent elsewhere (`BoardView.feel`), lifting places on one. One
 unambiguous cue against silence — three graded intensities are not tellable
-apart under a moving finger. Never while a dot is tentative: that whole drag
-belongs to choosing a candidate line. It's free
+apart under a moving finger. Not while a dot is tentative and the drag starts
+near the offered lines — that gesture belongs to choosing among them (see
+"scrub zone" below). It's free
 at fit zoom — `clampPan` returns zero there, so a drag had nothing to do — and
 needs a long press to arm when zoomed, where panning owns the plain drag. Note
 the keyboard cursor's haptics are macOS-dead (no Taptic Engine); touch is where

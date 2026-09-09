@@ -59,6 +59,11 @@ Modes (single-player is the main focus):
 High-level only — see [CHANGELOG.md](CHANGELOG.md) for the full detail
 (and which TestFlight build each piece landed in).
 
+### 1.0.1 — choosing a line
+
+A pending dot no longer owns the whole board: away from the offered lines you
+can pan as usual, and a tap out there cancels.
+
 ### 1.0.0 — the store release
 
 The first public release. Little of it is gameplay — the game was
