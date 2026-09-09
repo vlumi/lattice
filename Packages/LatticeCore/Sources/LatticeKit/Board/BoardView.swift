@@ -197,13 +197,35 @@ public struct BoardView: View {
     /// 1), so a drag over empty board is free to be a feel-sweep; zoomed in,
     /// panning wins unless a long press armed the sweep first.
     ///
-    /// While a dot is tentative the drag is ALWAYS a scrub: the whole gesture
-    /// belongs to choosing among that dot's candidate lines, including the part
-    /// of it that passes over empty board between the ghosts.
+    /// While a dot is tentative, a drag STARTING near the candidates is a
+    /// scrub — the gesture belongs to choosing among them, including the part
+    /// that passes over empty board between the ghosts. Starting well away is
+    /// not: the board still pans, and a tap out there cancels (see
+    /// `handleTap`). Owning the whole board made a tentative dot feel like a
+    /// mode you were stuck in, cancellable only via the corner button.
     private func mode(startingAt location: CGPoint, _ layout: Layout) -> DragMode {
-        if session.tentative != nil { return .scrub }
+        if session.tentative != nil { return inScrubZone(location, layout) ? .scrub : .pan }
         if target(at: location, layout) != nil { return .scrub }
         return camera.zoom <= 1 || feelArmed ? .feel : .pan
+    }
+
+    /// Whether a location is close enough to the pending choice to be part of
+    /// it: near a candidate ghost, or near the tentative dot itself. The
+    /// margin is generous — a finger is wide, and the cost of being slightly
+    /// too eager (a scrub that selects nothing) is far lower than of being too
+    /// strict (a scrub that pans the board out from under you).
+    func inScrubZone(_ location: CGPoint, _ layout: Layout) -> Bool {
+        let reach = layout.cell * 1.2
+        if let dot = session.tentative,
+            hypot(
+                location.x - layout.position(of: dot).x,
+                location.y - layout.position(of: dot).y) <= reach
+        {
+            return true
+        }
+        return ghostGeometry(layout).contains { ghost in
+            layout.distance(from: location, toSegment: ghost.a, ghost.b) <= reach
+        }
     }
 
     /// Tick as the sweep crosses a point you can actually play, and stay silent
