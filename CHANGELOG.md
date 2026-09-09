@@ -11,11 +11,15 @@ collects entries merged to `main` but not yet in a TestFlight build; cutting a
 release renames it to that build's heading and opens a fresh empty one. A
 user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
+## [1.0.1]
+
+### Unreleased (next build)
+
+- Choosing a line no longer traps you. While a dot is pending, the board can be dragged and panned as usual anywhere away from the offered lines, and a tap out there cancels — it used to ignore both, leaving the Cancel button in the corner as the only way out. Scrubbing between the lines works as before, close to them.
+
 ## [1.0.0]
 
 The store release.
-
-### Unreleased (next build)
 
 ### build 12 — 2026-08-16
 
