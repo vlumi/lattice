@@ -15,6 +15,8 @@ user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
 ### Unreleased (next build)
 
+### build 13 — 2026-09-09
+
 - Choosing a line no longer traps you. While a dot is pending, the board can be dragged and panned as usual anywhere away from the offered lines, and a tap out there cancels — it used to ignore both, leaving the Cancel button in the corner as the only way out. Scrubbing between the lines works as before, close to them.
 
 ## [1.0.0]
