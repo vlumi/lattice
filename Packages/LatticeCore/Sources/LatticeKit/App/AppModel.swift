@@ -80,6 +80,11 @@ public final class AppModel: ObservableObject {
         dailySession.reloadSyncedState()
     }
 
+    /// The date may have changed while the app ran — move the daily on.
+    public func rollOverDay() {
+        dailySession.rollOverDay()
+    }
+
     /// Erase all progress: bests, replays, the daily log and streak, and any
     /// game in progress. Settings (sound, haptics, sync opt-in) survive — they're
     /// preferences, not progress.

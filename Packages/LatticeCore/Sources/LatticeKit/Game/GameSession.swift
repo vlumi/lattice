@@ -173,6 +173,19 @@ public final class GameSession: ObservableObject {
         opennessHistory = [totalLegalMoves]
     }
 
+    /// Daily: move on to the current date's challenge once the date has
+    /// changed under a running app. Midnight is a hard deadline — a
+    /// half-played board goes with its day, as it would on a relaunch.
+    public func rollOverDay(now: Date = Date()) {
+        let todayKey = DailyChallenge.dateKey(for: now)
+        guard mode == .daily, todayKey != dateKey else { return }
+        dateKey = todayKey
+        undoArmed = false
+        dailyLog = store.loadDailyLog()
+        let resolved = Self.resolve(mode: mode, rules: game.rules, store: store, todayKey: todayKey)
+        start(resolved.game, seed: nil, id: resolved.id)
+    }
+
     /// The openness curve of the highest-scoring stored game in this
     /// scoring pool, if any.
     private static func bestCurve(in store: LatticeStore, key: String) -> [Int]? {
@@ -216,6 +229,11 @@ public final class GameSession: ObservableObject {
 
     public var dailyLongestStreak: Int {
         dailyLog.longestStreak()
+    }
+
+    /// When the daily on the board closes; nil outside the daily.
+    public var dailyDeadline: Date? {
+        mode == .daily ? DailyChallenge.deadline(for: dateKey) : nil
     }
 
     /// The daily's date key, for captions; nil in free mode.
@@ -340,7 +358,7 @@ public final class GameSession: ObservableObject {
         }
     }
 
-    private func start(_ newGame: Game, seed: UInt64?) {
+    private func start(_ newGame: Game, seed: UInt64?, id: UUID = UUID()) {
         // Snapshot the outgoing game so an undo can recover it — but only if it
         // was actually in progress (a fresh, unplayed board isn't worth
         // "restoring"). Free/versus only; the daily can't restart.
@@ -350,7 +368,7 @@ public final class GameSession: ObservableObject {
             : nil
         game = newGame
         self.seed = seed
-        gameID = UUID()
+        gameID = id
         tentative = nil
         refresh()
         opennessHistory = [totalLegalMoves]

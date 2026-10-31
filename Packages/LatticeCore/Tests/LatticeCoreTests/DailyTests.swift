@@ -20,6 +20,26 @@ final class DailyTests: XCTestCase {
             DailyChallenge.dateKey(for: date("2027-01-01"), calendar: utc), "2027-01-01")
     }
 
+    func testDeadlineIsTheNextMidnight() throws {
+        let deadline = try XCTUnwrap(DailyChallenge.deadline(for: "2026-12-31", calendar: utc))
+        XCTAssertEqual(deadline, date("2027-01-01"))
+        XCTAssertNil(DailyChallenge.deadline(for: "not a date", calendar: utc))
+    }
+
+    /// The days the clocks change run 23 and 25 hours — not a flat 24.
+    func testDeadlineFollowsDaylightSaving() throws {
+        var helsinki = Calendar(identifier: .gregorian)
+        helsinki.timeZone = try XCTUnwrap(TimeZone(identifier: "Europe/Helsinki"))
+        func length(_ key: String) throws -> TimeInterval {
+            let start = try XCTUnwrap(DailyLog.date(of: key, calendar: helsinki))
+            return try XCTUnwrap(DailyChallenge.deadline(for: key, calendar: helsinki))
+                .timeIntervalSince(start)
+        }
+        XCTAssertEqual(try length("2026-03-29"), 23 * 3600)
+        XCTAssertEqual(try length("2026-10-25"), 25 * 3600)
+        XCTAssertEqual(try length("2026-10-26"), 24 * 3600)
+    }
+
     func testBoardExistsFromEpoch() {
         XCTAssertNil(DailyChallenge.board(for: "2026-07-20"))
         // The classic-cross era: the epoch day itself.

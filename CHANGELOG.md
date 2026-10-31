@@ -15,6 +15,8 @@ user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
 ### Unreleased (next build)
 
+- The Daily moves on to the new day without a relaunch. An app left running or in the background used to keep showing yesterday's board — already played — until it was quit and reopened. Midnight now closes the day's board: the next one appears then, or when you come back to the app. A countdown in the Daily header shows the time left to finish, and once you're done, the time until the next one.
+
 ### build 13 — 2026-09-09
 
 - Choosing a line no longer traps you. While a dot is pending, the board can be dragged and panned as usual anywhere away from the offered lines, and a tap out there cancels — it used to ignore both, leaving the Cancel button in the corner as the only way out. Scrubbing between the lines works as before, close to them.

@@ -4,6 +4,9 @@
     "%.1fs" : {
 
     },
+    "%@ left" : {
+
+    },
     "%lld" : {
 
     },
@@ -251,6 +254,9 @@
 
     },
     "New Game…" : {
+
+    },
+    "Next in %@" : {
 
     },
     "No finished games yet" : {
