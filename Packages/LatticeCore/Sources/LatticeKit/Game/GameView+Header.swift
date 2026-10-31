@@ -99,6 +99,9 @@ extension GameView {
                 }
                 .keyboardShortcut(.cancelAction)
             }
+            if let deadline = session.dailyDeadline {
+                dailyCountdown(to: deadline)
+            }
             if session.mode != .daily {
                 // Restart the same board. Disabled on an unplayed board: nothing
                 // to restart, and it blocks a mis-tap toward Undo.
@@ -134,6 +137,25 @@ extension GameView {
                 .accessibilityAddTraits(isShowingNewGame ? [.isSelected] : [])
                 .shortcutBadge("⌘N", showing: showShortcuts)
             }
+        }
+    }
+
+    /// Time until midnight closes the day's board — the time left to finish
+    /// it, or once it's done, until the next one. Ticks by itself; the
+    /// rollover at zero redraws the header with the new deadline.
+    @ViewBuilder private func dailyCountdown(to deadline: Date) -> some View {
+        let now = Date()
+        if now < deadline {
+            let timer = Text(timerInterval: now...deadline, countsDown: true)
+            Group {
+                if session.dailyDone {
+                    Text("Next in \(timer)", bundle: .module)
+                } else {
+                    Text("\(timer) left", bundle: .module)
+                }
+            }
+            .font(.subheadline.monospacedDigit())
+            .foregroundStyle(.secondary)
         }
     }
 

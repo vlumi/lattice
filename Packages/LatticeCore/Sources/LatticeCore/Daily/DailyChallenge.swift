@@ -23,6 +23,14 @@ public enum DailyChallenge {
             format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 
+    /// When the day's challenge closes: the next local midnight. Calendar
+    /// arithmetic, not +24h, so a daylight-saving day runs its 23 or 25 hours.
+    public static func deadline(for dateKey: String, calendar: Calendar = .current) -> Date? {
+        DailyLog.date(of: dateKey, calendar: calendar).flatMap {
+            calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: $0))
+        }
+    }
+
     public struct Board: Equatable, Sendable {
         public let dateKey: String
         public let rules: Rules

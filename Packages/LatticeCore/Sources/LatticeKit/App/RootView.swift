@@ -7,6 +7,7 @@ import SwiftUI
 /// the native View menu (which drives `model.selection` directly).
 public struct RootView: View {
     @ObservedObject private var model: AppModel
+    @Environment(\.scenePhase) private var scenePhase
     @State private var historyPath = NavigationPath()
     /// "?" reveals keyboard shortcuts app-wide (the board cheatsheet + the
     /// floating-control badges in GameView).
@@ -102,6 +103,17 @@ public struct RootView: View {
         // deprecation (copied from Donpa; see Support/OnChangeCompat).
         .onChangeCompat(of: model.sync.revision) { _ in
             model.reloadSyncedState()
+        }
+        // The daily follows the date while the app stays alive: at midnight if
+        // it's running, on return if it was suspended through it.
+        .onChangeCompat(of: scenePhase) { phase in
+            if phase == .active { model.rollOverDay() }
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: .NSCalendarDayChanged)
+                .receive(on: RunLoop.main)
+        ) { _ in
+            model.rollOverDay()
         }
     }
 
