@@ -61,6 +61,10 @@ Every step is re-runnable; `make release` resumes where it left off:
   built. Fix, push to the PR branch (or close it), re-run.
 - **Merged but not tagged** (e.g. interrupted) — publish detects the
   bumped-but-untagged base and skips straight to tagging.
+- **Tagged, but you want the same build number back** (nothing shipped under
+  it yet) — delete the tag on origin (`git push --delete origin
+  <prefix>/vX.Y.Z-N`) and re-run: the lane mirrors origin's tags into the
+  clone, so the deleted tag stops counting and publish skips to tagging.
 - **Tag exists, release/dist failed** — the tag step is idempotent per
   platform; `make release-distribute-retry` re-archives/uploads an
   already-tagged release without touching git.
