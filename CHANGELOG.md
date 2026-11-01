@@ -12,7 +12,7 @@ release renames it to that build's heading and opens a fresh empty one — and
 when the release cuts a new marketing version, opens its `## [X.Y.Z]` section
 too. A user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
-## [1.0.2] — unreleased
+## [1.0.2]
 
 ### Unreleased (next build)
 

@@ -36,7 +36,7 @@ sync_tags() {
 # a hand-set line in an otherwise automatic lane is a step that gets forgotten —
 # skid tagged v0.8.0 while its changelog still filed the entries under v0.7.0).
 # The old version's heading keeps covering the builds it shipped; its prose blurb
-# travels with it. The new section opens with "— unreleased" and no blurb — the
+# travels with it. The new section opens with a bare heading and no blurb — the
 # blurb is the author's word, written when there is something to say.
 promote_changelog_build() {
     local build="$1"
@@ -70,7 +70,7 @@ promote_changelog_build() {
     #
     # New version: the OLD heading must keep covering the builds it shipped, so
     # nothing is rewritten. The Unreleased heading is replaced by a whole new
-    # section — `## [NEW] — unreleased`, a fresh Unreleased, this build's
+    # section — `## [NEW]`, a fresh Unreleased, this build's
     # heading — and the old version heading (with its prose blurb, buffered on
     # the way past) is re-opened below, over its own builds.
     awk -v build="$build" -v today="$today" -v version="$version" '
@@ -78,7 +78,7 @@ promote_changelog_build() {
         # and start buffering its blurb (the prose before Unreleased).
         version != "" && !done && /^## \[/ {
             old = $0
-            print "## [" version "] — unreleased\n"
+            print "## [" version "]\n"
             print h "\n"
             print "### build " build " — " today "\n"
             done = 1
