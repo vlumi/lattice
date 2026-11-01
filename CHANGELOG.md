@@ -8,16 +8,19 @@ Grouped by **marketing version** (a roadmap milestone), then by **build
 number** within it — the version stays steady while the build climbs each
 TestFlight upload. Each version's top section, **Unreleased (next build)**,
 collects entries merged to `main` but not yet in a TestFlight build; cutting a
-release renames it to that build's heading and opens a fresh empty one. A
-user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
+release renames it to that build's heading and opens a fresh empty one — and
+when the release cuts a new marketing version, opens its `## [X.Y.Z]` section
+too. A user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
-## [1.0.1]
+## [1.0.2]
 
 ### Unreleased (next build)
 
 ### build 14 — 2026-11-01
 
 - The Daily moves on to the new day without a relaunch. An app left running or in the background used to keep showing yesterday's board — already played — until it was quit and reopened. Midnight now closes the day's board: the next one appears then, or when you come back to the app. A countdown in the Daily header shows the time left to finish, and once you're done, the time until the next one.
+
+## [1.0.1]
 
 ### build 13 — 2026-09-09
 
