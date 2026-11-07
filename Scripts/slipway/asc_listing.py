@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Sync the App Store listing text from listing.json to App Store Connect —
-app name/subtitle/privacy URL (app-level) and description/keywords/promo/
-what's-new/URLs (per platform version). Edit listing.json, push with one
+"""Sync the App Store listing text from Scripts/asc/listing.json to App Store
+Connect — app name/subtitle/privacy URL (app-level) and description/keywords/
+promo/what's-new/URLs (per platform version). Edit listing.json, push with one
 command, never the ASC UI.
 
-Dry-run by default; --apply to write. Text only (screenshots: screenshots.py).
+Dry-run by default; --apply to write. Text only (screenshots: asc_screenshots.py).
+Run from the project root, through asc.sh:
 
-  Scripts/asc/listing.py            # dry run: show the diff
-  Scripts/asc/listing.py --apply    # write
-
-Needs: PyJWT + cryptography (see README.md).
+  asc.sh listing            # dry run: show the diff
+  asc.sh listing --apply    # write
 """
 import argparse
 import json
@@ -17,9 +16,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _client import ASC  # noqa: E402
+from asc_client import ASC  # noqa: E402
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+LISTING = os.path.join("Scripts", "asc", "listing.json")
 
 # ASC attribute keys, in the two localization scopes.
 APPINFO_FIELDS = ["name", "subtitle", "privacyPolicyUrl"]
@@ -62,7 +61,7 @@ def main():
     ap.add_argument("--apply", action="store_true", help="write (default: dry run)")
     args = ap.parse_args()
 
-    doc = json.load(open(os.path.join(HERE, "listing.json")))
+    doc = json.load(open(LISTING))
     asc = ASC()
     apps = asc.get(f"/apps?filter[bundleId]={doc['bundleId']}&limit=1")["data"]
     if not apps:

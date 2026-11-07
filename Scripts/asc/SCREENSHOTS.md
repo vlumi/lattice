@@ -91,8 +91,8 @@ the trap — a 16 **Plus** is 6.7", not 6.9", and gives 1290×2796. An SE gives
 
 ## The shots
 
-The list lives in `organize-shots.py`, so one table drives this guide, the
-`make shots` prompts and the upload order:
+The list lives in `organize-shots.py`, so one table drives this guide and the
+`make shots` prompts; the upload order is `shots.json`'s:
 
 ```sh
 make shots-list PLATFORM=iphone

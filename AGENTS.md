@@ -402,25 +402,24 @@ beside a `Form`, and a *disabled* one still swallows its key.
 stamps each player's time to reach the target, ranks the standings, and
 broadcasts them (`DuelMessage.results`), so every device shows the same result.
 
-### Plumbing stays in sync with Donpa (Donpa leads)
+### Plumbing comes from slipway
 
-**Project plumbing is kept identical across the sibling projects, with Donpa
-as the leading source of truth** — one implementation to maintain, not
-several subtly-different near-duplicates. "Plumbing" = the release lane
-(`Scripts/release-*.sh`, `distribute.sh`, `generate.sh`, `ExportOptions.plist`),
-CI (`.github/workflows/`), lint/format configs, the Makefile's target
-structure, and the signing/build-setting shape of `project.yml`.
+The build and release plumbing is shared with the sibling projects through
+[slipway](https://github.com/vlumi/slipway), carried as a pinned copy in
+`Scripts/slipway/` and configured by `slipway.yml`: the release lane, the
+generate/build/test/lint/format/clean targets, the App Store listing and
+screenshot sync, and the commit-SHA build phase. Its README is the reference.
 
-- **Copy wholesale, don't cherry-pick.** Replicate Donpa's plumbing verbatim;
-  the ONLY permitted local delta is per-app **identity** (bundle id, product
-  names, entitlement *paths*, category UTI, deployment floor, the starting
-  `CURRENT_PROJECT_VERSION`). Selectively imitating "the parts that matter"
-  is how you get a lane that looks right and breaks in the gaps — don't.
-- **Propagation is one-way: Donpa → here.** A plumbing improvement or bug fix
-  belongs **upstream in Donpa first**, then re-copied down. Never fix
-  plumbing only in Lattice, or the leader falls behind its followers.
-  (Game logic and *reasoned, recorded* design divergences — e.g. the
-  single-blob sync model — are exempt; this rule is about the plumbing.)
+- **Never edit the copy.** CI fails if `Scripts/slipway/` differs from the
+  version it records. A fix or improvement goes into slipway, gets released
+  there, and comes back with `make slipway-update V=vX.Y.Z`.
+- **Lattice's own plumbing stays here**: running and the demo, screenshot
+  capture (`Scripts/shoot.sh`, `Scripts/asc/organize-shots.py`), the generated
+  icon and sounds, and the data the shared scripts read (`Scripts/asc/listing.json`,
+  `Scripts/asc/shots.json`). To extend a slipway target, add a prerequisite in
+  the Makefile; never redefine it.
+- CI, the lint/format configs and the signing/build-setting shape of
+  `project.yml` are still kept like the sibling projects' by hand.
 
 ### Reusable seams to copy-adapt from Donpa
 
@@ -439,7 +438,7 @@ depend on Donpa):
   stack ([[donpa-is-design-reference]]), but Lattice's duel is its own model:
   **host-advertises** (not Donpa's mutual-consent swap), N-player star
   topology with host relay, and a pure `DuelMatch` state machine driving it.
-  Plumbing stays in sync with Donpa; the duel model is Lattice-specific.
+  The duel model is Lattice-specific.
   A move is one small message; each device runs its own clock. See the
   two-player section for the rules.
 
@@ -485,7 +484,7 @@ depend on Donpa):
     export-compliance prompt on every upload.
   - **`GitCommitSHA`** is stamped into each built app's Info.plist by a
     `postBuildScripts` phase on both targets
-    (`Scripts/embed-commit-sha.sh`), and shown in the About view — so a
+    (`Scripts/slipway/embed-commit-sha.sh`), and shown in the About view — so a
     TestFlight build self-identifies its exact source. A dirty tree gets a
     `-dirty` suffix; a non-git checkout writes `unknown` rather than failing
     the build. It only writes the *built product's* plist, never the

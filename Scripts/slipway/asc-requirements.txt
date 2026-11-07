@@ -1,0 +1,3 @@
+# The App Store Connect sync (asc_*.py); asc.sh installs these into its venv.
+pyjwt>=2.8
+cryptography>=42

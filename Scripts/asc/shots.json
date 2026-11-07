@@ -1,0 +1,13 @@
+{
+  "_comment": "The App Store carousel order (make asc-screenshots, Scripts/slipway). The capture order and how to stage each shot are in SCREENSHOTS.md and organize-shots.py.",
+  "store": [
+    "mid-game",
+    "choosing-a-line",
+    "history",
+    "daily",
+    "replay",
+    "new-game",
+    "nearby",
+    "mid-game-dark"
+  ]
+}

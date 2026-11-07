@@ -16,8 +16,7 @@
 //   swift Scripts/make-sounds.swift
 //
 // Deterministic (fixed noise seed), so re-running yields byte-identical files —
-// they're committed like the icon assets. Adapted from Donpa's make-sounds.swift
-// (plumbing kept in sync with the sibling app; Donpa leads).
+// they're committed like the icon assets. Adapted from Donpa's make-sounds.swift.
 
 import AVFoundation
 import Foundation
