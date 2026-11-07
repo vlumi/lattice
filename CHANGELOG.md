@@ -12,11 +12,15 @@ release renames it to that build's heading and opens a fresh empty one — and
 when the release cuts a new marketing version, opens its `## [X.Y.Z]` section
 too. A user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
-## [1.0.2]
+## [1.0.3]
 
 ### Unreleased (next build)
 
+### build 15 — 2026-11-07
+
 - The board no longer zooms out when you pick a dot and back in when you pick its line. On a narrow phone, the Cancel button that appears while a dot is pending could push the header onto a second line, and the board shrank to make room. Cancel now takes the place of the floating Undo button instead, so the board stays put.
+
+## [1.0.2]
 
 ### build 14 — 2026-11-01
 
