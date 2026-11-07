@@ -1,12 +1,11 @@
-"""Shared App Store Connect API client for the listing tooling.
+"""The App Store Connect API client for the listing and screenshot sync.
 
-Reuses the release lane's credentials: Key ID + Issuer ID from
-Scripts/.asc-config, the .p8 auto-discovered from
-~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8 (same as distribute.sh).
+The release lane's credentials: Key ID + Issuer ID from the project's
+Scripts/.asc-config, the .p8 from
+~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8 (as distribute.sh finds it).
 
-Needs: PyJWT + cryptography  (pip install pyjwt cryptography)
+Needs: PyJWT + cryptography (asc.sh's venv).
 """
-import glob
 import json
 import os
 import sys
@@ -14,16 +13,16 @@ import time
 import urllib.error
 import urllib.request
 
-try:
-    import jwt  # PyJWT
-except ImportError:
-    sys.exit("Missing dependency: pip install pyjwt cryptography")
-
 API = "https://api.appstoreconnect.apple.com/v1"
 
 
 class ASC:
     def __init__(self):
+        # Imported here, so the modules load (and test) without the venv.
+        try:
+            import jwt  # PyJWT
+        except ImportError:
+            sys.exit("Missing dependency: pip install pyjwt cryptography")
         key_id, issuer, private_key = self._load_config()
         now = int(time.time())
         self._token = jwt.encode(
@@ -34,9 +33,7 @@ class ASC:
 
     @staticmethod
     def _load_config():
-        # Scripts/.asc-config lives one directory up from this module.
-        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        path = os.path.join(root, ".asc-config")
+        path = os.path.join("Scripts", ".asc-config")
         if not os.path.exists(path):
             sys.exit(f"{path} missing (copy .asc-config.example, fill in Key/Issuer ID).")
         cfg = {}

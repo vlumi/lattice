@@ -1,0 +1,6 @@
+# Settings for the shared build and release plumbing in Scripts/slipway (see its
+# README.md). Everything else about the lane follows from these.
+name: Lattice
+display_name: Lattice Five
+platforms: [ios, macos]
+app_icon: Sources/Shared/Assets.xcassets/AppIcon.appiconset/icon-light.png

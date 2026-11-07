@@ -25,7 +25,11 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-      - name: SwiftLint
+      - name: slipway copy unmodified
+        # Scripts/slipway is a pinned copy of the shared plumbing: a fix belongs
+        # upstream in slipway, then `make slipway-update` brings it here.
+        run: Scripts/slipway/check.sh
+      - name: Install SwiftLint
         # Pinned to an exact version so CI and local installs agree (an
         # unpinned install follows the rolling latest, so a new SwiftLint
         # release could turn CI red on untouched code). Bump deliberately.
@@ -37,11 +41,10 @@ jobs:
           unzip -o -q swiftlint.zip -d swiftlint-bin
           ./swiftlint-bin/swiftlint version | grep -qx "${SWIFTLINT_VERSION}" \
             || { echo "SwiftLint version mismatch"; exit 1; }
-          ./swiftlint-bin/swiftlint lint --strict
-      - name: swift-format
-        run: |
-          swift format lint --strict --recursive --configuration .swift-format \
-            Packages/LatticeCore/Sources Packages/LatticeCore/Tests Sources
+      - name: SwiftLint + swift-format
+        # The same `make lint` as a local run, so the paths are said once (in
+        # slipway.mk), with the pinned SwiftLint first on the PATH.
+        run: PATH="$PWD/swiftlint-bin:$PATH" make lint
 
   test:
     name: Test core logic
@@ -103,18 +106,8 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
-        run: xcodegen generate
+        run: make generate
       - name: Build macOS (no signing)
-        run: |
-          xcodebuild build \
-            -project Lattice.xcodeproj \
-            -scheme Lattice-macOS \
-            -destination 'platform=macOS' \
-            CODE_SIGNING_ALLOWED=NO
+        run: make build-mac
       - name: Build iOS (simulator)
-        run: |
-          xcodebuild build \
-            -project Lattice.xcodeproj \
-            -scheme Lattice-iOS \
-            -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO
+        run: make build-ios

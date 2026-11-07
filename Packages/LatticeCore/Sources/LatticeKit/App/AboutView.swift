@@ -6,7 +6,7 @@ import SwiftUI
 /// Japanese-name handling: Lattice isn't localized yet.
 struct AboutView: View {
     /// The build's git commit, stamped into the bundled plist at build time by
-    /// Scripts/embed-commit-sha.sh. "-dirty" means it was built off uncommitted
+    /// Scripts/slipway/embed-commit-sha.sh. "-dirty" means it was built off uncommitted
     /// changes; absent on a build made before that phase existed.
     private var commitSHA: String? {
         Bundle.main.infoDictionary?["GitCommitSHA"] as? String

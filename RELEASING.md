@@ -8,8 +8,8 @@ make release PLATFORM=ios    # one platform (build number still bumps every targ
 make release-build           # stop after export — no ASC upload
 ```
 
-Adapted from Donpa's release lane; the scripts are `Scripts/release-*.sh` +
-`Scripts/distribute.sh`, chained by the Makefile. The pure steps (preflight,
+The lane is slipway's (`Scripts/slipway/`, settings in `slipway.yml`; its
+README.md has the details), chained by `slipway.mk`. The pure steps (preflight,
 tag, distribute) re-derive everything from git + `project.yml`, so each runs
 standalone; only publish (bump prompts → auto-merging PR → CI wait) is
 stateful, and its state lands in the merged commit.
@@ -28,8 +28,9 @@ stateful, and its state lands in the merged commit.
 Both live in `project.yml`, identical across the two targets (the lane
 verifies):
 
-- **`MARKETING_VERSION`** (X.Y.Z) — bumped only on an `all` release, and only
-  when you answer the prompt.
+- **`MARKETING_VERSION`** (X.Y.Z) — asked on every release (blank keeps it,
+  `p` patch, `m` minor, or type `X.Y.Z`). A new version also gets its
+  `## [X.Y.Z]` changelog heading written by the lane.
 - **`CURRENT_PROJECT_VERSION`** (the build number) — bumped on every release,
   shared by both targets so the apps never diverge.
 

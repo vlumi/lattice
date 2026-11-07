@@ -1,4 +1,4 @@
-# App Store Connect API credentials for Scripts/distribute.sh.
+# App Store Connect API credentials for the release lane and the listing sync (Scripts/slipway).
 #
 # Copy this to Scripts/.asc-config (gitignored) and fill in your key's IDs. The
 # .p8 itself is NOT referenced here — place it at
