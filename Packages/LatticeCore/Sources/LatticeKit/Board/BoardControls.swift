@@ -24,9 +24,8 @@ struct BoardControls: View {
                     camera.reset()
                 }
             }
-            // While a dot is pending, Undo's place is Cancel's. Not in the
-            // header: wrapping it onto a second line there shrank the board,
-            // which re-fitted smaller for every pending dot.
+            // Cancel stands in for Undo while a dot is pending: the header must
+            // not change then, or a wrap would shrink and re-fit the board.
             if session.tentative != nil {
                 button(
                     systemName: "xmark", label: Text("Cancel", bundle: .module), shortcut: "esc"
