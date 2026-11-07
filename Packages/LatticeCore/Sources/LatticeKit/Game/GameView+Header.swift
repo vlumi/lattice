@@ -87,18 +87,6 @@ extension GameView {
 
     @ViewBuilder private var controls: some View {
         Group {
-            // Only while there IS something to cancel. It used to be always
-            // present (hidden) to keep the header's width constant, but at
-            // accessibility sizes a whole invisible word is what pushed the row
-            // off a narrow screen; the board re-fits smoothly enough without it.
-            if session.tentative != nil {
-                Button {
-                    session.cancel()
-                } label: {
-                    Text("Cancel", bundle: .module)
-                }
-                .keyboardShortcut(.cancelAction)
-            }
             if let deadline = session.dailyDeadline {
                 dailyCountdown(to: deadline)
             }

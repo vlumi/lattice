@@ -16,6 +16,8 @@ too. A user-facing PR writes its own bullet here (see [AGENTS.md](AGENTS.md)).
 
 ### Unreleased (next build)
 
+- The board no longer zooms out when you pick a dot and back in when you pick its line. On a narrow phone, the Cancel button that appears while a dot is pending could push the header onto a second line, and the board shrank to make room. Cancel now takes the place of the floating Undo button instead, so the board stays put.
+
 ### build 14 — 2026-11-01
 
 - The Daily moves on to the new day without a relaunch. An app left running or in the background used to keep showing yesterday's board — already played — until it was quit and reopened. Midnight now closes the day's board: the next one appears then, or when you come back to the app. A countdown in the Daily header shows the time left to finish, and once you're done, the time until the next one.

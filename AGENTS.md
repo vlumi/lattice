@@ -115,8 +115,10 @@ turns — sits on top of this pure, headless-testable core.
    the line commits the move.
 
 **Cancel needs no mechanism**: before selection, tap the tentative dot again,
-tap empty board, or Esc (macOS) — nothing was committed. (A Cancel button sits
-in the header too, for discoverability.)
+tap empty board, or Esc (macOS) — nothing was committed. (For discoverability,
+the floating Undo button turns into Cancel while a dot is pending. Not in the
+header: there it could wrap the header onto a second line, and the board, losing
+that height, re-fitted smaller for every pending dot and back after it.)
 
 **The scrub zone.** A pending dot claims only its own neighbourhood: a drag or
 tap starting within ~1.2 cells of a candidate ghost or the tentative dot is a

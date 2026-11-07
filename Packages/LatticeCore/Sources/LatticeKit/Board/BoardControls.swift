@@ -1,9 +1,10 @@
 import SwiftUI
 
 /// The floating controls over the board (bottom-trailing): help and Undo
-/// always, Fit only when the camera has moved. Subtle circular buttons on a faint material
-/// so they read as controls without competing with the board. Extracted from
-/// GameView; the board reserves this corner (see Layout.controlsClearInset).
+/// (Cancel while a dot is pending) always, Fit only when the camera has moved.
+/// Subtle circular buttons on a faint material so they read as controls
+/// without competing with the board. Extracted from GameView; the board
+/// reserves this corner (see Layout.controlsClearInset).
 struct BoardControls: View {
     @ObservedObject var session: GameSession
     @ObservedObject var camera: BoardCamera
@@ -23,13 +24,23 @@ struct BoardControls: View {
                     camera.reset()
                 }
             }
-            button(
-                systemName: "arrow.uturn.backward", label: Text("Undo", bundle: .module),
-                shortcut: "⌘Z", enabled: session.undoAllowed
-            ) {
-                session.undo()
+            // Cancel stands in for Undo while a dot is pending: the header must
+            // not change then, or a wrap would shrink and re-fit the board.
+            if session.tentative != nil {
+                button(
+                    systemName: "xmark", label: Text("Cancel", bundle: .module), shortcut: "esc"
+                ) {
+                    session.cancel()
+                }
+            } else {
+                button(
+                    systemName: "arrow.uturn.backward", label: Text("Undo", bundle: .module),
+                    shortcut: "⌘Z", enabled: session.undoAllowed
+                ) {
+                    session.undo()
+                }
+                .disabled(!session.undoAllowed)
             }
-            .disabled(!session.undoAllowed)
             if let onHelp {
                 button(
                     systemName: "questionmark", label: Text("How to play", bundle: .module),
