@@ -17,7 +17,7 @@
       "keywords": "morpion,join five,solitaire,puzzle,pencil,paper,dots,lines,grid,daily,logic,offline,strategy",
       "supportUrl": "https://lattice.misaki.fi/support/",
       "marketingUrl": "https://lattice.misaki.fi/",
-      "whatsNew": "The Daily now moves on to the new day by itself — no more relaunching to get today's board. A countdown in the header shows how long you have left to finish, and once you're done, when the next board arrives."
+      "whatsNew": "The board stays put while you choose a line: on narrower phones it used to shrink when you picked a dot and grow back after. Cancel now takes the Undo button's place while a dot is pending."
     }
   }
 }

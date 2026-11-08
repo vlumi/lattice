@@ -17,9 +17,27 @@ PLATFORM="${PLATFORM:-iphone}"
 BUNDLE="fi.misaki.lattice"
 ARGS=(-demo-clean -demo-seed)
 
-pick_udid() {  # $1 = name pattern
-    xcrun simctl list devices available | grep -E "$1" \
-        | grep -oE "[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}" | tail -1
+# shellcheck source=Scripts/simulator.sh
+. Scripts/simulator.sh
+
+# $1 = name pattern. The newest runtime first, and only DEMO_RUNTIME's (a
+# prefix like iOS-26) when that is set.
+candidate_udids() {
+    xcrun simctl list devices available -j | PATTERN="$1" RUNTIME="${DEMO_RUNTIME:-}" python3 -c '
+import json, os, re, sys
+pattern, runtime_prefix = re.compile(os.environ["PATTERN"]), os.environ["RUNTIME"]
+found = []
+for runtime, devices in json.load(sys.stdin)["devices"].items():
+    name = runtime.split(".")[-1]  # iOS-26-5
+    version = re.search(r"-(\d+)-(\d+)$", name)
+    if not version or not name.startswith(runtime_prefix):
+        continue
+    for device in devices:
+        if pattern.search(device["name"]):
+            found.append(((int(version[1]), int(version[2])), device["udid"]))
+for _, udid in sorted(found, reverse=True):
+    print(udid)
+'
 }
 
 case "$PLATFORM" in
@@ -38,11 +56,14 @@ case "$PLATFORM" in
         pattern='iPhone 16e|iPhone SE'
         [ "$PLATFORM" = ipad ] && pattern='iPad Pro|iPad Air'
         [ -n "${DEVICE_PATTERN:-}" ] && pattern="$DEVICE_PATTERN"
-        udid="$(pick_udid "$pattern")"
-        [ -n "$udid" ] || { echo "No $PLATFORM simulator found." >&2; exit 1; }
+        candidates="$(candidate_udids "$pattern")"
+        [ -n "$candidates" ] || { echo "No $PLATFORM simulator found." >&2; exit 1; }
         make build-ios
-        xcrun simctl boot "$udid" 2>/dev/null || true
-        open -a Simulator --args -CurrentDeviceUDID "$udid"
+        # shellcheck disable=SC2086  # one udid per word
+        udid="$(boot_first_simulator $candidates)" || { echo "No $PLATFORM simulator would boot." >&2; exit 1; }
+        # Shown where there is a Simulator.app to show it in; Xcode 27 has none
+        # (its devices live in DeviceHub), and the demo runs headless just as well.
+        open -g -a Simulator --args -CurrentDeviceUDID "$udid" 2>/dev/null || true
         app="$(find .build-xcode/Build/Products/Debug-iphonesimulator \
             -maxdepth 1 -name 'Lattice Five.app' | head -1)"
         [ -n "$app" ] || { echo "Build missing." >&2; exit 1; }

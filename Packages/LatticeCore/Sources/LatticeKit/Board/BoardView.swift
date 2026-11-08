@@ -171,7 +171,9 @@ public struct BoardView: View {
                     .onEnded { value in
                         gestureZoom = 1
                         camera.apply(zoomDelta: value, panDelta: .zero, in: size)
-                    })
+                    }
+            )
+            .task(id: size) { frameDemoPending(in: size, layout) }
         }
         .clipped()
         .background(BoardKeyboard(session: session, enabled: keyboardEnabled))

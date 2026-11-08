@@ -34,9 +34,9 @@ SHOTS = [
      "board fills the frame with a little air around it, then capture. The "
      "shot that has to carry the whole listing."),
     ("choosing-a-line", False,
-     "Tap any dot with a faint pinpoint — the candidate lines fan out. "
-     "Capture BEFORE committing. The one shot that explains the mechanic. "
-     "(Esc / tap away to clear it afterwards.)"),
+     "`make shots` stages it: the Free board with a dot pending, its candidate "
+     "lines fanned out. By hand, tap any dot with a faint pinpoint and capture "
+     "BEFORE committing. The one shot that explains the mechanic."),
     ("history", False,
      "Tap History. The chart and the recent-games list are already there — "
      "two rows read 'Daily'. Nothing else in the genre shows a curve like it."),
@@ -44,8 +44,9 @@ SHOTS = [
      "Tap the top row in that list, then drag the scrubber to about halfway. "
      "Board plus openness chart: where did the position peak and die?"),
     ("daily", False,
-     "Tap Daily. The day's fresh board, streak in the header — also the 'what "
-     "you see on day one' shot."),
+     "`make shots` stages it; by hand, tap Daily. The day's fresh board, the "
+     "streak and the countdown in the header — also the 'what you see on day "
+     "one' shot."),
     ("new-game", False,
      "Back to Free, then the header's variant button (⌘N on Mac). Shows the "
      "variant row with its explanation line and Random Start."),
@@ -57,6 +58,14 @@ SHOTS = [
      "The duel board with live standings. Needs a second device — do it last, "
      "or skip for v1."),
 ]
+
+
+# Launch arguments that stage a shot without a tap (see DemoMode), for
+# `make shots` to relaunch the demo with before capturing it.
+STAGING = {
+    "choosing-a-line": "-demo-pending",
+    "daily": "-demo-tab daily",
+}
 
 
 def shots_for(platform, include_multi_device=False):
@@ -91,7 +100,7 @@ def main():
 
     if "--plain" in flagset:  # machine-readable, for Scripts/shoot.sh
         for name, desc in shots:
-            print(f"{name}\t{desc}")
+            print(f"{name}\t{desc}\t{STAGING.get(name, '')}")
         return
 
     if "--list" in flagset or len(args) < 2:
