@@ -62,7 +62,8 @@ else:
 }
 
 echo "Simulator: $udid"
-open -a Simulator
+# No Simulator.app under Xcode 27 (DeviceHub has the devices); the run works headless.
+open -g -a Simulator 2>/dev/null || true
 xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1 || true
 
 # Build for the generic simulator destination (robust — no per-device matching),

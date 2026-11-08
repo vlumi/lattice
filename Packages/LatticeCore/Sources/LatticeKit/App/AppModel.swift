@@ -72,6 +72,31 @@ public final class AppModel: ObservableObject {
         // Route finished-game persistence into sync (no-op when sync is off).
         freeSession.onSyncedChange = { [weak sync] in sync?.localDidChange() }
         dailySession.onSyncedChange = { [weak sync] in sync?.localDidChange() }
+
+        if DemoMode.isClean { stageDemo() }
+    }
+
+    /// A screenshot's starting state, from the demo launch arguments.
+    private func stageDemo() {
+        switch DemoMode.tab {
+        case "daily": selection = .daily
+        case "versus": selection = .versus
+        case "history": selection = .history
+        #if !os(macOS)
+        case "settings": selection = .settings
+        #endif
+        default: break
+        }
+        let board: GameSession? =
+            switch selection {
+            case .free: freeSession
+            case .daily: dailySession
+            case .versus: versusSession
+            default: nil
+            }
+        if DemoMode.stagesPendingDot, let board, let point = DemoMode.showcasePoint(in: board) {
+            board.place(point)
+        }
     }
 
     /// A cloud pull changed local bests/daily — refresh the live sessions.

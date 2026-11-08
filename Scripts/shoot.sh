@@ -24,6 +24,9 @@ LIST_FLAGS=(--plain)
 # only discovered at upload — so pin them here and check every shot below.
 # Pro Max ONLY — the "Plus" is a 6.7" device and captures 1290x2796, which ASC
 # refuses for the 6.9" class. Measured, not assumed.
+# The set was shot on iOS 26 simulators: 27 adds the app's name to the iPad's
+# status bar, so a shot from it wouldn't match the rest of the carousel.
+export DEMO_RUNTIME="iOS-26"
 case "$PLATFORM" in
     iphone) export DEVICE_PATTERN='iPhone 1[6-9] Pro Max'; EXPECT="1320x2868" ;;
     ipad) export DEVICE_PATTERN='iPad Pro 13-inch'; EXPECT="2064x2752" ;;
@@ -43,6 +46,19 @@ case "$PLATFORM" in
     iphone | ipad) make build-ios >/dev/null ;;
     *) echo "PLATFORM must be iphone | ipad | mac" >&2; exit 2 ;;
 esac
+
+# One status bar for the whole carousel, whenever a shot is taken: the set's
+# 13:27 on its day (a date sets the iPad's too), full battery, Wi-Fi only.
+# simctl takes a date only as UTC with milliseconds, and shows it in this Mac's
+# time zone — so convert from local.
+pin_status_bar() {
+    local shot_time
+    shot_time=$(date -u -r "$(date -j -f "%Y-%m-%d %H:%M:%S" "2026-08-16 13:27:00" +%s)" \
+        +%Y-%m-%dT%H:%M:%S.000Z)
+    xcrun simctl status_bar "${SIM_UDID:-booted}" override --time "$shot_time" \
+        --batteryState discharging --batteryLevel 100 --cellularMode notSupported \
+        --wifiMode active --wifiBars 3
+}
 
 capture() {  # $1 = output file
     mkdir -p "$(dirname "$1")"
@@ -91,6 +107,21 @@ quit_app() {
     return 0
 }
 
+# Relaunch the demo with a shot's staging arguments (see organize-shots.py's
+# STAGING), so it needs no tap — the only way to stage a headless simulator.
+relaunch() {  # $@ = extra launch arguments
+    quit_app
+    if [ "$PLATFORM" = mac ]; then
+        open -n ".build-xcode/Build/Products/Debug/$APP_NAME.app" --args -demo-clean -demo-seed "$@"
+        WINDOW_ID=$(mac_window_id) || { echo "App window never appeared." >&2; exit 1; }
+    else
+        xcrun simctl launch "$SIM_UDID" "$BUNDLE" -demo-clean -demo-seed "$@" >/dev/null
+    fi
+    # A relaunched demo draws its first frame after 2–4s on a 6.9" simulator.
+    # A fixed wait, not "until the screen settles": the daily countdown never does.
+    sleep 6
+}
+
 total=$(python3 Scripts/asc/organize-shots.py "$PLATFORM" "${LIST_FLAGS[@]}" | wc -l | tr -d ' ')
 
 echo "━━━ $PLATFORM — launching demo ━━━"
@@ -102,14 +133,21 @@ if [ "$PLATFORM" = mac ]; then
     sleep 1  # the app pins 1440x900 in demo mode; let that settle
 else
     SIM_UDID=$(cat "$udid_file" 2>/dev/null || true)
+    pin_status_bar
     sleep 3  # let the launch settle before the first stage prompt
 fi
 rm -f "$udid_file"
 
 i=0
-while IFS=$'\t' read -r name desc; do
+staged=0
+while IFS=$'\t' read -r name desc staging; do
     i=$((i + 1))
     file="$OUT/$PLATFORM/${name}-${PLATFORM}.png"
+    # A shot staged by hand starts from a plain demo, not the last staged one.
+    if [ -z "$staging" ] && [ "$staged" = 1 ]; then
+        relaunch
+        staged=0
+    fi
     echo ""
     echo "[$i/$total] $name"
     echo "  $desc"
@@ -117,6 +155,11 @@ while IFS=$'\t' read -r name desc; do
     read -r reply </dev/tty
     [ "$reply" = q ] && { quit_app; exit 0; }
     [ "$reply" = s ] && continue
+    if [ -n "$staging" ]; then
+        # shellcheck disable=SC2086  # the arguments are meant to split
+        relaunch $staging
+        staged=1
+    fi
     while :; do
         capture "$file"
         size=$(png_size "$file")
